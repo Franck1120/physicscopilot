@@ -5,8 +5,12 @@ version: "3.9"
 #   cp .env.example .env       # fill in your secrets
 #   docker compose -f infra/docker-compose.yml up
 #
-# Supabase: run locally via the Supabase CLI or point SUPABASE_URL to the cloud.
-#   Docs: https://supabase.com/docs/guides/local-development
+# Supabase local stack (optional): run `supabase start` first, then set
+#   SUPABASE_URL=http://localhost:54321 in your .env.
+# Simple Postgres (default): used by this compose file for future persistence.
+#
+# CLIProxyAPI: must be running separately on the host at port 8085.
+#   The server reaches it via host.docker.internal:8085 when GEMINI_API_KEY is absent.
 
 services:
   # ── Go backend ──────────────────────────────────────────────────────────────
@@ -20,9 +24,12 @@ services:
       - ../.env
     environment:
       PORT: "${PORT:-8080}"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      # When GEMINI_API_KEY is absent, GeminiService falls back to CLIProxyAPI.
+      # host.docker.internal resolves to the Docker host on Windows/Mac (Docker Desktop)
+      # and via extra_hosts on Linux.
+      CLIPROXY_URL: "http://host.docker.internal:8085"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-8080}/health || exit 1"]
@@ -31,7 +38,7 @@ services:
       retries: 5
       start_period: 10s
 
-  # ── Local Postgres (mirrors Supabase schema) ─────────────────────────────────
+  # ── Local Postgres (mirrors Supabase schema, for future persistence) ─────────
   postgres:
     image: postgres:16-alpine
     ports:
@@ -42,7 +49,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ../supabase/migrations/20260411000000_initial_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
