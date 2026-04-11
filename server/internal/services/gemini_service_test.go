@@ -18,19 +18,23 @@ func validGeminiJSON(payload string) string {
 	return `{"candidates":[{"content":{"parts":[{"text":` + payload + `}]}}]}`
 }
 
-func TestNewGeminiServiceMissingAPIKey(t *testing.T) {
+func TestNewGeminiServiceFallsBackToProxy(t *testing.T) {
 	t.Setenv("GEMINI_API_KEY", "")
-	t.Setenv("GEMINI_BASE_URL", "")
+	t.Setenv("CLIPROXY_URL", "")
 
 	svc, err := NewGeminiService()
-	if err == nil {
-		t.Fatal("expected error when GEMINI_API_KEY is missing")
+	if err != nil {
+		t.Fatalf("unexpected error when using CLIProxyAPI fallback: %v", err)
 	}
-	if svc != nil {
-		t.Fatal("expected nil service when GEMINI_API_KEY is missing")
+	if svc == nil {
+		t.Fatal("expected non-nil service when using CLIProxyAPI fallback")
 	}
-	if !strings.Contains(err.Error(), "GEMINI_API_KEY") {
-		t.Errorf("error should mention GEMINI_API_KEY, got: %v", err)
+	if !svc.useProxy {
+		t.Error("expected useProxy=true when GEMINI_API_KEY is missing")
+	}
+	expected := defaultCLIProxyBaseURL + "/v1/chat/completions"
+	if svc.proxyURL != expected {
+		t.Errorf("expected proxyURL %q, got %q", expected, svc.proxyURL)
 	}
 }
 

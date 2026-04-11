@@ -27,6 +27,7 @@ server/bin/
 server/coverage.txt
 server/*.test
 server/physicscopilot-server
+server/*.exe
 
 # ── Python (kb/) ──────────────────────────────────────────────────────────────
 kb/__pycache__/
