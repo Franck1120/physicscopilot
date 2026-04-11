@@ -2,61 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/session_record.dart';
 
-// TODO: sostituire con dati reali da DB
-final List<SessionRecord> _mockSessions = [
-  SessionRecord(
-    id: '1',
-    date: DateTime(2026, 4, 11, 14, 30),
-    printerName: 'Prusa MK4',
-    problemDescription:
-        'Estrusione irregolare nel primo strato, materiale non aderisce al piatto.',
-    status: SessionStatus.resolved,
-    duration: Duration(minutes: 12),
-  ),
-  SessionRecord(
-    id: '2',
-    date: DateTime(2026, 4, 9, 9, 15),
-    printerName: 'Bambu Lab X1C',
-    problemDescription:
-        'Warping angoli sollevati, brim non sufficiente per la geometria del pezzo.',
-    status: SessionStatus.unresolved,
-    duration: Duration(minutes: 8),
-  ),
-  SessionRecord(
-    id: '3',
-    date: DateTime(2026, 4, 7, 17, 45),
-    printerName: 'Creality Ender 3 V3',
-    problemDescription:
-        'Layer shift asse Y dopo 3 ore di stampa, cinghia allentata identificata.',
-    status: SessionStatus.resolved,
-    duration: Duration(minutes: 25),
-  ),
-  SessionRecord(
-    id: '4',
-    date: DateTime(2026, 4, 3, 11, 0),
-    printerName: 'Voron 2.4',
-    problemDescription:
-        'Stringing eccessivo tra le torri, retraction e temperatura da calibrare.',
-    status: SessionStatus.resolved,
-    duration: Duration(minutes: 18),
-  ),
-  SessionRecord(
-    id: '5',
-    date: DateTime(2026, 3, 28, 16, 20),
-    printerName: 'Anycubic Kobra 2',
-    problemDescription:
-        'Hotend intasato, filamento PLA carbonizzato nel break zone.',
-    status: SessionStatus.unresolved,
-    duration: Duration(minutes: 5),
-  ),
-];
-
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessions = _mockSessions;
+    // No sessions until backend persistence is wired up — show empty state.
+    const List<SessionRecord> sessions = [];
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),

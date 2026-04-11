@@ -5,40 +5,8 @@ import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBor
 import '../providers/printer_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/websocket_service.dart';
-import '../models/session_record.dart';
 import 'history_screen.dart';
 
-// ---------------------------------------------------------------------------
-// Mock data — last 3 sessions shown on the home tab
-// DateTime has no const constructor, so this list is final (not const).
-// ---------------------------------------------------------------------------
-
-final List<SessionRecord> _mockRecentSessions = [
-  SessionRecord(
-    id: 's1',
-    date: DateTime(2026, 4, 10),
-    printerName: 'HP LaserJet 1020',
-    problemDescription: 'Paper jam at tray 2',
-    status: SessionStatus.resolved,
-    duration: const Duration(minutes: 8),
-  ),
-  SessionRecord(
-    id: 's2',
-    date: DateTime(2026, 4, 8),
-    printerName: 'Canon PIXMA G3470',
-    problemDescription: 'Ink cartridge not recognised',
-    status: SessionStatus.unresolved,
-    duration: const Duration(minutes: 14),
-  ),
-  SessionRecord(
-    id: 's3',
-    date: DateTime(2026, 4, 5),
-    printerName: 'Epson EcoTank L3150',
-    problemDescription: 'Stripes on printed pages',
-    status: SessionStatus.resolved,
-    duration: const Duration(minutes: 5),
-  ),
-];
 
 // ---------------------------------------------------------------------------
 // HomeScreen
@@ -356,8 +324,8 @@ class _RecentSessionsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
+      children: const [
+        Text(
           'ULTIME SESSIONI',
           style: TextStyle(
             color: kTextMuted,
@@ -366,105 +334,42 @@ class _RecentSessionsSection extends StatelessWidget {
             letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _mockRecentSessions
-                .map((s) => _SessionCompactCard(record: s))
-                .toList(),
-          ),
-        ),
+        SizedBox(height: 10),
+        _NoSessionsCard(),
       ],
     );
   }
 }
 
-class _SessionCompactCard extends StatelessWidget {
-  const _SessionCompactCard({required this.record});
-
-  final SessionRecord record;
-
-  static const Map<SessionStatus, Color> _statusColors = {
-    SessionStatus.resolved: Color(0xFF1E8449),
-    SessionStatus.unresolved: Color(0xFFC0392B),
-  };
-
-  static const Map<SessionStatus, String> _statusLabels = {
-    SessionStatus.resolved: 'Risolto',
-    SessionStatus.unresolved: 'Aperto',
-  };
-
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/'
-      '${d.year}';
+class _NoSessionsCard extends StatelessWidget {
+  const _NoSessionsCard();
 
   @override
   Widget build(BuildContext context) {
-    final Color statusColor = _statusColors[record.status]!;
-    final String statusLabel = _statusLabels[record.status]!;
-
     return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         color: kBgCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: kBgCardBorder, width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: const Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDate(record.date),
-                style: const TextStyle(
-                  color: kTextMuted,
-                  fontSize: 11,
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          Icon(Icons.history_outlined, color: kTextMuted, size: 32),
+          SizedBox(height: 10),
           Text(
-            record.printerName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            record.problemDescription,
-            style: const TextStyle(
+            'Nessuna sessione recente',
+            style: TextStyle(
               color: kTextMuted,
-              fontSize: 11,
+              fontSize: 13,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Le tue sessioni di diagnosi appariranno qui.',
+            style: TextStyle(color: kTextMuted, fontSize: 11),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
