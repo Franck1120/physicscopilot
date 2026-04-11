@@ -1,31 +1,48 @@
 version: "3.9"
 
+# ── PhysicsCopilot — local dev stack ──────────────────────────────────────────
+# Usage:
+#   cp .env.example .env       # fill in your secrets
+#   docker compose -f infra/docker-compose.yml up
+#
+# Supabase: run locally via the Supabase CLI or point SUPABASE_URL to the cloud.
+#   Docs: https://supabase.com/docs/guides/local-development
+
 services:
+  # ── Go backend ──────────────────────────────────────────────────────────────
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/Dockerfile.fly
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
+    env_file:
+      - ../.env
     environment:
-      - PORT=8080
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      PORT: "${PORT:-8080}"
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-8080}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  # Local Postgres for development (mirrors Supabase schema)
+  # ── Local Postgres (mirrors Supabase schema) ─────────────────────────────────
   postgres:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: physicscopilot
-      POSTGRES_USER: postgres
+      POSTGRES_DB:       physicscopilot
+      POSTGRES_USER:     postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infra/supabase/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
