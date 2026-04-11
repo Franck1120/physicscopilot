@@ -1,0 +1,18 @@
+# Exclude everything in the repo root except the server/ directory context
+.git
+*.md
+*.txt
+
+# Test files (not needed in image)
+**/*_test.go
+
+# Local dev files
+.env
+.env.*
+!.env.example
+
+# Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.DS_Store
