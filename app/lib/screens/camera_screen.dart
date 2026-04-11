@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../main.dart' show kAccent, kAccentDark;
 
 import '../providers/camera_provider.dart';
 import '../providers/overlay_provider.dart';
@@ -403,7 +404,7 @@ class _ChatPanel extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent,
+                      color: kAccent,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -482,7 +483,7 @@ class _ChatToggleButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isOpen ? Colors.blueAccent : Colors.black54,
+          color: isOpen ? kAccent : Colors.black54,
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -515,9 +516,9 @@ class _MicButton extends StatelessWidget {
     final Color glowColor;
 
     if (isSpeaking) {
-      bgColor = Colors.blueAccent;
+      bgColor = kAccent;
       iconColor = Colors.white;
-      glowColor = Colors.blueAccent;
+      glowColor = kAccent;
     } else if (isActive) {
       bgColor = Colors.redAccent;
       iconColor = Colors.white;
