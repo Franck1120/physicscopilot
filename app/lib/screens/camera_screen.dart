@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../main.dart' show kAccent, kAccentDark;
+import '../main.dart' show kAccent;
 
 import '../providers/camera_provider.dart';
 import '../providers/overlay_provider.dart';

@@ -293,9 +293,9 @@ class _PrinterSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const kBgCard,
+            color: kBgCard,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const kBgCardBorder, width: 1),
+            border: Border.all(color: kBgCardBorder, width: 1),
           ),
           child: Row(
             children: [
@@ -331,7 +331,7 @@ class _PrinterSection extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  backgroundColor: const kBgPrimary,
+                  backgroundColor: kBgPrimary,
                   side: const BorderSide(color: kAccent, width: 1),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   visualDensity: VisualDensity.compact,
@@ -410,9 +410,9 @@ class _SessionCompactCard extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const kBgCard,
+        color: kBgCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const kBgCardBorder, width: 1),
+        border: Border.all(color: kBgCardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,9 +482,9 @@ class _ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const kBgPrimary,
+      backgroundColor: kBgPrimary,
       appBar: AppBar(
-        backgroundColor: const kBgCard,
+        backgroundColor: kBgCard,
         elevation: 0,
         title: const Text(
           'Profilo',
@@ -555,7 +555,7 @@ class _ProfileHeader extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-          backgroundColor: const kBgPrimary,
+          backgroundColor: kBgPrimary,
           side: const BorderSide(color: kAccent, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
@@ -584,9 +584,9 @@ class _ProfileTileList extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const kBgCard,
+        color: kBgCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const kBgCardBorder, width: 1),
+        border: Border.all(color: kBgCardBorder, width: 1),
       ),
       child: ListTile(
         leading: Icon(t.icon, color: kTextMuted),
