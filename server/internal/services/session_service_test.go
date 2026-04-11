@@ -443,3 +443,34 @@ func TestConcurrentAccess(t *testing.T) {
 		t.Errorf("expected at most %d messages, got %d", maxConversationHistory, len(retrieved.ConversationHistory))
 	}
 }
+
+func TestShutdownCancelsContext(t *testing.T) {
+	svc := NewSessionService(nil, nil)
+
+	// Shutdown should cancel the internal context and return promptly.
+	done := make(chan struct{})
+	go func() {
+		svc.Shutdown()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// success — Shutdown returned
+	case <-time.After(2 * time.Second):
+		t.Fatal("Shutdown did not return within 2 seconds")
+	}
+
+	// After Shutdown, the internal context should be cancelled.
+	if svc.ctx.Err() == nil {
+		t.Error("expected context to be cancelled after Shutdown")
+	}
+}
+
+func TestShutdownIsIdempotent(t *testing.T) {
+	svc := NewSessionService(nil, nil)
+
+	// Calling Shutdown twice must not panic.
+	svc.Shutdown()
+	svc.Shutdown()
+}

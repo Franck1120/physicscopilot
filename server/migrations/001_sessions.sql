@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   device_brand TEXT,
   device_model TEXT,
   problem_type TEXT,
-  status TEXT NOT NULL DEFAULT 'active',
+  status TEXT NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'completed', 'abandoned')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -16,9 +17,10 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-  role TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
-  message_type TEXT NOT NULL DEFAULT 'text',
+  message_type TEXT NOT NULL DEFAULT 'text'
+    CHECK (message_type IN ('text', 'image', 'voice')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

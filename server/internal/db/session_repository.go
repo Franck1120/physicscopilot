@@ -38,7 +38,17 @@ func (r *SessionRepo) CreateSession(ctx context.Context, userID, deviceBrand, de
 		RETURNING id, user_id, device_brand, device_model, problem_type, status, created_at, updated_at`
 
 	row := r.pool.QueryRow(ctx, q, userID, deviceBrand, deviceModel)
-	return scanSession(row)
+
+	rec := &SessionRecord{}
+	var problemType *string
+	if err := row.Scan(&rec.ID, &rec.UserID, &rec.DeviceBrand, &rec.DeviceModel,
+		&problemType, &rec.Status, &rec.CreatedAt, &rec.UpdatedAt); err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+	if problemType != nil {
+		rec.ProblemType = *problemType
+	}
+	return rec, nil
 }
 
 // GetSession retrieves a session by its UUID string ID.
@@ -48,9 +58,15 @@ func (r *SessionRepo) GetSession(ctx context.Context, sessionID string) (*Sessio
 		FROM sessions WHERE id = $1`
 
 	row := r.pool.QueryRow(ctx, q, sessionID)
-	rec, err := scanSession(row)
-	if err != nil {
+
+	rec := &SessionRecord{}
+	var problemType *string
+	if err := row.Scan(&rec.ID, &rec.UserID, &rec.DeviceBrand, &rec.DeviceModel,
+		&problemType, &rec.Status, &rec.CreatedAt, &rec.UpdatedAt); err != nil {
 		return nil, fmt.Errorf("get session %s: %w", sessionID, err)
+	}
+	if problemType != nil {
+		rec.ProblemType = *problemType
 	}
 	return rec, nil
 }
@@ -79,10 +95,11 @@ func (r *SessionRepo) ListUserSessions(ctx context.Context, userID string) ([]*S
 	return sessions, rows.Err()
 }
 
-// UpdateSessionStatus updates the status and problem_type of a session.
-func (r *SessionRepo) UpdateSessionStatus(ctx context.Context, sessionID, status, problemType string) error {
+// UpdateSessionStatus updates the status and optionally the problem_type of a session.
+// Pass nil for problemType to leave it unchanged.
+func (r *SessionRepo) UpdateSessionStatus(ctx context.Context, sessionID, status string, problemType *string) error {
 	const q = `
-		UPDATE sessions SET status = $2, problem_type = $3, updated_at = NOW()
+		UPDATE sessions SET status = $2, problem_type = COALESCE($3, problem_type), updated_at = NOW()
 		WHERE id = $1`
 
 	ct, err := r.pool.Exec(ctx, q, sessionID, status, problemType)
@@ -93,18 +110,4 @@ func (r *SessionRepo) UpdateSessionStatus(ctx context.Context, sessionID, status
 		return fmt.Errorf("session %s not found", sessionID)
 	}
 	return nil
-}
-
-// scanSession scans a single session row. It handles nullable problem_type.
-func scanSession(row interface{ Scan(...any) error }) (*SessionRecord, error) {
-	rec := &SessionRecord{}
-	var problemType *string
-	if err := row.Scan(&rec.ID, &rec.UserID, &rec.DeviceBrand, &rec.DeviceModel,
-		&problemType, &rec.Status, &rec.CreatedAt, &rec.UpdatedAt); err != nil {
-		return nil, err
-	}
-	if problemType != nil {
-		rec.ProblemType = *problemType
-	}
-	return rec, nil
 }

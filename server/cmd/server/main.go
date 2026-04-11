@@ -33,6 +33,11 @@ var startTime = time.Now()
 func main() {
 	applogger.Init()
 
+	// Graceful shutdown on SIGINT / SIGTERM — declared early so background
+	// goroutines can select on ctx.Done().
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// Initialize database pool (optional — server starts without DB if unavailable)
 	var sessionRepo *db.SessionRepo
 	var messageRepo *db.MessageRepo
@@ -57,12 +62,18 @@ func main() {
 	convSvc := services.NewConversationService(sessionSvc, geminiSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 
-	// Background cleanup of expired sessions every 5 minutes
+	// Background cleanup of expired sessions every 5 minutes.
+	// Selects on ctx.Done() so the goroutine exits on shutdown signal.
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
-		for range ticker.C {
-			sessionSvc.CleanupExpiredSessions(30 * time.Minute)
+		for {
+			select {
+			case <-ticker.C:
+				sessionSvc.CleanupExpiredSessions(30 * time.Minute)
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -144,10 +155,6 @@ func main() {
 		port = "8080"
 	}
 
-	// Graceful shutdown on SIGINT / SIGTERM
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
 	go func() {
 		slog.Info("server starting", "port", port, "version", version)
 		if err := app.Listen(":" + port); err != nil {
@@ -166,5 +173,9 @@ func main() {
 		slog.Error("shutdown error", "err", err)
 		os.Exit(1)
 	}
+
+	// Drain background DB writes before the deferred dbPool.Close() runs.
+	sessionSvc.Shutdown()
+
 	slog.Info("server stopped cleanly")
 }

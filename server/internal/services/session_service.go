@@ -53,16 +53,29 @@ type SessionService struct {
 	sessions    map[string]*SessionState
 	sessionRepo *db.SessionRepo
 	messageRepo *db.MessageRepo
+	wg          sync.WaitGroup
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 // NewSessionService creates a SessionService.
 // If sessionRepo and messageRepo are nil, the service operates in-memory only (e.g., for tests).
 func NewSessionService(sessionRepo *db.SessionRepo, messageRepo *db.MessageRepo) *SessionService {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &SessionService{
 		sessions:    make(map[string]*SessionState),
 		sessionRepo: sessionRepo,
 		messageRepo: messageRepo,
+		ctx:         ctx,
+		cancel:      cancel,
 	}
+}
+
+// Shutdown cancels in-flight background DB writes and waits for them to complete.
+// Call this before closing the database pool.
+func (s *SessionService) Shutdown() {
+	s.cancel()
+	s.wg.Wait()
 }
 
 // CreateSession initializes a new repair session for the given device.
@@ -75,7 +88,7 @@ func (s *SessionService) CreateSession(deviceBrand, deviceModel string) (*Sessio
 
 	// Persist to DB when repo is available; the DB generates the UUID.
 	if s.sessionRepo != nil {
-		rec, err := s.sessionRepo.CreateSession(context.Background(), "anonymous", deviceBrand, deviceModel)
+		rec, err := s.sessionRepo.CreateSession(s.ctx, "anonymous", deviceBrand, deviceModel)
 		if err != nil {
 			slog.Warn("db: failed to persist new session, falling back to in-memory", "err", err)
 		} else {
@@ -173,8 +186,10 @@ func (s *SessionService) AddMessage(sessionID, role, content string, hasImage bo
 		if hasImage {
 			msgType = "image"
 		}
+		s.wg.Add(1)
 		go func() {
-			if _, err := s.messageRepo.SaveMessage(context.Background(), sessionID, role, content, msgType); err != nil {
+			defer s.wg.Done()
+			if _, err := s.messageRepo.SaveMessage(s.ctx, sessionID, role, content, msgType); err != nil {
 				slog.Warn("db: failed to persist message", "session_id", sessionID, "err", err)
 			}
 		}()
@@ -216,8 +231,10 @@ func (s *SessionService) SetProblemDetected(sessionID, problem string) error {
 
 	// Persist to DB in background without blocking the caller.
 	if s.sessionRepo != nil {
+		s.wg.Add(1)
 		go func() {
-			if err := s.sessionRepo.UpdateSessionStatus(context.Background(), sessionID, "active", problem); err != nil {
+			defer s.wg.Done()
+			if err := s.sessionRepo.UpdateSessionStatus(s.ctx, sessionID, "active", &problem); err != nil {
 				slog.Warn("db: failed to persist problem detected", "session_id", sessionID, "err", err)
 			}
 		}()
@@ -271,10 +288,12 @@ func (s *SessionService) DeleteSession(sessionID string) error {
 
 	delete(s.sessions, sessionID)
 
-	// Soft-delete in DB by marking as abandoned.
+	// Soft-delete in DB by marking as abandoned (nil preserves existing problem_type).
 	if s.sessionRepo != nil {
+		s.wg.Add(1)
 		go func() {
-			if err := s.sessionRepo.UpdateSessionStatus(context.Background(), sessionID, "abandoned", ""); err != nil {
+			defer s.wg.Done()
+			if err := s.sessionRepo.UpdateSessionStatus(s.ctx, sessionID, "abandoned", nil); err != nil {
 				slog.Warn("db: failed to mark session as abandoned", "session_id", sessionID, "err", err)
 			}
 		}()
