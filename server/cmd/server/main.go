@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -109,18 +108,7 @@ func main() {
 	app.Use("/health", apiLimiter.Middleware())
 
 	// Health check — version, uptime, active connections, memory
-	app.Get("/health", func(c *fiber.Ctx) error {
-		var m runtime.MemStats
-		runtime.ReadMemStats(&m)
-		return c.JSON(fiber.Map{
-			"status":             "ok",
-			"service":            "physicscopilot",
-			"version":            version,
-			"uptime":             time.Since(startTime).Round(time.Second).String(),
-			"active_connections": wsHandler.ActiveConnections(),
-			"memory_mb":          m.Alloc / 1024 / 1024,
-		})
-	})
+	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
 
 	// Prometheus metrics endpoint — exposes default registry
 	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
