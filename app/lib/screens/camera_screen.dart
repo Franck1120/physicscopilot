@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart' show kAccent, kAccentDark;
 
@@ -104,6 +105,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   // ── UI actions ────────────────────────────────────────────────────────────
 
   Future<void> _toggleMic() async {
+    HapticFeedback.mediumImpact();
     await ref.read(voiceProvider.notifier).toggleListening();
   }
 
