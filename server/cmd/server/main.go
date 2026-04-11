@@ -102,10 +102,14 @@ func main() {
 		},
 	}))
 
-	// CORS — allow Flutter app (any origin, since tunnel URLs change) and landing page
+	// CORS — restrict to configured origins (env) or known defaults.
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		allowedOrigins = "http://localhost:3000,https://web-rust-five-35.vercel.app,https://physicscopilot.app"
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,DELETE,OPTIONS",
+		AllowOrigins: allowedOrigins,
+		AllowMethods: "GET,POST,OPTIONS",
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
