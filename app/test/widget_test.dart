@@ -10,7 +10,10 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
-      ProviderScope(child: PhysicsCopilotApp(prefs: prefs)),
+      ProviderScope(
+        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        child: PhysicsCopilotApp(prefs: prefs),
+      ),
     );
     expect(find.byType(PhysicsCopilotApp), findsOneWidget);
   });
