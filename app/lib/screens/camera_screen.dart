@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart' show kAccent;
-
 import '../providers/camera_provider.dart';
 import '../providers/overlay_provider.dart';
 import '../providers/session_provider.dart';
@@ -16,6 +15,9 @@ import '../services/websocket_service.dart';
 import '../widgets/ar_overlay.dart';
 import '../widgets/guidance_overlay.dart';
 import '../widgets/step_progress.dart';
+
+/// How long to wait for an AI response before surfacing a timeout error.
+const Duration _kAIResponseTimeout = Duration(seconds: 15);
 
 /// Full-screen camera view with AR overlay, voice I/O, step progress, and chat.
 class CameraScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   StreamSubscription<String>? _sttSubscription;
+  Timer? _aiTimeoutTimer;
 
   late final AnimationController _chatController;
   late final Animation<Offset> _chatSlide;
@@ -58,6 +61,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     _frameSubscription?.cancel();
     _messageSubscription?.cancel();
     _sttSubscription?.cancel();
+    _aiTimeoutTimer?.cancel();
     _chatController.dispose();
     _textInput.dispose();
     super.dispose();
@@ -78,14 +82,28 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     _messageSubscription?.cancel();
     final wsService = ref.read(webSocketServiceProvider);
     _messageSubscription = wsService.messages.listen((json) {
-      if (json['type'] == 'response') {
-        ref.read(sessionProvider.notifier).updateFromResponse(json);
-        ref.read(stepProvider.notifier).updateFromResponse(json);
-        // Speak the AI text response aloud.
-        final text = json['text'] as String?;
-        if (text != null && text.isNotEmpty) {
-          ref.read(voiceProvider.notifier).speak(text);
+      // Any server reply cancels the AI response timeout.
+      _aiTimeoutTimer?.cancel();
+      _aiTimeoutTimer = null;
+
+      try {
+        final type = json['type'] as String?;
+        if (type == 'response') {
+          ref.read(sessionProvider.notifier).updateFromResponse(json);
+          ref.read(stepProvider.notifier).updateFromResponse(json);
+          // Speak the AI text response aloud.
+          final text = json['text'] as String?;
+          if (text != null && text.isNotEmpty) {
+            ref.read(voiceProvider.notifier).speak(text);
+          }
+        } else if (type == 'error') {
+          final msg = json['message'] as String?;
+          ref.read(sessionProvider.notifier).setError(
+            msg ?? 'Errore dal server.',
+          );
         }
+      } catch (_) {
+        ref.read(sessionProvider.notifier).setError('Risposta non valida dal server.');
       }
     });
   }
@@ -98,7 +116,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     _sttSubscription = voiceService.recognizedText.listen((text) {
       ref.read(voiceProvider.notifier).onRecognized(text);
       ref.read(webSocketServiceProvider).sendText(text);
-      ref.read(sessionProvider.notifier).setProcessing();
+      _startAITimeout();
     });
   }
 
@@ -123,7 +141,17 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     if (text.isEmpty) return;
     _textInput.clear();
     ref.read(webSocketServiceProvider).sendText(text);
+    _startAITimeout();
+  }
+
+  // ── AI response timeout ────────────────────────────────────────────────────
+
+  void _startAITimeout() {
     ref.read(sessionProvider.notifier).setProcessing();
+    _aiTimeoutTimer?.cancel();
+    _aiTimeoutTimer = Timer(_kAIResponseTimeout, () {
+      if (mounted) ref.read(sessionProvider.notifier).setAITimeout();
+    });
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -213,6 +241,12 @@ class _CameraBody extends StatelessWidget {
     final padding = MediaQuery.of(context).padding;
     final screenSize = MediaQuery.of(context).size;
 
+    final isOffline = connectionStatus.when(
+      data: (s) => s == ConnectionStatus.disconnected,
+      loading: () => false,
+      error: (_, __) => true,
+    );
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -221,6 +255,14 @@ class _CameraBody extends StatelessWidget {
 
         // ── AR overlay (fills entire feed) ───────────────────────────────
         ArOverlay(data: overlayData),
+
+        // ── Offline banner (top, full-width) ─────────────────────────────
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: _OfflineBanner(isVisible: isOffline),
+        ),
 
         // ── Step progress (bottom) ───────────────────────────────────────
         if (stepState.steps.isNotEmpty)
@@ -234,19 +276,19 @@ class _CameraBody extends StatelessWidget {
             ),
           ),
 
-        // ── AI guidance overlay (bottom, above step bar) ──────────────────
+        // ── AI guidance / error overlay (bottom, above step bar) ──────────
         Positioned(
           left: 0,
           right: isChatOpen ? screenSize.width * 0.45 : 0,
           bottom: padding.bottom +
               (stepState.steps.isNotEmpty ? 110 : 80),
           child: GuidanceOverlay(
-            text: session.responseText,
+            text: session.errorText ?? session.responseText,
             isProcessing: session.isProcessing,
           ),
         ),
 
-        // ── Connection status (top-right) ────────────────────────────────
+        // ── Connection status dot (top-right) ────────────────────────────
         Positioned(
           top: padding.top + 16,
           right: isChatOpen ? screenSize.width * 0.45 + 8 : 16,
@@ -387,6 +429,49 @@ class _ChatPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Offline banner ────────────────────────────────────────────────────────────
+
+/// Full-width banner shown at the top of the screen when the WebSocket is
+/// disconnected. Animates in/out with a vertical slide.
+class _OfflineBanner extends StatelessWidget {
+  final bool isVisible;
+
+  const _OfflineBanner({required this.isVisible});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSlide(
+      offset: isVisible ? Offset.zero : const Offset(0, -1),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: AnimatedOpacity(
+        opacity: isVisible ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          width: double.infinity,
+          color: Colors.red.shade700,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.wifi_off, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text(
+                'Offline — Reconnecting...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

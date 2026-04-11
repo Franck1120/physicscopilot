@@ -6,12 +6,15 @@ class SessionState {
   final String? audioUrl;
   final Map<String, dynamic>? overlay;
   final bool isProcessing;
+  /// Non-null when the last AI request failed or timed out.
+  final String? errorText;
 
   const SessionState({
     this.responseText,
     this.audioUrl,
     this.overlay,
     this.isProcessing = false,
+    this.errorText,
   });
 
   SessionState copyWith({
@@ -19,12 +22,16 @@ class SessionState {
     String? audioUrl,
     Map<String, dynamic>? overlay,
     bool? isProcessing,
+    String? errorText,
   }) {
     return SessionState(
       responseText: responseText ?? this.responseText,
       audioUrl: audioUrl ?? this.audioUrl,
       overlay: overlay ?? this.overlay,
       isProcessing: isProcessing ?? this.isProcessing,
+      // Pass null explicitly to clear errorText; copyWith cannot distinguish
+      // "not provided" from "clear it", so callers pass null to clear.
+      errorText: errorText,
     );
   }
 }
@@ -42,9 +49,19 @@ class SessionNotifier extends StateNotifier<SessionState> {
     );
   }
 
-  /// Marks the session as waiting for a server response.
+  /// Marks the session as waiting for a server response (clears previous error).
   void setProcessing() {
-    state = state.copyWith(isProcessing: true);
+    state = state.copyWith(isProcessing: true, errorText: null);
+  }
+
+  /// Sets a user-visible error message and clears the processing state.
+  void setError(String message) {
+    state = state.copyWith(isProcessing: false, errorText: message);
+  }
+
+  /// Called when the 15-second AI response timeout fires.
+  void setAITimeout() {
+    setError('Nessuna risposta dall\'AI. Riprova.');
   }
 
   /// Resets all session state (e.g. on reconnect or new session).
