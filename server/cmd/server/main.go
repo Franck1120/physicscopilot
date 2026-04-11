@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -14,10 +15,13 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Franck1120/physicscopilot/server/internal/handlers"
 	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
@@ -85,6 +89,21 @@ func main() {
 		Format: "[${time}] ${status} ${latency} ${method} ${path}\n",
 	}))
 
+	// Prometheus metrics middleware — records request count and latency for
+	// every non-/metrics route (recording /metrics itself would be noisy).
+	app.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/metrics" {
+			return c.Next()
+		}
+		start := time.Now()
+		err := c.Next()
+		status := strconv.Itoa(c.Response().StatusCode())
+		dur := time.Since(start).Seconds()
+		metrics.HttpRequestsTotal.WithLabelValues(c.Method(), c.Path(), status).Inc()
+		metrics.HttpRequestDuration.WithLabelValues(c.Method(), c.Path()).Observe(dur)
+		return err
+	})
+
 	// REST API rate limiting — 60 req/min per IP
 	apiLimiter := middleware.NewIPRateLimiter()
 	app.Use("/health", apiLimiter.Middleware())
@@ -102,6 +121,9 @@ func main() {
 			"memory_mb":          m.Alloc / 1024 / 1024,
 		})
 	})
+
+	// Prometheus metrics endpoint — exposes default registry
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	// WebSocket upgrade guard
 	app.Use("/ws", func(c *fiber.Ctx) error {

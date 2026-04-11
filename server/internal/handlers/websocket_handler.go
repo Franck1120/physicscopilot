@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/websocket/v2"
 )
@@ -238,6 +239,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	sc := &safeConn{c: c}
 	h.activeConns.Add(1)
+	metrics.WsActiveConnections.Inc()
 	h.register(sc)
 
 	slog.Info("WebSocket client connected",
@@ -261,6 +263,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 			slog.Warn("failed to delete session", "session_id", sessionID, "err", delErr)
 		}
 		h.activeConns.Add(-1)
+		metrics.WsActiveConnections.Dec()
 		h.ipConns.remove(ip)
 		h.deregister(sc)
 		slog.Info("WebSocket client disconnected",
@@ -289,6 +292,12 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 			}
 			break
 		}
+
+		msgType := msg.Type
+		if msgType == "" {
+			msgType = "unknown"
+		}
+		metrics.WsMessagesTotal.WithLabelValues(msgType).Inc()
 
 		switch msg.Type {
 		case "frame":
@@ -334,7 +343,9 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 	}
 
 	ctx := context.Background()
+	t0 := time.Now()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
+	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
 		writeError(sc, err.Error())
@@ -352,7 +363,9 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 // handleText processes a text-only conversation turn.
 func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessage) {
 	ctx := context.Background()
+	t0 := time.Now()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
+	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
 		writeError(sc, err.Error())
