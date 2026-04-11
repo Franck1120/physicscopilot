@@ -1,0 +1,1507 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-11",
+  "total": 44,
+  "problems": [
+
+    {
+      "id": "warping",
+      "name": "Warping",
+      "category": "bed_adhesion",
+      "severity": "error",
+      "description": "Print corners or edges lift off the bed during printing, causing deformation",
+      "visual_symptoms": [
+        "Corners of the print curling upward away from the bed",
+        "Print separating from bed surface at edges during print",
+        "Bottom layers visibly bowed or lifted at perimeter"
+      ],
+      "probable_causes": [
+        {"cause": "Bed temperature too low", "probability": 0.35, "test": "Check bed temperature on display vs slicer setting"},
+        {"cause": "Enclosure not used for high-temp materials", "probability": 0.25, "test": "Check ambient temperature around printer during print"},
+        {"cause": "First layer not adhered properly", "probability": 0.25, "test": "Observe first layer — does it look flat and well-bonded?"},
+        {"cause": "Large flat print surface with no brim", "probability": 0.15, "test": "Check slicer for brim/raft usage on large footprint models"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase bed temperature by 5-10°C for PLA (60°C), ABS (100-110°C), PETG (80°C)", "verification": "Display shows new target temperature", "time_seconds": 30},
+            {"instruction": "Enable brim in slicer (5-10mm wide)", "verification": "Slicer preview shows brim around model base", "time_seconds": 60},
+            {"instruction": "Clean bed with isopropyl alcohol 90%+ before print", "verification": "Bed surface is clean and grease-free", "time_seconds": 120},
+            {"instruction": "Re-slice and reprint", "verification": "Corners remain flat during first 5 layers", "time_seconds": 300}
+          ],
+          "tools_needed": ["isopropyl alcohol", "lint-free cloth"],
+          "success_rate": 0.80
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Apply glue stick or hairspray to bed surface", "verification": "Thin even layer visible on bed", "time_seconds": 60},
+            {"instruction": "Add draft shield in slicer to reduce ambient air currents", "verification": "Draft shield visible around model in slicer preview", "time_seconds": 60},
+            {"instruction": "Use enclosure or cardboard tent to maintain ambient temperature", "verification": "Ambient temperature stabilized at 30°C+", "time_seconds": 120}
+          ],
+          "tools_needed": ["glue stick or hairspray", "enclosure"],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["ABS", "PLA", "PETG", "ASA", "bed-adhesion", "first-layer", "temperature"]
+    },
+
+    {
+      "id": "poor_first_layer_adhesion",
+      "name": "Poor First Layer Adhesion",
+      "category": "bed_adhesion",
+      "severity": "error",
+      "description": "First layer fails to stick to the bed surface, causing the print to detach early",
+      "visual_symptoms": [
+        "First layer peels up or moves as nozzle travels over it",
+        "Gaps and holes visible in first layer when viewed from above",
+        "Extruded lines are rounded on top instead of pressed flat"
+      ],
+      "probable_causes": [
+        {"cause": "Z offset too high (nozzle too far from bed)", "probability": 0.40, "test": "Observe first layer — does filament look squished or round?"},
+        {"cause": "Bed surface dirty or contaminated", "probability": 0.30, "test": "Inspect bed under light for grease or dust"},
+        {"cause": "Bed temperature too low for material", "probability": 0.20, "test": "Check nozzle and bed temp match recommended for filament"},
+        {"cause": "Print speed too fast for first layer", "probability": 0.10, "test": "Check first layer speed in slicer settings"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Clean bed with isopropyl alcohol 90%+ using a lint-free cloth", "verification": "Bed looks clean, no residue visible", "time_seconds": 120},
+            {"instruction": "Adjust Z offset down by 0.05-0.1mm increments (Live Adjust Z)", "verification": "First layer lines look flat and slightly squished", "time_seconds": 120},
+            {"instruction": "Reduce first layer speed to 20-25mm/s in slicer", "verification": "Slicer shows updated first layer speed", "time_seconds": 60},
+            {"instruction": "Verify bed temperature matches material recommendation", "verification": "Display shows correct temperature", "time_seconds": 30}
+          ],
+          "tools_needed": ["isopropyl alcohol", "lint-free cloth"],
+          "success_rate": 0.88
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "first-layer", "z-offset", "bed-adhesion"]
+    },
+
+    {
+      "id": "elephants_foot",
+      "name": "Elephant's Foot",
+      "category": "bed_adhesion",
+      "severity": "warning",
+      "description": "Bottom layers of the print are wider than the rest, creating a flared base",
+      "visual_symptoms": [
+        "First 1-3 layers visibly wider than the layers above",
+        "Outward bulge at the base of the print visible from the side",
+        "Model base does not match expected dimensions when measured"
+      ],
+      "probable_causes": [
+        {"cause": "Nozzle too close to bed (Z offset too low)", "probability": 0.50, "test": "Check if first layer looks extremely flat and squished outward"},
+        {"cause": "Bed temperature too high, softening bottom layers", "probability": 0.30, "test": "Verify bed temperature is within recommended range"},
+        {"cause": "First layer flow rate too high", "probability": 0.20, "test": "Check first layer flow/extrusion multiplier in slicer"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Raise Z offset by 0.02-0.05mm increments", "verification": "First layer lines look flat but not spreading sideways", "time_seconds": 90},
+            {"instruction": "Reduce bed temperature by 5°C", "verification": "Display shows new temperature and print base doesn't bulge", "time_seconds": 30},
+            {"instruction": "Reduce first layer flow rate to 90-95% in slicer", "verification": "Slicer shows updated first layer flow", "time_seconds": 60}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "z-offset", "first-layer", "dimensional-accuracy"]
+    },
+
+    {
+      "id": "first_layer_too_high",
+      "name": "First Layer Too High",
+      "category": "bed_adhesion",
+      "severity": "warning",
+      "description": "Nozzle prints first layer too far from bed, leading to poor adhesion and gaps",
+      "visual_symptoms": [
+        "First layer filament looks rounded (not squished) when viewed from side",
+        "Gaps between first layer lines visible from above",
+        "Print easily peels off bed with minimal force"
+      ],
+      "probable_causes": [
+        {"cause": "Z offset value set too high", "probability": 0.55, "test": "Check Z offset value in printer menu — should be slightly negative"},
+        {"cause": "Bed leveling mesh not applied correctly", "probability": 0.30, "test": "Trigger bed leveling routine and observe mesh correction values"},
+        {"cause": "Nozzle or bed surface changed without re-leveling", "probability": 0.15, "test": "When was last bed leveling done?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Run bed auto-leveling/tramming routine", "verification": "Leveling completes without errors", "time_seconds": 120},
+            {"instruction": "Decrease Z offset by 0.05mm increments while printing first layer", "verification": "First layer lines appear flat and slightly squished", "time_seconds": 90},
+            {"instruction": "Save Z offset to EEPROM / printer memory", "verification": "Setting persists after power cycle", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["z-offset", "first-layer", "bed-leveling", "PLA", "PETG", "ABS"]
+    },
+
+    {
+      "id": "first_layer_too_low",
+      "name": "First Layer Too Low",
+      "category": "bed_adhesion",
+      "severity": "error",
+      "description": "Nozzle prints too close to bed, scraping surface and blocking extrusion",
+      "visual_symptoms": [
+        "Nozzle scraping or dragging across bed surface (audible scratching)",
+        "No filament extruding during first layer or very little",
+        "Bed surface scratched or damaged after failed first layer"
+      ],
+      "probable_causes": [
+        {"cause": "Z offset set too low (too negative)", "probability": 0.60, "test": "Listen for scraping sound during first layer; check Z offset value"},
+        {"cause": "Manual bed leveling done incorrectly (too tight)", "probability": 0.25, "test": "Paper test: paper should slide with slight resistance, not be locked"},
+        {"cause": "Bed surface expanded from heat, raising bed", "probability": 0.15, "test": "Level bed at print temperature, not cold"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Cancel print immediately to avoid bed damage", "verification": "Print stopped", "time_seconds": 10},
+            {"instruction": "Increase Z offset by 0.1mm increments", "verification": "Nozzle clears bed surface without touching", "time_seconds": 60},
+            {"instruction": "Run first layer calibration print at new Z offset", "verification": "Nozzle doesn't scrape, filament extrudes normally", "time_seconds": 180}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.95
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["z-offset", "first-layer", "bed-damage", "PLA", "PETG", "ABS"]
+    },
+
+    {
+      "id": "bed_not_level",
+      "name": "Bed Not Level",
+      "category": "bed_adhesion",
+      "severity": "error",
+      "description": "Bed is tilted or uneven, causing inconsistent first layer height across the print area",
+      "visual_symptoms": [
+        "First layer looks good in one corner but too high or too low in another",
+        "Print adheres on one side but lifts on the opposite side",
+        "First layer thickness visibly inconsistent across different areas"
+      ],
+      "probable_causes": [
+        {"cause": "Manual tramming not performed recently", "probability": 0.40, "test": "Paper test at all 4 corners — resistance should be equal"},
+        {"cause": "Auto-leveling probe failed or needs calibration", "probability": 0.35, "test": "Run manual leveling to verify mesh accuracy"},
+        {"cause": "Bed warped or physically bent", "probability": 0.15, "test": "Use a straight edge ruler across bed surface to check flatness"},
+        {"cause": "Bed springs/springs uneven or worn", "probability": 0.10, "test": "Check bed corner adjusters for equal tension"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Run auto bed leveling (ABL/UBL) routine", "verification": "Mesh generated without errors", "time_seconds": 180},
+            {"instruction": "Manually tram bed corners using paper test at each corner", "verification": "Paper slides with equal resistance at all corners", "time_seconds": 300},
+            {"instruction": "Reprint first layer test and observe uniformity", "verification": "First layer consistent across full print area", "time_seconds": 180}
+          ],
+          "tools_needed": ["paper"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["bed-leveling", "first-layer", "tramming", "ABL", "PLA", "PETG"]
+    },
+
+    {
+      "id": "nozzle_too_close",
+      "name": "Nozzle Too Close to Bed",
+      "category": "bed_adhesion",
+      "severity": "error",
+      "description": "Nozzle is extremely close to bed, causing scraping, blockages and bed damage",
+      "visual_symptoms": [
+        "Visible scratches or gouges in PEI or glass bed surface",
+        "Filament not extruding or extruding in very thin amounts",
+        "Nozzle moves but leaves no or almost no trace of filament"
+      ],
+      "probable_causes": [
+        {"cause": "Z offset too negative after recent change", "probability": 0.50, "test": "Check Z offset value — if more negative than -2mm on most printers, likely too low"},
+        {"cause": "Bed physically moved closer (spring compressed too much)", "probability": 0.30, "test": "Home Z and manually check clearance between nozzle and bed"},
+        {"cause": "Different bed surface thickness installed without re-calibrating", "probability": 0.20, "test": "Was bed surface recently changed (glass → PEI or vice versa)?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Stop print immediately", "verification": "Print halted", "time_seconds": 10},
+            {"instruction": "Navigate to Z offset in printer menu and increase value by 0.1-0.2mm", "verification": "Z offset shows higher (less negative) value", "time_seconds": 60},
+            {"instruction": "Home Z axis and verify nozzle has clearance from bed", "verification": "A sheet of paper fits between nozzle and bed with slight resistance", "time_seconds": 60},
+            {"instruction": "Inspect bed for damage; if PEI is scratched, smooth with fine sandpaper", "verification": "Bed surface is smooth", "time_seconds": 120}
+          ],
+          "tools_needed": ["paper", "fine sandpaper (optional)"],
+          "success_rate": 0.92
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["z-offset", "bed-damage", "PEI", "first-layer"]
+    },
+
+    {
+      "id": "nozzle_too_far",
+      "name": "Nozzle Too Far from Bed",
+      "category": "bed_adhesion",
+      "severity": "warning",
+      "description": "Nozzle prints too high above bed surface, filament doesn't bond to bed",
+      "visual_symptoms": [
+        "Filament strands look round and not pressed into bed",
+        "First layer lines are separate and not bonded to each other",
+        "Completed first layer can be pulled off easily in one piece"
+      ],
+      "probable_causes": [
+        {"cause": "Z offset set too high (too positive or not negative enough)", "probability": 0.55, "test": "Observe first layer — filament should be slightly squished"},
+        {"cause": "Bed probe z-offset (probe trigger height) miscalibrated", "probability": 0.30, "test": "Re-run probe calibration routine"},
+        {"cause": "Bed physically lower than expected (spring stretched or loose)", "probability": 0.15, "test": "Check bed corner screws and spring tension"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Decrease Z offset by 0.05mm increments during live print", "verification": "First layer filament looks flat and bonded to bed", "time_seconds": 90},
+            {"instruction": "Save adjusted Z offset", "verification": "Setting persists", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.92
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["z-offset", "first-layer", "bed-adhesion", "PLA", "PETG", "ABS"]
+    },
+
+    {
+      "id": "stringing",
+      "name": "Stringing / Oozing",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Thin strings of filament left between separate parts of the print during travel moves",
+      "visual_symptoms": [
+        "Thin hair-like strings stretched between separate parts of the print",
+        "Cobweb-like filament deposits between towers or protrusions",
+        "Fine hairs visible on the print surface near travel paths"
+      ],
+      "probable_causes": [
+        {"cause": "Retraction distance too low", "probability": 0.40, "test": "Check retraction distance in slicer — typical: 1-2mm direct drive, 4-6mm bowden"},
+        {"cause": "Nozzle temperature too high", "probability": 0.35, "test": "Check nozzle temperature — high temps increase oozing"},
+        {"cause": "Travel speed too slow", "probability": 0.15, "test": "Check travel speed in slicer — should be 150-200mm/s"},
+        {"cause": "Wet filament absorbing moisture", "probability": 0.10, "test": "Listen for popping or crackling sounds during extrusion"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Lower nozzle temperature by 5-10°C", "verification": "Temperature display shows new value", "time_seconds": 30},
+            {"instruction": "Increase retraction distance: 1-2mm (direct drive) or 4-6mm (Bowden)", "verification": "Slicer shows updated retraction distance", "time_seconds": 60},
+            {"instruction": "Increase retraction speed to 40-60mm/s", "verification": "Slicer shows updated retraction speed", "time_seconds": 30},
+            {"instruction": "Increase travel speed to 150-200mm/s", "verification": "Slicer shows updated travel speed", "time_seconds": 30},
+            {"instruction": "Run stringing test print (temperature tower or travel test)", "verification": "Fewer or no strings visible between towers", "time_seconds": 300}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "retraction", "temperature", "travel-speed"]
+    },
+
+    {
+      "id": "under_extrusion",
+      "name": "Under-Extrusion",
+      "category": "extrusion",
+      "severity": "error",
+      "description": "Printer deposits less filament than expected, resulting in gaps and weak prints",
+      "visual_symptoms": [
+        "Gaps between extrusion lines visible in walls and infill",
+        "Layers appear thin or incomplete with missing sections",
+        "Print feels light and fragile; walls show pinholes"
+      ],
+      "probable_causes": [
+        {"cause": "Partial clog or dirty nozzle", "probability": 0.35, "test": "Manually extrude 100mm filament and measure actual output"},
+        {"cause": "Extruder not calibrated (E-steps incorrect)", "probability": 0.25, "test": "Mark filament 100mm above extruder and command 100mm extrusion; measure remainder"},
+        {"cause": "Print speed too high for temperature", "probability": 0.20, "test": "Reduce print speed by 25% and observe if gaps reduce"},
+        {"cause": "Filament diameter mismatch in slicer", "probability": 0.20, "test": "Measure actual filament diameter with calipers at multiple points"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase flow rate / extrusion multiplier by 5% in slicer", "verification": "Walls look more solid with fewer gaps", "time_seconds": 60},
+            {"instruction": "Reduce print speed by 20%", "verification": "Slicer shows reduced speed; gaps diminish", "time_seconds": 30},
+            {"instruction": "Check nozzle temperature — increase by 5°C if at minimum", "verification": "Temperature at or above minimum recommended", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.65
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Calibrate E-steps: command 100mm extrusion, measure actual output", "verification": "Actual extrusion within 1mm of commanded 100mm", "time_seconds": 300},
+            {"instruction": "Measure filament diameter at 5 points with calipers, enter average in slicer", "verification": "Slicer filament diameter matches measured value", "time_seconds": 180},
+            {"instruction": "Perform cold pull to check for partial nozzle clog", "verification": "Cold pull filament tip shows nozzle bore shape without debris", "time_seconds": 300}
+          ],
+          "tools_needed": ["calipers", "ruler"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "TPU", "extrusion", "flow-rate", "calibration"]
+    },
+
+    {
+      "id": "over_extrusion",
+      "name": "Over-Extrusion",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Printer deposits more filament than needed, causing bumpy surfaces and dimensional inaccuracy",
+      "visual_symptoms": [
+        "Lumpy or bumpy top and side surfaces",
+        "Seam area has visible blobs or excess material",
+        "Printed parts are larger than designed dimensions"
+      ],
+      "probable_causes": [
+        {"cause": "Flow rate / extrusion multiplier set too high", "probability": 0.45, "test": "Check flow rate in slicer — should be 95-105% for most materials"},
+        {"cause": "E-steps calibrated too high", "probability": 0.30, "test": "Extrude 100mm and measure actual output — should be 100mm"},
+        {"cause": "Filament diameter smaller than entered in slicer", "probability": 0.25, "test": "Measure filament diameter with calipers"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Reduce flow rate / extrusion multiplier by 5% in slicer", "verification": "Surfaces look smoother, print dimensions more accurate", "time_seconds": 60},
+            {"instruction": "Measure filament diameter and update slicer setting", "verification": "Slicer diameter matches measured value", "time_seconds": 120}
+          ],
+          "tools_needed": ["calipers"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "flow-rate", "calibration", "dimensional-accuracy"]
+    },
+
+    {
+      "id": "clogged_nozzle",
+      "name": "Clogged Nozzle",
+      "category": "extrusion",
+      "severity": "error",
+      "description": "Nozzle is fully blocked, preventing any filament from extruding",
+      "visual_symptoms": [
+        "No filament coming out of nozzle during extrusion commands",
+        "Extruder motor grinding or clicking without any extrusion",
+        "Print stopped mid-print with no material being deposited"
+      ],
+      "probable_causes": [
+        {"cause": "Carbonized or burnt filament inside nozzle", "probability": 0.40, "test": "Heat nozzle and try manual extrusion — any resistance or no output?"},
+        {"cause": "Foreign material (dust, debris) in filament causing blockage", "probability": 0.25, "test": "Inspect filament for debris or use filament filter"},
+        {"cause": "Filament ground down in extruder before reaching nozzle", "probability": 0.20, "test": "Check extruder gear for filament dust buildup"},
+        {"cause": "Printing too cold causing material to solidify in nozzle", "probability": 0.15, "test": "Verify print temperature matches filament specification"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Heat nozzle 10-20°C above normal print temp (e.g. 230°C for PLA)", "verification": "Temperature reached", "time_seconds": 60},
+            {"instruction": "Manually push filament through nozzle with light pressure", "verification": "Filament flows out; no resistance", "time_seconds": 120},
+            {"instruction": "Perform cold pull: heat to 200°C, push filament, cool to 90°C, pull firmly", "verification": "Pulled filament tip has nozzle shape with debris embedded", "time_seconds": 300}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.60
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Remove nozzle (heat to 250°C first), soak in acetone for 1-2 hours", "verification": "Nozzle soaked and debris dissolved", "time_seconds": 7200},
+            {"instruction": "Use 0.3mm needle to clear nozzle bore while hot", "verification": "Needle passes through nozzle bore freely", "time_seconds": 120},
+            {"instruction": "Reinstall nozzle while hot to prevent cross-threading; torque to 1-1.5Nm", "verification": "Nozzle seated without leaks", "time_seconds": 180},
+            {"instruction": "Test extrusion at normal temperature", "verification": "Filament flows smoothly", "time_seconds": 120}
+          ],
+          "tools_needed": ["wrench", "needle or thin wire", "acetone (for ABS)"],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "nozzle", "maintenance", "cleaning"]
+    },
+
+    {
+      "id": "partial_clog",
+      "name": "Partial Clog",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Nozzle is partially blocked, causing reduced and inconsistent extrusion",
+      "visual_symptoms": [
+        "Extrusion is thinner than expected with some gaps but not fully stopped",
+        "Extruder motor occasionally clicks but not constantly",
+        "Print quality degrades over time as clog worsens"
+      ],
+      "probable_causes": [
+        {"cause": "Partial carbonization or debris in nozzle", "probability": 0.45, "test": "Extrude 100mm manually and check if flow is consistent and full"},
+        {"cause": "Printing at too low a temperature for the material", "probability": 0.30, "test": "Try increasing temperature 5-10°C and observe if extrusion improves"},
+        {"cause": "Mixed filament remnants from previous material", "probability": 0.25, "test": "Did you recently change filament type?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Heat nozzle 15°C above normal print temp", "verification": "Temperature reached", "time_seconds": 60},
+            {"instruction": "Manually extrude 50-100mm of filament at high temp to flush debris", "verification": "Flow improves and becomes consistent", "time_seconds": 180},
+            {"instruction": "Perform 2-3 cold pulls at 90-100°C (for PLA)", "verification": "Pulled tip is clean without dark spots", "time_seconds": 600}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.75
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "nozzle", "maintenance", "cleaning", "cold-pull"]
+    },
+
+    {
+      "id": "filament_grinding",
+      "name": "Filament Grinding",
+      "category": "extrusion",
+      "severity": "error",
+      "description": "Extruder gear chews into filament instead of feeding it, creating dust and stopping extrusion",
+      "visual_symptoms": [
+        "Visible chewed notch or groove worn into filament near extruder",
+        "Plastic dust or shavings accumulating near extruder gear",
+        "Clicking sound from extruder motor as gear slips on damaged filament"
+      ],
+      "probable_causes": [
+        {"cause": "Extruder tension too high, biting into filament", "probability": 0.30, "test": "Check extruder arm tension spring — can it be loosened slightly?"},
+        {"cause": "Partial clog causing back-pressure on extruder", "probability": 0.35, "test": "Remove Bowden or hotend and try extruding — does resistance disappear?"},
+        {"cause": "Print speed or flow rate too high for temperature", "probability": 0.20, "test": "Reduce print speed by 30% and observe if grinding stops"},
+        {"cause": "Extruder motor current too low", "probability": 0.15, "test": "Check TMC driver current settings for extruder motor"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Cancel print, heat nozzle, manually pull out remaining filament", "verification": "Filament removed without resistance", "time_seconds": 120},
+            {"instruction": "Inspect filament for chewed section; cut above damaged area", "verification": "Fresh clean filament end visible", "time_seconds": 60},
+            {"instruction": "Reload filament and reduce print speed by 20-30%", "verification": "Filament feeds smoothly without clicking", "time_seconds": 120},
+            {"instruction": "Check for and resolve any nozzle partial clog", "verification": "Filament extrudes freely", "time_seconds": 300}
+          ],
+          "tools_needed": ["scissors or cutters"],
+          "success_rate": 0.75
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "TPU", "extruder", "maintenance", "clog"]
+    },
+
+    {
+      "id": "inconsistent_extrusion",
+      "name": "Inconsistent Extrusion",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Extrusion varies in width causing wavy, uneven lines and poor surface quality",
+      "visual_symptoms": [
+        "Extruded lines vary in width — alternating thick and thin sections",
+        "Wavy or uneven appearance on walls and surfaces",
+        "Moire or wood-grain pattern visible on print walls"
+      ],
+      "probable_causes": [
+        {"cause": "Filament diameter inconsistency", "probability": 0.30, "test": "Measure filament diameter every 10cm over 50cm with calipers"},
+        {"cause": "Partial clog causing flow variation", "probability": 0.30, "test": "Extrude slowly and observe uniformity of flow"},
+        {"cause": "Extruder tension arm loose or inconsistent grip", "probability": 0.20, "test": "Check extruder idler tension — should grip firmly without crushing filament"},
+        {"cause": "PTFE tube damage or gap at nozzle coupling", "probability": 0.20, "test": "Inspect Bowden/PTFE tube for kinks, damage, or gaps at hotend coupling"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Measure filament at 10 points and check for diameter variation > 0.05mm", "verification": "Diameter measurements consistent within ±0.05mm", "time_seconds": 300},
+            {"instruction": "Inspect and reseat PTFE tube — ensure no gap at nozzle end", "verification": "Tube seats firmly against nozzle; no gap", "time_seconds": 180},
+            {"instruction": "Check extruder idler tension and adjust to manufacturer spec", "verification": "Filament gripped firmly; no slipping during manual extrusion", "time_seconds": 120}
+          ],
+          "tools_needed": ["calipers", "screwdriver"],
+          "success_rate": 0.70
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "TPU", "extruder", "calibration", "PTFE"]
+    },
+
+    {
+      "id": "blobs_and_zits",
+      "name": "Blobs and Zits",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Small bumps or blobs appear on print surface, especially at layer start/end points",
+      "visual_symptoms": [
+        "Small round bumps on outer wall surface at seam locations",
+        "Tiny pimple-like protrusions at random points on walls",
+        "Visible seam with excess material at layer start/stop"
+      ],
+      "probable_causes": [
+        {"cause": "Incorrect retraction settings causing ooze at seam", "probability": 0.35, "test": "Check retraction distance and speed — and seam position setting"},
+        {"cause": "Coasting not enabled or set incorrectly", "probability": 0.25, "test": "Check if coasting is enabled in slicer advanced settings"},
+        {"cause": "Pressure advance / linear advance not calibrated", "probability": 0.25, "test": "Print PA/LA calibration pattern and observe corners"},
+        {"cause": "Start/stop speed too slow causing material accumulation", "probability": 0.15, "test": "Check seam position set to random or rear to hide seam"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Enable and calibrate Pressure Advance (Klipper) or Linear Advance (Marlin)", "verification": "PA/LA calibration print shows square corners without bulging", "time_seconds": 600},
+            {"instruction": "Set seam position to 'rear' or 'random' in slicer", "verification": "Seam moved to less visible location", "time_seconds": 60},
+            {"instruction": "Enable coasting in slicer (0.2-0.5mm3)", "verification": "Less excess material at seam", "time_seconds": 60}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "seam", "retraction", "pressure-advance", "linear-advance"]
+    },
+
+    {
+      "id": "wet_filament",
+      "name": "Wet / Moisture-Absorbed Filament",
+      "category": "extrusion",
+      "severity": "warning",
+      "description": "Filament has absorbed moisture from air, causing poor print quality and surface defects",
+      "visual_symptoms": [
+        "Popping, crackling, or hissing sounds during extrusion",
+        "Steam or tiny bubbles visible at nozzle tip during extrusion",
+        "Rough, fuzzy, or bubbly surface texture on printed parts",
+        "Brittle filament that snaps easily when bent"
+      ],
+      "probable_causes": [
+        {"cause": "Filament stored without desiccant in humid environment", "probability": 0.55, "test": "Check filament storage — was it in a sealed bag or dry box?"},
+        {"cause": "Hygroscopic material (Nylon, PETG, TPU) absorbing ambient humidity", "probability": 0.30, "test": "Listen for crackling during extrusion; check humidity of print environment"},
+        {"cause": "Filament left on printer for extended period", "probability": 0.15, "test": "How long was the spool sitting on the printer without a cover?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Dry filament in food dehydrator or oven: PLA 45°C/4h, PETG 65°C/4h, Nylon 70°C/8h", "verification": "Crackling sounds stop during extrusion after drying", "time_seconds": 14400},
+            {"instruction": "Store filament in sealed container with silica gel desiccant", "verification": "Container sealed with desiccant; humidity indicator shows <20%", "time_seconds": 60}
+          ],
+          "tools_needed": ["food dehydrator or oven", "silica gel desiccant"],
+          "success_rate": 0.92
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "Nylon", "TPU", "filament-storage", "drying"]
+    },
+
+    {
+      "id": "filament_not_feeding",
+      "name": "Filament Not Feeding",
+      "category": "extrusion",
+      "severity": "error",
+      "description": "Filament fails to advance through the extruder, halting extrusion completely",
+      "visual_symptoms": [
+        "Extruder motor turning but filament not moving",
+        "No filament visible being deposited despite print running",
+        "Extruder making grinding or clicking sound without filament advancement"
+      ],
+      "probable_causes": [
+        {"cause": "Filament run-out or empty spool", "probability": 0.25, "test": "Check spool — is there filament remaining?"},
+        {"cause": "Filament tangle on spool", "probability": 0.25, "test": "Unravel spool manually — does a loop free itself?"},
+        {"cause": "Filament grinding (stripped) at extruder", "probability": 0.25, "test": "Inspect filament near extruder gear for chewed section"},
+        {"cause": "Bowden tube disconnected or blocked", "probability": 0.15, "test": "Check Bowden tube connection at both ends"},
+        {"cause": "Extruder motor driver failure", "probability": 0.10, "test": "Listen to extruder motor — is it receiving power and making sound?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Check spool and untangle any filament loops", "verification": "Filament feeds freely from spool", "time_seconds": 120},
+            {"instruction": "Inspect filament near extruder; cut above any chewed section", "verification": "Fresh filament end visible", "time_seconds": 60},
+            {"instruction": "Reload filament: heat nozzle, push filament until it extrudes from tip", "verification": "Filament exits nozzle smoothly", "time_seconds": 120},
+            {"instruction": "Check Bowden tube connections if applicable", "verification": "Tube firmly seated at both ends", "time_seconds": 60}
+          ],
+          "tools_needed": ["scissors or cutters"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "extruder", "filament-runout", "Bowden"]
+    },
+
+    {
+      "id": "layer_shifting",
+      "name": "Layer Shifting",
+      "category": "print_quality",
+      "severity": "error",
+      "description": "Print layers shift horizontally mid-print, causing offset bands in the model",
+      "visual_symptoms": [
+        "Visible horizontal offset in the print — upper layers displaced from lower ones",
+        "Print appears stepped or staircase-like from the side",
+        "Layer shift may worsen as print continues higher"
+      ],
+      "probable_causes": [
+        {"cause": "Loose or skipping X/Y belts", "probability": 0.40, "test": "Pluck belts like guitar strings — should sound similar; check tension"},
+        {"cause": "Print speed too high for acceleration settings", "probability": 0.25, "test": "Reduce print speed by 30% and observe if shifting stops"},
+        {"cause": "Nozzle collision with model (blob or warped section)", "probability": 0.20, "test": "Inspect failed print for blobs or collision damage"},
+        {"cause": "Stepper motor current too low", "probability": 0.15, "test": "Check TMC driver current for X/Y motors — compare to manufacturer spec"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Check belt tension on X and Y axes — tighten if slack", "verification": "Belts taut and produce similar pitch when plucked", "time_seconds": 300},
+            {"instruction": "Reduce print speed by 25% and acceleration by 20%", "verification": "Slicer shows reduced values", "time_seconds": 60},
+            {"instruction": "Check for any blobs or rough spots on model that could cause nozzle collision", "verification": "Print surface smooth; enable Z-hop in slicer", "time_seconds": 60}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "belts", "calibration", "speed", "mechanical"]
+    },
+
+    {
+      "id": "ghosting_ringing",
+      "name": "Ghosting / Ringing",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Rippling or wave patterns appear on print walls after sharp corners or features",
+      "visual_symptoms": [
+        "Wave or ripple pattern on walls after corners or holes",
+        "Ghost image of a feature appears on nearby walls",
+        "Oscillating lines most visible on outer walls near sharp transitions"
+      ],
+      "probable_causes": [
+        {"cause": "Print speed too high causing vibration/resonance", "probability": 0.40, "test": "Reduce speed by 30% — does ringing reduce?"},
+        {"cause": "Input shaping / resonance compensation not calibrated", "probability": 0.30, "test": "Run ringing test print at current settings and compare to with input shaping"},
+        {"cause": "Loose belts allowing mechanical resonance", "probability": 0.20, "test": "Check belt tension — pluck and compare pitch"},
+        {"cause": "Printer on unstable surface absorbing vibration", "probability": 0.10, "test": "Place printer on solid level surface and retry"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Reduce print speed to 50-60mm/s", "verification": "Ringing reduced at lower speed", "time_seconds": 30},
+            {"instruction": "Reduce acceleration to 500-1000mm/s²", "verification": "Fewer waves on wall surfaces", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.70
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Calibrate Input Shaping (Klipper) using ADXL345 accelerometer", "verification": "Input shaping calibration print shows reduced ringing", "time_seconds": 900},
+            {"instruction": "Tighten all belts to correct tension spec", "verification": "Belt pluck produces correct frequency", "time_seconds": 300}
+          ],
+          "tools_needed": ["ADXL345 accelerometer (for Klipper IS calibration)"],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "speed", "input-shaping", "calibration", "mechanical"]
+    },
+
+    {
+      "id": "z_banding",
+      "name": "Z Banding / Zebra Lines",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Repeating horizontal bands or lines appear at regular intervals on print walls",
+      "visual_symptoms": [
+        "Horizontal bands repeating at consistent intervals up the print",
+        "Alternating light and dark stripes on outer walls",
+        "Pattern repeats every 1-2mm corresponding to lead screw pitch"
+      ],
+      "probable_causes": [
+        {"cause": "Z lead screw wobble or bent lead screw", "probability": 0.35, "test": "Watch Z screw rotate during print — does it wobble?"},
+        {"cause": "Z lead screw nut loose or eccentric", "probability": 0.25, "test": "Check Z nut mount for play or looseness"},
+        {"cause": "Lead screw coupler loose or misaligned", "probability": 0.25, "test": "Check coupler between stepper and lead screw — any wobble?"},
+        {"cause": "Inconsistent Z motor current causing micro-step irregularity", "probability": 0.15, "test": "Check Z motor current setting"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Check and tighten Z axis lead screw coupler set screws", "verification": "No play between motor shaft and coupler", "time_seconds": 120},
+            {"instruction": "Lubricate lead screws with PTFE-based grease or super lube", "verification": "Lead screw moves smoothly without binding", "time_seconds": 180},
+            {"instruction": "Install anti-backlash Z nut if not present", "verification": "Z movement smooth with no backlash", "time_seconds": 600},
+            {"instruction": "Verify lead screw is straight — roll on flat surface", "verification": "Lead screw doesn't wobble when rolled", "time_seconds": 60}
+          ],
+          "tools_needed": ["allen key set", "PTFE grease"],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "z-axis", "mechanical", "lead-screw"]
+    },
+
+    {
+      "id": "poor_bridging",
+      "name": "Poor Bridging",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Horizontal spans between two supports sag or fail, creating drooping or messy bridges",
+      "visual_symptoms": [
+        "Sagging or drooping filament strands on horizontal spans",
+        "Stringy, messy underside on bridge sections",
+        "Bridge fails completely — filament drops into open air gap"
+      ],
+      "probable_causes": [
+        {"cause": "Bridge speed too slow (filament sags before cooling)", "probability": 0.35, "test": "Increase bridging speed and observe if strands stay taut"},
+        {"cause": "Cooling not sufficient for bridging", "probability": 0.30, "test": "Check part cooling fan is running at 100% during bridges"},
+        {"cause": "Nozzle temperature too high for bridging", "probability": 0.20, "test": "Lower temperature 5-10°C and test bridge performance"},
+        {"cause": "Bridge too long without intermediate supports", "probability": 0.15, "test": "Measure bridge span — over 50mm typically needs supports"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Set bridging fan speed to 100% in slicer", "verification": "Fan at full speed during bridge layers", "time_seconds": 30},
+            {"instruction": "Set bridge speed to 30-50mm/s in slicer", "verification": "Bridges print faster with less sag", "time_seconds": 30},
+            {"instruction": "Lower temperature by 5°C for bridge layers", "verification": "Material cools faster and stays taut", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.78
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "bridging", "cooling", "support"]
+    },
+
+    {
+      "id": "gaps_in_top_layers",
+      "name": "Gaps in Top Layers",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Top surface of print has holes, gaps or incomplete fill, showing infill below",
+      "visual_symptoms": [
+        "Holes or gaps visible in top surface, especially near center",
+        "Infill pattern showing through top layer",
+        "Top surface looks mesh-like or porous instead of solid"
+      ],
+      "probable_causes": [
+        {"cause": "Not enough top solid layers", "probability": 0.35, "test": "Check top layers count in slicer — should be 4-5 minimum"},
+        {"cause": "Under-extrusion causing incomplete top fill", "probability": 0.30, "test": "Check if walls also show under-extrusion symptoms"},
+        {"cause": "Top surface line width too wide or too narrow", "probability": 0.20, "test": "Check top/bottom line width in slicer advanced settings"},
+        {"cause": "Infill percentage too low causing top layers to bridge over gaps", "probability": 0.15, "test": "Check infill — below 20% can cause top surface issues"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase top layers count to 5-6 in slicer", "verification": "Slicer preview shows more solid layers on top", "time_seconds": 30},
+            {"instruction": "Increase infill to 20-25% if lower", "verification": "Better support for top layers", "time_seconds": 30},
+            {"instruction": "Increase flow rate by 3-5%", "verification": "Top layers look more complete", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "top-surface", "infill", "flow-rate"]
+    },
+
+    {
+      "id": "rough_top_surface",
+      "name": "Rough / Uneven Top Surface",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Top surface of print looks rough, bumpy or grainy instead of smooth",
+      "visual_symptoms": [
+        "Visible line patterns or texture on top surface",
+        "Bumpy or granular appearance on top face",
+        "Top surface lines not fusing smoothly together"
+      ],
+      "probable_causes": [
+        {"cause": "Top surface print speed too high", "probability": 0.30, "test": "Check top surface speed in slicer — reduce to 30-40mm/s"},
+        {"cause": "Ironing not enabled for smooth top finish", "probability": 0.25, "test": "Check if ironing feature is available and enabled in slicer"},
+        {"cause": "Over-extrusion causing bumps", "probability": 0.25, "test": "Check flow rate and observe wall surface for over-extrusion signs"},
+        {"cause": "Insufficient cooling on top layers", "probability": 0.20, "test": "Check cooling fan speed during top layer printing"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Reduce top surface print speed to 30-40mm/s", "verification": "Top surface looks smoother at lower speed", "time_seconds": 30},
+            {"instruction": "Enable ironing in slicer at 0.1mm ironing line spacing", "verification": "Slicer shows ironing pass on top surfaces", "time_seconds": 60},
+            {"instruction": "Ensure cooling fan at 100% during top layers", "verification": "Smoother solidification of top surface", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "top-surface", "ironing", "speed", "cooling"]
+    },
+
+    {
+      "id": "visible_layer_lines",
+      "name": "Visible Layer Lines",
+      "category": "print_quality",
+      "severity": "info",
+      "description": "Layer lines clearly visible on print surface, reducing visual quality",
+      "visual_symptoms": [
+        "Horizontal ridge lines visible on vertical print surfaces",
+        "Staircase effect on curved or angled surfaces",
+        "Overall print surface looks layered rather than smooth"
+      ],
+      "probable_causes": [
+        {"cause": "Layer height too large", "probability": 0.50, "test": "Check layer height in slicer — 0.2mm is standard, 0.1mm reduces visibility"},
+        {"cause": "Adaptive layer height not enabled on curved features", "probability": 0.25, "test": "Check if variable layer height is available in slicer"},
+        {"cause": "Part not oriented to minimize layer lines on critical surfaces", "probability": 0.25, "test": "Consider rotating model to place critical surface parallel to bed"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Reduce layer height to 0.1-0.12mm for fine detail prints", "verification": "Layer lines less visible in slicer preview and on print", "time_seconds": 30},
+            {"instruction": "Reorient model so critical surfaces print vertically (not on top/bottom)", "verification": "Critical surface smooth in slicer preview", "time_seconds": 60},
+            {"instruction": "Sand print with progressive grits (120 → 220 → 400) and prime", "verification": "Layer lines no longer visible after sanding", "time_seconds": 1800}
+          ],
+          "tools_needed": ["sandpaper (120, 220, 400 grit)", "primer spray (optional)"],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "layer-height", "post-processing", "surface-finish"]
+    },
+
+    {
+      "id": "overhangs_drooping",
+      "name": "Overhangs Drooping",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Print material on overhang sections sags or droops downward due to insufficient support",
+      "visual_symptoms": [
+        "Drooping or sagging material on sections extending beyond 45-50° overhang",
+        "Rough, stringy underside on overhanging surfaces",
+        "Curling upward on edges of steep overhangs"
+      ],
+      "probable_causes": [
+        {"cause": "Overhang angle exceeds printer capability without support", "probability": 0.40, "test": "Check overhang angle — over 45-50° typically needs support or good cooling"},
+        {"cause": "Cooling insufficient for overhang layers", "probability": 0.35, "test": "Check if part cooling fan is at 100% during overhang layers"},
+        {"cause": "Temperature too high for good overhang performance", "probability": 0.15, "test": "Lower temperature 5°C and test on overhang test print"},
+        {"cause": "Print speed too fast on overhang sections", "probability": 0.10, "test": "Check if overhang speed reduction is enabled in slicer"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Set cooling fan to 100% for all layers", "verification": "Fan running at full speed during overhang layers", "time_seconds": 30},
+            {"instruction": "Enable support structures in slicer for overhangs > 45°", "verification": "Supports visible in slicer preview under steep overhangs", "time_seconds": 60},
+            {"instruction": "Reduce overhang speed to 15-20mm/s in slicer", "verification": "Slicer shows reduced speed for overhang perimeters", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.82
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "overhang", "cooling", "support", "speed"]
+    },
+
+    {
+      "id": "poor_infill",
+      "name": "Poor Infill Quality",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Infill is incomplete, disconnected or improperly bonded to walls",
+      "visual_symptoms": [
+        "Infill lines not connecting to walls — visible gap between wall and infill",
+        "Sparse or incomplete infill despite adequate percentage setting",
+        "Infill lines crossing over each other causing over-extrusion blobs in infill"
+      ],
+      "probable_causes": [
+        {"cause": "Infill overlap too low (not bonding to walls)", "probability": 0.35, "test": "Check infill overlap percentage in slicer — try 20-30%"},
+        {"cause": "Infill print speed too high causing poor bonding", "probability": 0.25, "test": "Reduce infill speed and observe if gaps decrease"},
+        {"cause": "Under-extrusion during infill", "probability": 0.25, "test": "Increase flow rate slightly and check infill density"},
+        {"cause": "Wrong infill pattern for structural requirements", "probability": 0.15, "test": "Try gyroid or honeycomb instead of lines for better strength"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase infill overlap to 25-30% in slicer", "verification": "Infill visibly connects better to walls", "time_seconds": 30},
+            {"instruction": "Reduce infill speed to 50-60mm/s", "verification": "Fewer gaps in infill pattern", "time_seconds": 30},
+            {"instruction": "Increase infill flow rate by 5% if gaps persist", "verification": "More complete infill coverage", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "infill", "flow-rate", "speed"]
+    },
+
+    {
+      "id": "pillowing",
+      "name": "Pillowing",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Top surface shows bumps or domes between infill lines due to insufficient top layers or cooling",
+      "visual_symptoms": [
+        "Pillow-like bumps visible on top surface between infill support lines",
+        "Top surface looks puffy or wavy from above",
+        "Infill pattern faintly visible through uneven top surface"
+      ],
+      "probable_causes": [
+        {"cause": "Too few top layers", "probability": 0.40, "test": "Count top solid layers in slicer — minimum 4-5 recommended"},
+        {"cause": "Insufficient cooling causing top layers to soften", "probability": 0.30, "test": "Check part cooling fan speed during top layers"},
+        {"cause": "Infill density too low providing insufficient support for top surface", "probability": 0.20, "test": "Check infill — below 15% can cause pillowing"},
+        {"cause": "Top layer print temperature too high", "probability": 0.10, "test": "Lower print temperature 5°C for top layers"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase top solid layers to 5-6 in slicer", "verification": "Top surface fully solid with no bumps", "time_seconds": 30},
+            {"instruction": "Increase infill density to 20-25%", "verification": "Better structural support for top layers", "time_seconds": 30},
+            {"instruction": "Set cooling fan to 100% for top layers", "verification": "Top surface solidifies faster and lies flat", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.88
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "top-surface", "infill", "cooling"]
+    },
+
+    {
+      "id": "gaps_between_infill_and_walls",
+      "name": "Gaps Between Infill and Walls",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Visible gaps appear between the outer walls and the infill structure",
+      "visual_symptoms": [
+        "Visible channels or gaps between perimeter walls and infill lines",
+        "Looking at top view or cross-section shows separation between walls and fill",
+        "Walls feel hollow or loose compared to expected solid feel"
+      ],
+      "probable_causes": [
+        {"cause": "Infill overlap with perimeter too low", "probability": 0.40, "test": "Check infill overlap setting — increase to 25-35%"},
+        {"cause": "Infill print speed much higher than perimeter speed causing width mismatch", "probability": 0.30, "test": "Check speed delta between wall speed and infill speed"},
+        {"cause": "Under-extrusion during infill lines", "probability": 0.30, "test": "Increase flow rate and check if gaps close"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase infill-wall overlap to 30% in slicer settings", "verification": "Cross-section preview shows infill connecting to walls", "time_seconds": 60},
+            {"instruction": "Reduce infill speed delta — keep infill speed within 2x wall speed", "verification": "More consistent line widths between wall and infill", "time_seconds": 30},
+            {"instruction": "Increase flow rate by 3-5% if under-extrusion suspected", "verification": "Gaps close on next print", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.82
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "infill", "walls", "flow-rate", "overlap"]
+    },
+
+    {
+      "id": "scarring_on_top",
+      "name": "Scarring on Top Surface",
+      "category": "print_quality",
+      "severity": "warning",
+      "description": "Nozzle leaves visible drag marks or scars on top surfaces during travel moves",
+      "visual_symptoms": [
+        "Drag marks or grooves on completed top surface from nozzle travel",
+        "Lines scratched into otherwise smooth top surface",
+        "Blobs dragged across top layer leaving streaks"
+      ],
+      "probable_causes": [
+        {"cause": "Z-hop not enabled — nozzle drags on surface during travel", "probability": 0.45, "test": "Check if Z-hop is enabled in slicer retraction settings"},
+        {"cause": "Combing/avoid crossing perimeters not enabled", "probability": 0.30, "test": "Enable combing in slicer to keep travel moves within infill area"},
+        {"cause": "Over-extrusion causing excess material that nozzle drags over", "probability": 0.25, "test": "Check for blobs or excess material on top surface"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Enable Z-hop on retraction (0.2-0.4mm) in slicer", "verification": "Nozzle lifts during travel moves; no drag marks", "time_seconds": 30},
+            {"instruction": "Enable combing / avoid crossing perimeters in slicer", "verification": "Travel moves stay inside model boundaries", "time_seconds": 30},
+            {"instruction": "Check and reduce flow rate if over-extrusion blobs present", "verification": "Less material for nozzle to drag across", "time_seconds": 60}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "z-hop", "travel", "top-surface", "combing"]
+    },
+
+    {
+      "id": "thermal_runaway",
+      "name": "Thermal Runaway",
+      "category": "thermal",
+      "severity": "critical",
+      "description": "Nozzle or bed temperature drops unexpectedly and printer triggers safety shutdown",
+      "visual_symptoms": [
+        "Printer suddenly stops and displays 'Thermal Runaway' error message",
+        "Temperature reading drops suddenly or reads incorrectly on display",
+        "Print stops mid-way with no movement and error on screen"
+      ],
+      "probable_causes": [
+        {"cause": "Hotend thermistor loose or disconnected", "probability": 0.35, "test": "Check thermistor wires and connector — any intermittent connections?"},
+        {"cause": "Heater cartridge failing or insufficient wattage", "probability": 0.25, "test": "Verify heater cartridge wattage matches printer spec; check for damage"},
+        {"cause": "Fan blowing too much air on heater block", "probability": 0.20, "test": "Check if part cooling fan or enclosure fan directs air onto heater block"},
+        {"cause": "PID values miscalibrated — temperature oscillating too widely", "probability": 0.20, "test": "Run PID autotune and observe temperature stability"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "STOP: Do not bypass or disable thermal runaway protection — it is a fire safety feature", "verification": "Thermal runaway protection remains enabled", "time_seconds": 10},
+            {"instruction": "Inspect thermistor connection at hotend and control board — reseat connectors", "verification": "Connections firm and secure; temperature reads stable", "time_seconds": 180},
+            {"instruction": "Run PID autotune: M303 E0 S200 C8 (Marlin) or PID_CALIBRATE (Klipper)", "verification": "PID values saved; temperature holds stable within ±1°C", "time_seconds": 600},
+            {"instruction": "Verify heater block is insulated with thermal sock or kapton tape", "verification": "Heater block insulated from air currents", "time_seconds": 120},
+            {"instruction": "Replace thermistor if temperature readings are erratic", "verification": "Temperature stable and accurate", "time_seconds": 600}
+          ],
+          "tools_needed": ["screwdriver", "replacement thermistor (if needed)"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["safety", "thermistor", "heater", "PID", "hotend", "critical"]
+    },
+
+    {
+      "id": "heat_creep",
+      "name": "Heat Creep",
+      "category": "thermal",
+      "severity": "error",
+      "description": "Heat migrates up the hotend into the cold zone, softening filament prematurely and causing jams",
+      "visual_symptoms": [
+        "Print starts fine then gradually stops extruding after 20-60 minutes",
+        "Filament cannot be retracted or pushed — feels stuck in cold zone",
+        "Extruder clicking noise that increases over print duration"
+      ],
+      "probable_causes": [
+        {"cause": "Hotend cooling fan failing or spinning too slowly", "probability": 0.45, "test": "Check if hotend fan runs at full speed during print; listen for grinding bearing"},
+        {"cause": "PTFE liner degraded or improperly seated", "probability": 0.25, "test": "Remove and inspect PTFE tube — any melted, discolored or warped sections?"},
+        {"cause": "Printing too fast/hot for cooling capacity of hotend", "probability": 0.20, "test": "Reduce temperature by 5-10°C and speed by 20%; observe if jam recurs"},
+        {"cause": "Heatsink blocked with dust or filament debris", "probability": 0.10, "test": "Inspect heatsink fins for debris or blockage"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Verify hotend cooling fan is spinning at full speed during print", "verification": "Fan audibly at full speed; heatsink cool to touch below cooling fins", "time_seconds": 60},
+            {"instruction": "Clean heatsink fins with compressed air or soft brush", "verification": "No debris blocking airflow", "time_seconds": 120}
+          ],
+          "tools_needed": ["compressed air"],
+          "success_rate": 0.55
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Replace hotend cooling fan if noisy or slow", "verification": "New fan runs silently at correct speed", "time_seconds": 600},
+            {"instruction": "Replace PTFE liner inside hotend if discolored or melted", "verification": "New PTFE tube seated properly against nozzle", "time_seconds": 900},
+            {"instruction": "Reduce print temperature by 5°C and speed by 15%", "verification": "Print completes multi-hour jobs without heat creep recurrence", "time_seconds": 3600}
+          ],
+          "tools_needed": ["replacement fan", "PTFE tube", "allen keys"],
+          "success_rate": 0.88
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "hotend", "cooling", "PTFE", "maintenance"]
+    },
+
+    {
+      "id": "warping_from_temperature",
+      "name": "Warping from Thermal Differential",
+      "category": "thermal",
+      "severity": "error",
+      "description": "Print warps due to temperature difference between layers causing differential shrinkage",
+      "visual_symptoms": [
+        "Large print corners lifting significantly — often 5-15mm off bed",
+        "Cracking sounds during printing as material contracts",
+        "Print detaches from bed entirely due to thermal stress"
+      ],
+      "probable_causes": [
+        {"cause": "No enclosure for high-temperature materials (ABS, ASA, PC)", "probability": 0.40, "test": "Measure ambient temperature near print — should be 40-50°C for ABS"},
+        {"cause": "Cooling fan too aggressive for warping-prone materials", "probability": 0.30, "test": "Disable cooling fan for ABS/ASA and observe warping reduction"},
+        {"cause": "Bed temperature too low", "probability": 0.20, "test": "Increase bed temp: ABS needs 100-110°C, ASA 100°C+"},
+        {"cause": "Material intrinsically high-shrinkage without chamber heating", "probability": 0.10, "test": "Check material datasheet for shrinkage percentage"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Use a printer enclosure and preheat to 40-50°C before printing ABS/ASA", "verification": "Ambient temperature inside enclosure reaches target", "time_seconds": 900},
+            {"instruction": "Disable or reduce part cooling fan for ABS/ASA (0-20% max)", "verification": "Warping significantly reduced", "time_seconds": 30},
+            {"instruction": "Increase bed temperature to 100-110°C for ABS, 100°C for ASA", "verification": "Display shows correct bed temperature", "time_seconds": 60},
+            {"instruction": "Apply brim (8-10mm wide) to increase bed contact area", "verification": "Print corners stay down throughout print", "time_seconds": 60}
+          ],
+          "tools_needed": ["enclosure"],
+          "success_rate": 0.82
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["ABS", "ASA", "PC", "warping", "enclosure", "temperature", "bed-adhesion"]
+    },
+
+    {
+      "id": "delamination",
+      "name": "Delamination / Layer Separation",
+      "category": "thermal",
+      "severity": "error",
+      "description": "Print layers separate or split apart, creating visible cracks between layers",
+      "visual_symptoms": [
+        "Visible cracks or splits running horizontally between print layers",
+        "Layers that can be peeled apart manually with little force",
+        "Print looks laminated with gaps visible between sections"
+      ],
+      "probable_causes": [
+        {"cause": "Print temperature too low for inter-layer adhesion", "probability": 0.40, "test": "Increase temperature by 5-10°C and check if delamination stops"},
+        {"cause": "Print speed too high for adequate layer bonding time", "probability": 0.25, "test": "Reduce print speed by 30% and observe if layers bond better"},
+        {"cause": "Layer height too large relative to nozzle diameter", "probability": 0.20, "test": "Layer height should not exceed 75% of nozzle diameter"},
+        {"cause": "Rapid cooling preventing interlayer fusion", "probability": 0.15, "test": "Reduce cooling fan speed especially for first 10 layers"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase nozzle temperature by 5-10°C", "verification": "Layers bond visibly better; no cracks between layers", "time_seconds": 30},
+            {"instruction": "Reduce print speed to 40-50mm/s", "verification": "More time for layers to fuse properly", "time_seconds": 30},
+            {"instruction": "Reduce layer height if > 75% of nozzle diameter", "verification": "Better layer bonding at reduced height", "time_seconds": 30},
+            {"instruction": "Reduce cooling fan speed to 50-70% for first 10 layers", "verification": "No delamination in lower sections of print", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PLA", "PETG", "ABS", "ASA", "layer-adhesion", "temperature", "speed"]
+    },
+
+    {
+      "id": "nozzle_temperature_fluctuation",
+      "name": "Nozzle Temperature Fluctuation",
+      "category": "thermal",
+      "severity": "warning",
+      "description": "Nozzle temperature oscillates more than ±2°C causing inconsistent extrusion quality",
+      "visual_symptoms": [
+        "Temperature graph showing wide oscillations (>±3°C) rather than flat line",
+        "Print surface quality varying in horizontal bands corresponding to temperature cycles",
+        "Clicking or inconsistent extrusion correlated with temperature dips"
+      ],
+      "probable_causes": [
+        {"cause": "PID values not tuned for current hotend", "probability": 0.45, "test": "Run M303 PID autotune and compare current vs tuned values"},
+        {"cause": "Heater cartridge loose in heater block", "probability": 0.25, "test": "Check if heater cartridge is fully seated and its set screw tight"},
+        {"cause": "Thermistor partially disconnected causing false readings", "probability": 0.20, "test": "Wiggle thermistor wires and observe if temperature reading jumps"},
+        {"cause": "Partial heater block damage or wrong voltage heater", "probability": 0.10, "test": "Check heater cartridge voltage rating matches PSU output"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Run PID autotune: M303 E0 S200 C8 (Marlin) or PID_CALIBRATE TARGET=200 (Klipper)", "verification": "New PID values; temperature holds within ±1°C", "time_seconds": 600},
+            {"instruction": "Save PID values to EEPROM (M500 in Marlin) or update printer.cfg", "verification": "Values persist after restart", "time_seconds": 30},
+            {"instruction": "Tighten heater cartridge grub screw if loose", "verification": "Heater cartridge fully seated and secure", "time_seconds": 60}
+          ],
+          "tools_needed": ["allen key"],
+          "success_rate": 0.88
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PID", "hotend", "thermistor", "heater", "calibration", "temperature"]
+    },
+
+    {
+      "id": "bed_temperature_fluctuation",
+      "name": "Bed Temperature Fluctuation",
+      "category": "thermal",
+      "severity": "warning",
+      "description": "Heated bed temperature varies significantly during print, affecting first layer adhesion",
+      "visual_symptoms": [
+        "Bed temperature oscillating more than ±3°C on display during print",
+        "First layer inconsistency observed across different print attempts",
+        "Print adhesion failures correlating with temperature dip periods"
+      ],
+      "probable_causes": [
+        {"cause": "Bed PID not tuned (bang-bang mode causing oscillation)", "probability": 0.40, "test": "Check if bed uses PID or bang-bang control — enable PID mode"},
+        {"cause": "Bed power supply insufficient for large heated bed", "probability": 0.25, "test": "Check PSU current rating vs. bed heater wattage"},
+        {"cause": "Bed thermistor placement not representative of print surface temperature", "probability": 0.20, "test": "Compare IR thermometer reading on bed surface vs display"},
+        {"cause": "Voltage fluctuations from PSU affecting bed heater output", "probability": 0.15, "test": "Measure PSU output voltage under bed heating load"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Enable and run PID tuning for heated bed (M303 E-1 S60 C8 in Marlin)", "verification": "Bed temperature stable within ±1°C at target", "time_seconds": 600},
+            {"instruction": "Save bed PID values to EEPROM", "verification": "Values persist after reboot", "time_seconds": 30},
+            {"instruction": "Verify PSU wattage is sufficient: bed wattage + hotend + motors + fans with 20% headroom", "verification": "PSU runs cool and stable during full print", "time_seconds": 60}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["PID", "bed", "temperature", "calibration", "power-supply"]
+    },
+
+    {
+      "id": "loose_belts",
+      "name": "Loose Belts",
+      "category": "mechanical",
+      "severity": "warning",
+      "description": "X or Y axis drive belts are slack, causing layer shifting, ghosting and poor dimensional accuracy",
+      "visual_symptoms": [
+        "Ringing/ghosting artifact on walls after sharp corners",
+        "Layer shifting in X or Y direction inconsistently",
+        "Dimensional inaccuracy — circles print as ovals"
+      ],
+      "probable_causes": [
+        {"cause": "Belt tension naturally loosened with use over time", "probability": 0.50, "test": "Pluck belt like guitar string — should resonate clearly, not be dead"},
+        {"cause": "Belt tensioner adjustment screw backed out", "probability": 0.30, "test": "Check tensioner adjustment screw; measure belt deflection"},
+        {"cause": "Belt teeth worn allowing slip on pulley", "probability": 0.20, "test": "Inspect belt teeth for wear, cracking, or rounding"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Tighten X belt: turn tensioner screw clockwise or pull and retighten belt end", "verification": "Belt has firm tension — approximately 120Hz when plucked (or per printer spec)", "time_seconds": 180},
+            {"instruction": "Tighten Y belt in same manner", "verification": "Y belt at same tension as X belt", "time_seconds": 180},
+            {"instruction": "Print XY calibration square and measure for squareness", "verification": "Diagonals within 0.2mm of each other", "time_seconds": 600}
+          ],
+          "tools_needed": ["allen key", "ruler"],
+          "success_rate": 0.88
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["mechanical", "belt", "X-axis", "Y-axis", "calibration", "layer-shifting"]
+    },
+
+    {
+      "id": "loose_screws",
+      "name": "Loose Screws / Fasteners",
+      "category": "mechanical",
+      "severity": "warning",
+      "description": "Fasteners have loosened causing mechanical play or vibration during printing",
+      "visual_symptoms": [
+        "Increased ringing or ghosting artifact on prints",
+        "Audible rattling or knocking during print moves",
+        "Layer shifting or wobble that isn't solved by belt tension"
+      ],
+      "probable_causes": [
+        {"cause": "Vibration loosening screws over time (no threadlock applied)", "probability": 0.50, "test": "Systematically check all axis eccentric nuts, carriage screws, hotend mount screws"},
+        {"cause": "Eccentric nuts (wheels) not properly tightened", "probability": 0.30, "test": "Try to wobble X/Y gantry by hand — any play?"},
+        {"cause": "Hotend or extruder mounting screws loose", "probability": 0.20, "test": "Try to wiggle hotend assembly by hand — any movement?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Systematically tighten all visible screws on printer frame, gantry, and carriage", "verification": "No screws turn further; no visible play in components", "time_seconds": 600},
+            {"instruction": "Adjust eccentric nuts for V-slot wheels — wheels should roll without play", "verification": "Gantry moves smoothly without wobble", "time_seconds": 300},
+            {"instruction": "Apply blue threadlock (Loctite 243) to vibration-prone fasteners", "verification": "Fasteners won't loosen from vibration", "time_seconds": 300}
+          ],
+          "tools_needed": ["allen key set", "spanner", "Loctite 243 (optional)"],
+          "success_rate": 0.85
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["mechanical", "maintenance", "screws", "frame", "calibration"]
+    },
+
+    {
+      "id": "z_wobble",
+      "name": "Z Wobble",
+      "category": "mechanical",
+      "severity": "warning",
+      "description": "Z axis oscillates or wobbles during movement causing vertical banding on prints",
+      "visual_symptoms": [
+        "Repeating helical or sinusoidal pattern of bands on print walls",
+        "Z banding that follows a helical path matching lead screw pitch",
+        "One side of print has more pronounced banding than other"
+      ],
+      "probable_causes": [
+        {"cause": "Z lead screw not aligned with motor shaft (bent coupling)", "probability": 0.35, "test": "Watch coupling during Z movement — does it flex or wobble?"},
+        {"cause": "Lead screw constrained too rigidly at top — needs freedom to float", "probability": 0.30, "test": "Is lead screw fixed at top bearing? Remove or loosen top constraint"},
+        {"cause": "Z axis frame not square — lead screw not vertical", "probability": 0.20, "test": "Check frame with a square — is Z axis perpendicular to bed?"},
+        {"cause": "Lead screw physically bent", "probability": 0.15, "test": "Remove lead screw and roll on flat surface to check straightness"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {"instruction": "Loosen Z motor coupling and realign lead screw with motor shaft; retighten", "verification": "Coupling no longer flexes during Z movement", "time_seconds": 300},
+            {"instruction": "If top bearing constraint: loosen or remove to let lead screw self-align", "verification": "Lead screw runs centered without side force", "time_seconds": 180},
+            {"instruction": "Install spider/flexible coupling to absorb minor misalignment", "verification": "Z banding reduced on test print", "time_seconds": 600}
+          ],
+          "tools_needed": ["allen key", "flexible coupling (if needed)"],
+          "success_rate": 0.78
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["Z-axis", "lead-screw", "mechanical", "banding", "wobble"]
+    },
+
+    {
+      "id": "abnormal_noise",
+      "name": "Abnormal Noise During Printing",
+      "category": "mechanical",
+      "severity": "warning",
+      "description": "Unusual sounds such as grinding, squeaking, or knocking during printer operation",
+      "visual_symptoms": [
+        "Grinding noise from X/Y axis during movement",
+        "Squeaking from bearings or linear rails",
+        "Knocking or clicking sounds at specific positions or during Z moves"
+      ],
+      "probable_causes": [
+        {"cause": "Dry linear bearings or rails needing lubrication", "probability": 0.35, "test": "Apply PTFE/lithium grease to rails and bearings; does noise stop?"},
+        {"cause": "V-slot wheels too tight causing friction", "probability": 0.25, "test": "Loosen eccentric nuts slightly — do wheels roll more freely?"},
+        {"cause": "Belt rubbing on frame or misaligned", "probability": 0.20, "test": "Visually inspect belt path — does belt contact frame anywhere?"},
+        {"cause": "Loose or failing motor bearing", "probability": 0.20, "test": "Isolate motor by disconnecting belt — does grinding sound persist when motor moves?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Apply lubricant to linear rods/rails and bearings (PTFE spray or lithium grease)", "verification": "Axes move more quietly and smoothly", "time_seconds": 300},
+            {"instruction": "Inspect belt path for rubbing contact points with frame", "verification": "Belt runs freely without contact", "time_seconds": 120},
+            {"instruction": "Check wheel tension on V-slot profiles — adjust eccentric nuts", "verification": "Wheels roll without grinding", "time_seconds": 180}
+          ],
+          "tools_needed": ["PTFE spray or lithium grease", "allen key"],
+          "success_rate": 0.75
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["mechanical", "noise", "bearings", "lubrication", "maintenance", "belts"]
+    },
+
+    {
+      "id": "extruder_clicking",
+      "name": "Extruder Clicking / Skipping",
+      "category": "mechanical",
+      "severity": "warning",
+      "description": "Extruder motor makes rhythmic clicking sounds indicating it is skipping steps",
+      "visual_symptoms": [
+        "Audible click or knock from extruder area at regular intervals",
+        "Under-extrusion visible on print corresponding to click timing",
+        "Filament dust or shavings accumulating near extruder gear"
+      ],
+      "probable_causes": [
+        {"cause": "Partial or full nozzle clog creating back-pressure", "probability": 0.40, "test": "Remove Bowden from hotend and try extruding — does clicking stop?"},
+        {"cause": "Print temperature too low increasing viscosity", "probability": 0.25, "test": "Increase temperature 5-10°C and observe if clicking reduces"},
+        {"cause": "Print speed too fast for extruder to keep up", "probability": 0.20, "test": "Reduce speed by 30% and check if clicking stops"},
+        {"cause": "Extruder motor current too low", "probability": 0.15, "test": "Check TMC driver current for extruder — compare to manufacturer spec"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Increase nozzle temperature by 5-10°C", "verification": "Clicking reduces or stops", "time_seconds": 60},
+            {"instruction": "Reduce print speed by 20-25%", "verification": "Extruder feeds smoothly without clicking", "time_seconds": 30},
+            {"instruction": "Check for nozzle clog: attempt cold pull to clear partial blockage", "verification": "Filament flows freely without back-pressure", "time_seconds": 300}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.78
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["extruder", "mechanical", "clog", "temperature", "speed", "stepper"]
+    },
+
+    {
+      "id": "print_not_sticking_to_bed_surface",
+      "name": "Print Not Sticking to Bed Surface",
+      "category": "mechanical",
+      "severity": "error",
+      "description": "Print loses adhesion to bed surface despite correct Z offset, often mid-print",
+      "visual_symptoms": [
+        "Print slides across bed surface during fast moves",
+        "Print detaches cleanly from bed surface without taking bed material with it",
+        "No visible adhesion failure in first layer — detachment happens later"
+      ],
+      "probable_causes": [
+        {"cause": "Bed surface contaminated with grease or release agent", "probability": 0.40, "test": "Clean with IPA 90%+ — does water bead on surface? (indicates contamination)"},
+        {"cause": "Wrong bed surface for material (PEI good for PLA/PETG, not flexible sheets for ABS)", "probability": 0.25, "test": "Check material/surface compatibility chart for your bed type"},
+        {"cause": "Bed surface worn or scratched — low adhesion spots", "probability": 0.20, "test": "Inspect surface for shiny smooth spots that indicate wear"},
+        {"cause": "Print moving from inertia at high speed", "probability": 0.15, "test": "Reduce print speed and acceleration for tall prints"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Thoroughly clean bed with IPA 90%+ and lint-free cloth", "verification": "Bed surface uniformly matte; water doesn't bead", "time_seconds": 120},
+            {"instruction": "Apply adhesive for problematic materials: glue stick, Magigoo, or hairspray", "verification": "Thin adhesive layer covers print area", "time_seconds": 60},
+            {"instruction": "Verify bed temperature is correct for material and surface type", "verification": "Correct temperature reached before printing", "time_seconds": 60}
+          ],
+          "tools_needed": ["IPA 90%+", "lint-free cloth", "glue stick (optional)"],
+          "success_rate": 0.82
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["bed-adhesion", "PEI", "glass", "cleaning", "PLA", "PETG", "ABS"]
+    },
+
+    {
+      "id": "filament_tangled",
+      "name": "Filament Tangled on Spool",
+      "category": "mechanical",
+      "severity": "error",
+      "description": "Filament loops over itself on spool, binding and stopping extrusion mid-print",
+      "visual_symptoms": [
+        "Print stops suddenly without nozzle clog or other apparent issue",
+        "Filament appears locked or stuck when trying to feed by hand",
+        "Visible crossed-over or looped filament strands on the spool"
+      ],
+      "probable_causes": [
+        {"cause": "Filament end lost into spool during handling", "probability": 0.40, "test": "Inspect spool — is filament end tucked under wound layers?"},
+        {"cause": "Improperly wound spool from manufacturer", "probability": 0.30, "test": "Inspect spool windings for crossed layers"},
+        {"cause": "Filament end not secured when removing spool from printer", "probability": 0.30, "test": "Did filament end spring free and loop back when last removed?"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Pause print immediately", "verification": "Print paused", "time_seconds": 10},
+            {"instruction": "Carefully unspool filament by hand until tangle is resolved", "verification": "Filament feeds freely from spool without resistance", "time_seconds": 300},
+            {"instruction": "Feed filament back through path and resume print", "verification": "Extrusion resumes normally", "time_seconds": 120},
+            {"instruction": "After print: always secure filament end in spool notch or clip", "verification": "Filament end secured for next use", "time_seconds": 30}
+          ],
+          "tools_needed": [],
+          "success_rate": 0.90
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["filament", "spool", "maintenance", "storage", "PLA", "PETG", "ABS"]
+    },
+
+    {
+      "id": "print_detaching_mid_print",
+      "name": "Print Detaching Mid-Print",
+      "category": "mechanical",
+      "severity": "error",
+      "description": "Print separates from bed or support structure during printing, causing print failure",
+      "visual_symptoms": [
+        "Print suddenly moves or spins freely when nozzle touches it",
+        "Spaghetti visible — nozzle extruding into air where print should be",
+        "Print knocked over with nozzle continuing to extrude on top of failed mass"
+      ],
+      "probable_causes": [
+        {"cause": "Insufficient bed adhesion for print height/weight", "probability": 0.35, "test": "Was brim used? How large is print footprint relative to its height?"},
+        {"cause": "Nozzle collision with print (layer shifted or blob)", "probability": 0.30, "test": "Inspect failed print for collision damage on upper layers"},
+        {"cause": "Warping forces overcoming bed adhesion", "probability": 0.25, "test": "Were corners lifting before final detachment?"},
+        {"cause": "Vibration or external impact during print", "probability": 0.10, "test": "Check printer environment for vibration sources or accidental contact"}
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {"instruction": "Stop print and clear failed print from bed", "verification": "Bed clean and ready", "time_seconds": 120},
+            {"instruction": "Add brim (8-10mm wide) in slicer for next attempt", "verification": "Brim visible in slicer preview", "time_seconds": 60},
+            {"instruction": "Clean bed with IPA and apply adhesive if needed", "verification": "Bed surface clean and adhesive applied", "time_seconds": 120},
+            {"instruction": "Enable Z-hop and reduce print speed to avoid nozzle collisions", "verification": "Z-hop enabled in slicer; reduced speed set", "time_seconds": 60}
+          ],
+          "tools_needed": ["IPA", "lint-free cloth"],
+          "success_rate": 0.80
+        }
+      ],
+      "compatible_printers": ["all"],
+      "tags": ["bed-adhesion", "brim", "warping", "z-hop", "PLA", "PETG", "ABS"]
+    }
+
+  ]
+}
