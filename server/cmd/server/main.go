@@ -110,8 +110,9 @@ func main() {
 	// Health check — version, uptime, active connections, memory
 	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
 
-	// Prometheus metrics endpoint — exposes default registry
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+	// Prometheus metrics endpoint — protected by HTTP Basic Auth.
+	// Credentials: user=admin, password=$METRICS_PASSWORD (default: "metrics-secret").
+	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
 
 	// WebSocket: JWT auth → upgrade guard → handler
 	// WSAuthMiddleware is a no-op when SUPABASE_JWT_SECRET is unset (dev mode).
