@@ -1,73 +1,65 @@
-.PHONY: dev-server dev-app build-server build-app test deploy clean
+.PHONY: dev dev-server dev-app test test-coverage build-server build-apk \
+        lint docker-up docker-down clean help
 
-FLUTTER := flutter
-GO := go
-DOCKER := docker
-FLY := flyctl
+# ── Development ───────────────────────────────────────────────────────────────
 
-# ── Development ──────────────────────────────────────────────────────────────
+dev: docker-up ## Start Supabase stack, then run Go server
+	cd server && go run ./cmd/server/
 
-dev-server: ## Run Go server with hot reload
-	cd server && $(GO) run ./cmd/server
+dev-server: ## Run Go server without Docker (no JAVA_HOME override)
+	cd server && go run ./cmd/server/
 
 dev-app: ## Run Flutter app (requires connected device or emulator)
-	cd app && $(FLUTTER) run
+	cd app && flutter run
 
-dev: ## Start all services locally (requires Docker)
-	docker-compose -f infra/docker-compose.yml up
+# ── Testing ───────────────────────────────────────────────────────────────────
+
+test: ## Run Go tests with race detector
+	cd server && go test -v -race ./...
+
+test-coverage: ## Run Go tests with coverage report (opens coverage.html)
+	cd server && go test -coverprofile=coverage.out ./... \
+		&& go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: server/coverage.html"
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
-build-server: ## Build Docker image for Go server
-	$(DOCKER) build -t physicscopilot-server ./server
+build-server: ## Build optimised Go server binary → bin/server
+	mkdir -p bin
+	cd server && CGO_ENABLED=0 go build \
+		-ldflags="-s -w" \
+		-o ../bin/server \
+		./cmd/server/
 
-build-app: ## Build Flutter APK (release)
-	cd app && $(FLUTTER) build apk --release
+build-apk: ## Build Flutter debug APK
+	cd app && flutter build apk --debug
 
-build-server-binary: ## Build Go server binary locally
-	cd server && $(GO) build -o bin/server ./cmd/server
+build-apk-release: ## Build Flutter release APK
+	cd app && flutter build apk --release
 
-# ── Test ──────────────────────────────────────────────────────────────────────
+# ── Lint ──────────────────────────────────────────────────────────────────────
 
-test: test-server test-app ## Run all tests
+lint: ## Run Go vet + staticcheck and Flutter analyze
+	cd server && go vet ./...
+	@which staticcheck > /dev/null && cd server && staticcheck ./... || \
+		echo "staticcheck not installed — run: go install honnef.co/go/tools/cmd/staticcheck@latest"
+	cd app && flutter analyze
 
-test-server: ## Run Go tests
-	cd server && $(GO) test ./... -v -race
+# ── Docker / Supabase ─────────────────────────────────────────────────────────
 
-test-app: ## Run Flutter tests
-	cd app && $(FLUTTER) test
+docker-up: ## Start Supabase local stack (docker compose)
+	docker compose up -d
 
-# ── Deploy ────────────────────────────────────────────────────────────────────
+docker-down: ## Stop Supabase local stack
+	docker compose down
 
-deploy: ## Deploy server to Fly.io
-	$(FLY) deploy --config infra/fly.toml
+# ── Clean ─────────────────────────────────────────────────────────────────────
 
-deploy-server: ## Build & deploy Go server to Fly.io (with secrets check)
-	@echo "→ Checking Fly.io auth..."
-	@$(FLY) status --config infra/fly.toml > /dev/null 2>&1 || (echo "Run: flyctl auth login" && exit 1)
-	@echo "→ Deploying physicscopilot-server to Fly.io..."
-	$(FLY) deploy --config infra/fly.toml --dockerfile infra/Dockerfile.fly
-	@echo "✓ Deploy complete. View logs: flyctl logs --config infra/fly.toml"
+clean: ## Remove build artefacts
+	rm -rf bin/ server/coverage.out server/coverage.html app/build/
 
-secrets-set: ## Set required secrets on Fly.io (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY)
-	@echo "Setting secrets on Fly.io..."
-	$(FLY) secrets set \
-		GEMINI_API_KEY="$(GEMINI_API_KEY)" \
-		SUPABASE_URL="$(SUPABASE_URL)" \
-		SUPABASE_ANON_KEY="$(SUPABASE_ANON_KEY)" \
-		--config infra/fly.toml
+# ── Help ──────────────────────────────────────────────────────────────────────
 
-# ── Database ──────────────────────────────────────────────────────────────────
-
-db-migrate: ## Apply Supabase schema
-	@echo "Apply infra/supabase/schema.sql via Supabase dashboard or CLI"
-
-# ── Utilities ─────────────────────────────────────────────────────────────────
-
-clean: ## Remove build artifacts
-	cd server && rm -rf bin/
-	cd app && $(FLUTTER) clean
-
-help: ## Show this help
+help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
