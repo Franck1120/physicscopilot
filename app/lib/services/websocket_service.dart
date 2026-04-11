@@ -75,9 +75,9 @@ class WebSocketService {
   void _scheduleReconnect() {
     if (_disposed) return;
     _emit(ConnectionStatus.disconnected);
+    // Exponential back-off: 1 s, 2 s, 4 s, 8 s … capped at 30 s.
+    final delaySecs = min(1 << _reconnectAttempts, 30);
     _reconnectAttempts++;
-    // Exponential back-off: 2^attempts seconds, capped at 60 s.
-    final delaySecs = min(1 << _reconnectAttempts, 60);
     Future.delayed(Duration(seconds: delaySecs), connect);
   }
 
