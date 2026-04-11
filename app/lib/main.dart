@@ -28,13 +28,14 @@ const Color kTextMuted = Color(0xFF6B7280);
 // ---------------------------------------------------------------------------
 
 /// Exposes the SharedPreferences instance initialised before runApp.
-final _sharedPrefsProvider = Provider<SharedPreferences>((ref) {
+/// Public so tests can override it via ProviderScope.overrides.
+final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Override with ProviderScope.overrides');
 });
 
 /// True if the user has already completed onboarding.
 final onboardingCompletedProvider = Provider<bool>((ref) {
-  final prefs = ref.watch(_sharedPrefsProvider);
+  final prefs = ref.watch(sharedPrefsProvider);
   return prefs.getBool('onboarding_completed') ?? false;
 });
 
@@ -48,7 +49,7 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
-        _sharedPrefsProvider.overrideWithValue(prefs),
+        sharedPrefsProvider.overrideWithValue(prefs),
       ],
       child: PhysicsCopilotApp(prefs: prefs),
     ),
