@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
 import '../providers/printer_provider.dart';
 import '../models/session_record.dart';
 import 'history_screen.dart';
@@ -57,10 +58,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
-  static const Color _navBarBackground = Color(0xFF1A1A2E);
-  static const Color _selectedItemColor = Color(0xFF2980B9);
-  static const Color _unselectedItemColor = Color(0xFF7F8C8D);
-  static const Color _scaffoldBackground = Color(0xFF0F0F1A);
+  static const Color _navBarBackground = Color(0xFF111111);
+  static const Color _selectedItemColor = kAccent;
+  static const Color _unselectedItemColor = Color(0xFF6B7280);
+  static const Color _scaffoldBackground = kBgPrimary;
 
   void _onItemTapped(int index) {
     if (index == 1) {
@@ -140,9 +141,9 @@ class _HomeTab extends ConsumerWidget {
     final printer = ref.watch(printerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: kBgPrimary,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: const Color(0xFF111111),
         elevation: 0,
         title: const Text(
           'PhysicsCopilot',
@@ -181,7 +182,7 @@ class _NewSessionCard extends StatelessWidget {
 
   final VoidCallback onTap;
 
-  static const Color _cardBackground = Color(0xFF1B4F72);
+  static const Color _cardBackground = Color(0xFF064E3B);
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +196,7 @@ class _NewSessionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4F72).withValues(alpha: 0.4),
+              color: kAccent.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -226,7 +227,7 @@ class _NewSessionCard extends StatelessWidget {
                   Text(
                     'Nuova sessione di analisi',
                     style: TextStyle(
-                      color: Color(0xFFAED6F1),
+                      color: Color(0xFF6EE7B7),
                       fontSize: 13,
                     ),
                   ),
@@ -235,7 +236,7 @@ class _NewSessionCard extends StatelessWidget {
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: Color(0xFFAED6F1),
+              color: Color(0xFF6EE7B7),
               size: 18,
             ),
           ],
@@ -268,7 +269,7 @@ class _PrinterSection extends StatelessWidget {
         const Text(
           'STAMPANTE ATTIVA',
           style: TextStyle(
-            color: Color(0xFF7F8C8D),
+            color: kTextMuted,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.8,
@@ -279,15 +280,15 @@ class _PrinterSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A2E),
+            color: const kBgCard,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF2C2C4A), width: 1),
+            border: Border.all(color: const kBgCardBorder, width: 1),
           ),
           child: Row(
             children: [
               const Icon(
                 Icons.print_outlined,
-                color: Color(0xFF2980B9),
+                color: kAccent,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -297,7 +298,7 @@ class _PrinterSection extends StatelessWidget {
                   style: TextStyle(
                     color: hasPrinter
                         ? Colors.white
-                        : const Color(0xFF7F8C8D),
+                        : const kTextMuted,
                     fontSize: 15,
                     fontWeight:
                         hasPrinter ? FontWeight.w500 : FontWeight.normal,
@@ -312,13 +313,13 @@ class _PrinterSection extends StatelessWidget {
                   label: const Text(
                     'Cambia',
                     style: TextStyle(
-                      color: Color(0xFF2980B9),
+                      color: kAccent,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  backgroundColor: const Color(0xFF0F0F1A),
-                  side: const BorderSide(color: Color(0xFF2980B9), width: 1),
+                  backgroundColor: const kBgPrimary,
+                  side: const BorderSide(color: kAccent, width: 1),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -346,7 +347,7 @@ class _RecentSessionsSection extends StatelessWidget {
         const Text(
           'ULTIME SESSIONI',
           style: TextStyle(
-            color: Color(0xFF7F8C8D),
+            color: kTextMuted,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.8,
@@ -396,9 +397,9 @@ class _SessionCompactCard extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: const kBgCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2C2C4A), width: 1),
+        border: Border.all(color: const kBgCardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,7 +410,7 @@ class _SessionCompactCard extends StatelessWidget {
               Text(
                 _formatDate(record.date),
                 style: const TextStyle(
-                  color: Color(0xFF7F8C8D),
+                  color: kTextMuted,
                   fontSize: 11,
                 ),
               ),
@@ -446,7 +447,7 @@ class _SessionCompactCard extends StatelessWidget {
           Text(
             record.problemDescription,
             style: const TextStyle(
-              color: Color(0xFF7F8C8D),
+              color: kTextMuted,
               fontSize: 11,
             ),
             maxLines: 2,
@@ -468,9 +469,9 @@ class _ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: const kBgPrimary,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: const kBgCard,
         elevation: 0,
         title: const Text(
           'Profilo',
@@ -512,7 +513,7 @@ class _ProfileHeader extends StatelessWidget {
       children: [
         const CircleAvatar(
           radius: 42,
-          backgroundColor: Color(0xFF1B4F72),
+          backgroundColor: kAccentDark,
           child: Text(
             'U',
             style: TextStyle(
@@ -536,13 +537,13 @@ class _ProfileHeader extends StatelessWidget {
           label: const Text(
             'Free',
             style: TextStyle(
-              color: Color(0xFF2980B9),
+              color: kAccent,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
           ),
-          backgroundColor: const Color(0xFF0F0F1A),
-          side: const BorderSide(color: Color(0xFF2980B9), width: 1.5),
+          backgroundColor: const kBgPrimary,
+          side: const BorderSide(color: kAccent, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
       ],
@@ -570,19 +571,19 @@ class _ProfileTileList extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: const kBgCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2C2C4A), width: 1),
+        border: Border.all(color: const kBgCardBorder, width: 1),
       ),
       child: ListTile(
-        leading: Icon(t.icon, color: const Color(0xFF7F8C8D)),
+        leading: Icon(t.icon, color: const kTextMuted),
         title: Text(
           t.label,
           style: const TextStyle(color: Colors.white, fontSize: 15),
         ),
         trailing: const Icon(
           Icons.arrow_forward_ios_rounded,
-          color: Color(0xFF7F8C8D),
+          color: kTextMuted,
           size: 16,
         ),
         enabled: false,
