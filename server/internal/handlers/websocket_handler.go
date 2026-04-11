@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
 	"log/slog"
 	"net"
 	"sync"
@@ -25,6 +28,10 @@ const maxConnsPerIP = 10
 // Frame messages carry base64-encoded JPEG camera frames; 10 MB is generous
 // headroom even for high-res images.
 const maxMessageSize = 10 << 20 // 10 MB
+
+// maxContextBytes is the maximum size of the conversation context string
+// passed to the AI backend. Prevents unbounded memory usage.
+const maxContextBytes = 50 * 1024 // 50 KB
 
 // Heartbeat timing constants.
 const (
@@ -83,6 +90,36 @@ func (t *ipConnTracker) remove(ip string) {
 	if t.conns[ip] > 0 {
 		t.conns[ip]--
 	}
+}
+
+// jpegMagic are the first two bytes of a valid JPEG file.
+var jpegMagic = []byte{0xFF, 0xD8}
+
+// pngMagic are the first four bytes of a valid PNG file.
+var pngMagic = []byte{0x89, 0x50, 0x4E, 0x47}
+
+// validateImageFrame decodes the base64 frame and checks that it starts
+// with JPEG (FF D8) or PNG (89 50 4E 47) magic bytes.
+// Returns an error if the data is not a recognized image format.
+func validateImageFrame(frameBase64 string) error {
+	if frameBase64 == "" {
+		return fmt.Errorf("frame data is empty")
+	}
+	decoded, err := base64.StdEncoding.DecodeString(frameBase64)
+	if err != nil {
+		// Try URL-safe variant (some clients use base64url)
+		decoded, err = base64.URLEncoding.DecodeString(frameBase64)
+		if err != nil {
+			return fmt.Errorf("invalid base64 encoding")
+		}
+	}
+	if len(decoded) < 4 {
+		return fmt.Errorf("image data too short")
+	}
+	if bytes.HasPrefix(decoded, jpegMagic) || bytes.HasPrefix(decoded, pngMagic) {
+		return nil
+	}
+	return fmt.Errorf("unsupported image format: expected JPEG or PNG")
 }
 
 // ---------------------------------------------------------------------------
@@ -362,6 +399,11 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 		return
 	}
 
+	if err := validateImageFrame(msg.Data); err != nil {
+		writeError(sc, "Invalid frame: "+err.Error())
+		return
+	}
+
 	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
@@ -382,6 +424,15 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 
 // handleText processes a text-only conversation turn.
 func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessage) {
+	if msg.Content == "" {
+		writeError(sc, "Message content cannot be empty")
+		return
+	}
+	if len(msg.Content) > maxContextBytes {
+		writeError(sc, "Message content exceeds maximum allowed length")
+		return
+	}
+
 	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
