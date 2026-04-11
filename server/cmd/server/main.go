@@ -18,6 +18,7 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/Franck1120/physicscopilot/server/internal/db"
 	"github.com/Franck1120/physicscopilot/server/internal/handlers"
 	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
@@ -32,8 +33,22 @@ var startTime = time.Now()
 func main() {
 	applogger.Init()
 
+	// Initialize database pool (optional — server starts without DB if unavailable)
+	var sessionRepo *db.SessionRepo
+	var messageRepo *db.MessageRepo
+
+	dbPool, dbErr := db.NewPool(context.Background())
+	if dbErr != nil {
+		slog.Warn("database unavailable — running in-memory only", "err", dbErr)
+	} else {
+		slog.Info("database connected")
+		sessionRepo = db.NewSessionRepo(dbPool)
+		messageRepo = db.NewMessageRepo(dbPool)
+		defer dbPool.Close()
+	}
+
 	// Initialize services
-	sessionSvc := services.NewSessionService()
+	sessionSvc := services.NewSessionService(sessionRepo, messageRepo)
 	geminiSvc, err := services.NewGeminiService()
 	if err != nil {
 		slog.Error("Gemini service init failed", "err", err)

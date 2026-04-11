@@ -38,7 +38,7 @@ func startTestWSServer(t *testing.T, handler func(*fiberws.Conn)) (addr string, 
 // TestHeartbeatPingLoopExitsWhenDoneClosed verifies that pingLoop stops
 // promptly when its done channel is closed, regardless of the tick interval.
 func TestHeartbeatPingLoopExitsWhenDoneClosed(t *testing.T) {
-	sessionSvc := services.NewSessionService()
+	sessionSvc := services.NewSessionService(nil, nil)
 	convSvc := services.NewConversationService(sessionSvc, nil)
 	h := NewWSHandler(convSvc, sessionSvc)
 	h.PingInterval = time.Hour // very long — won't fire in the test
@@ -77,7 +77,7 @@ func TestHeartbeatPingLoopExitsWhenDoneClosed(t *testing.T) {
 // deliberately ignores server Ping frames, and verifies the server closes
 // the connection once pongWait elapses.
 func TestHeartbeatClosesConnectionOnNoPong(t *testing.T) {
-	sessionSvc := services.NewSessionService()
+	sessionSvc := services.NewSessionService(nil, nil)
 	convSvc := services.NewConversationService(sessionSvc, nil)
 	wsHandler := NewWSHandler(convSvc, sessionSvc)
 

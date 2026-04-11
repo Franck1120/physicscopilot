@@ -14,7 +14,7 @@ import (
 )
 
 func newHealthApp(version string, startTime time.Time) (*fiber.App, *WSHandler) {
-	sessionSvc := services.NewSessionService()
+	sessionSvc := services.NewSessionService(nil, nil)
 	convSvc := services.NewConversationService(sessionSvc, nil)
 	ws := NewWSHandler(convSvc, sessionSvc)
 

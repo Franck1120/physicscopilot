@@ -33,6 +33,9 @@ services:
     environment:
       PORT: "${PORT:-8080}"
       APP_ENV: development
+      # Database connection — constructed from the postgres service credentials.
+      # Override via .env DATABASE_URL for non-default configurations.
+      DATABASE_URL: "${DATABASE_URL}"
       # When GEMINI_API_KEY is absent, GeminiService falls back to CLIProxyAPI.
       CLIPROXY_URL: "http://cliproxy:8085"
     networks:
@@ -78,7 +81,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./supabase/migrations/20260411000000_initial_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ./server/migrations:/docker-entrypoint-initdb.d:ro
     networks:
       - pc_net
     restart: unless-stopped

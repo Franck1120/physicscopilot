@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewSessionService(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	if svc == nil {
 		t.Fatal("expected non-nil SessionService")
 	}
@@ -18,7 +18,7 @@ func TestNewSessionService(t *testing.T) {
 }
 
 func TestCreateSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	session, err := svc.CreateSession("Creality", "Ender 3")
 	if err != nil {
@@ -55,7 +55,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestGetSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	session, _ := svc.CreateSession("Prusa", "MK4")
 
@@ -72,7 +72,7 @@ func TestGetSession(t *testing.T) {
 }
 
 func TestGetSessionNotFound(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	_, err := svc.GetSession("nonexistent-id")
 	if err == nil {
@@ -84,7 +84,7 @@ func TestGetSessionNotFound(t *testing.T) {
 }
 
 func TestAddMessage(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Bambu", "X1C")
 
 	err := svc.AddMessage(session.SessionID, "user", "My printer is making a clicking noise", false)
@@ -113,7 +113,7 @@ func TestAddMessage(t *testing.T) {
 }
 
 func TestAddMessageWithImage(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Bambu", "X1C")
 
 	err := svc.AddMessage(session.SessionID, "user", "Here is a photo of the issue", true)
@@ -128,7 +128,7 @@ func TestAddMessageWithImage(t *testing.T) {
 }
 
 func TestAddMessageRollingWindow(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Creality", "Ender 3")
 
 	// Add 25 messages — only the last 20 should remain
@@ -150,7 +150,7 @@ func TestAddMessageRollingWindow(t *testing.T) {
 }
 
 func TestAddMessageNonexistentSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	err := svc.AddMessage("nonexistent", "user", "hello", false)
 	if err == nil {
@@ -159,7 +159,7 @@ func TestAddMessageNonexistentSession(t *testing.T) {
 }
 
 func TestAddMessageUpdatesLastActivity(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Prusa", "MK4")
 
 	before := session.LastActivity
@@ -176,7 +176,7 @@ func TestAddMessageUpdatesLastActivity(t *testing.T) {
 }
 
 func TestUpdateStep(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Creality", "Ender 3")
 
 	err := svc.UpdateStep(session.SessionID, 3, 10)
@@ -194,7 +194,7 @@ func TestUpdateStep(t *testing.T) {
 }
 
 func TestUpdateStepNonexistentSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	err := svc.UpdateStep("nonexistent", 1, 5)
 	if err == nil {
@@ -203,7 +203,7 @@ func TestUpdateStepNonexistentSession(t *testing.T) {
 }
 
 func TestSetProblemDetected(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Bambu", "X1C")
 
 	err := svc.SetProblemDetected(session.SessionID, "Clogged nozzle detected")
@@ -218,7 +218,7 @@ func TestSetProblemDetected(t *testing.T) {
 }
 
 func TestSetProblemDetectedNonexistentSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	err := svc.SetProblemDetected("nonexistent", "problem")
 	if err == nil {
@@ -227,7 +227,7 @@ func TestSetProblemDetectedNonexistentSession(t *testing.T) {
 }
 
 func TestBuildContextForGemini(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Prusa", "MK4")
 
 	_ = svc.AddMessage(session.SessionID, "user", "My printer is clicking", false)
@@ -251,7 +251,7 @@ func TestBuildContextForGemini(t *testing.T) {
 }
 
 func TestBuildContextForGeminiLimitsTen(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Creality", "Ender 3")
 
 	// Add 15 messages
@@ -276,7 +276,7 @@ func TestBuildContextForGeminiLimitsTen(t *testing.T) {
 }
 
 func TestBuildContextForGeminiEmptyHistory(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Bambu", "X1C")
 
 	context, err := svc.BuildContextForGemini(session.SessionID)
@@ -289,7 +289,7 @@ func TestBuildContextForGeminiEmptyHistory(t *testing.T) {
 }
 
 func TestBuildContextForGeminiNonexistentSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	_, err := svc.BuildContextForGemini("nonexistent")
 	if err == nil {
@@ -298,7 +298,7 @@ func TestBuildContextForGeminiNonexistentSession(t *testing.T) {
 }
 
 func TestDeleteSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Creality", "Ender 3")
 
 	err := svc.DeleteSession(session.SessionID)
@@ -313,7 +313,7 @@ func TestDeleteSession(t *testing.T) {
 }
 
 func TestDeleteSessionNonexistentSession(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	err := svc.DeleteSession("nonexistent")
 	if err == nil {
@@ -322,7 +322,7 @@ func TestDeleteSessionNonexistentSession(t *testing.T) {
 }
 
 func TestCleanupExpiredSessions(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	// Create two sessions
 	session1, _ := svc.CreateSession("Prusa", "MK4")
@@ -350,7 +350,7 @@ func TestCleanupExpiredSessions(t *testing.T) {
 }
 
 func TestCleanupExpiredSessionsKeepsActive(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Creality", "Ender 3")
 
 	// Cleanup with very large maxAge — nothing should be removed
@@ -363,7 +363,7 @@ func TestCleanupExpiredSessionsKeepsActive(t *testing.T) {
 }
 
 func TestGetSessionSnapshot(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Prusa", "MK4")
 	_ = svc.UpdateStep(session.SessionID, 3, 10)
 
@@ -390,7 +390,7 @@ func TestGetSessionSnapshot(t *testing.T) {
 }
 
 func TestGetSessionSnapshotNotFound(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 
 	_, err := svc.GetSessionSnapshot("nonexistent-id")
 	if err == nil {
@@ -402,7 +402,7 @@ func TestGetSessionSnapshotNotFound(t *testing.T) {
 }
 
 func TestConcurrentAccess(t *testing.T) {
-	svc := NewSessionService()
+	svc := NewSessionService(nil, nil)
 	session, _ := svc.CreateSession("Prusa", "MK4")
 
 	var wg sync.WaitGroup

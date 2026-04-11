@@ -1,12 +1,16 @@
 package services
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/Franck1120/physicscopilot/server/internal/db"
 )
 
 // maxConversationHistory is the rolling window size for conversation messages.
@@ -41,24 +45,51 @@ type SessionState struct {
 	LastActivity        time.Time             `json:"last_activity"`
 }
 
-// SessionService manages in-memory repair sessions with thread-safe access.
+// SessionService manages repair sessions with thread-safe in-memory cache
+// and optional PostgreSQL persistence. When sessionRepo and messageRepo are
+// nil, the service operates in-memory only (useful for tests).
 type SessionService struct {
-	mu       sync.RWMutex
-	sessions map[string]*SessionState
+	mu          sync.RWMutex
+	sessions    map[string]*SessionState
+	sessionRepo *db.SessionRepo
+	messageRepo *db.MessageRepo
 }
 
-// NewSessionService creates a SessionService with an initialized in-memory store.
-func NewSessionService() *SessionService {
+// NewSessionService creates a SessionService.
+// If sessionRepo and messageRepo are nil, the service operates in-memory only (e.g., for tests).
+func NewSessionService(sessionRepo *db.SessionRepo, messageRepo *db.MessageRepo) *SessionService {
 	return &SessionService{
-		sessions: make(map[string]*SessionState),
+		sessions:    make(map[string]*SessionState),
+		sessionRepo: sessionRepo,
+		messageRepo: messageRepo,
 	}
 }
 
 // CreateSession initializes a new repair session for the given device.
+// When a DB repo is available, the session is persisted first and gets a
+// Postgres-generated UUID. Otherwise, a local UUID is generated.
 func (s *SessionService) CreateSession(deviceBrand, deviceModel string) (*SessionState, error) {
 	now := time.Now()
+
+	var sessionID string
+
+	// Persist to DB when repo is available; the DB generates the UUID.
+	if s.sessionRepo != nil {
+		rec, err := s.sessionRepo.CreateSession(context.Background(), "anonymous", deviceBrand, deviceModel)
+		if err != nil {
+			slog.Warn("db: failed to persist new session, falling back to in-memory", "err", err)
+		} else {
+			sessionID = rec.ID
+		}
+	}
+
+	// Fallback to a locally-generated UUID when DB is unavailable.
+	if sessionID == "" {
+		sessionID = generateUUID()
+	}
+
 	session := &SessionState{
-		SessionID: uuid.New().String(),
+		SessionID: sessionID,
 		DeviceInfo: DeviceInfo{
 			Brand: deviceBrand,
 			Model: deviceModel,
@@ -107,6 +138,8 @@ func (s *SessionService) GetSessionSnapshot(sessionID string) (*SessionState, er
 
 // AddMessage appends a conversation message to the session, keeping only the
 // most recent maxConversationHistory messages (rolling window).
+// When a DB repo is available, the message is also persisted in a background
+// goroutine (fire-and-forget with warning on failure).
 func (s *SessionService) AddMessage(sessionID, role, content string, hasImage bool) error {
 	now := time.Now()
 
@@ -134,6 +167,19 @@ func (s *SessionService) AddMessage(sessionID, role, content string, hasImage bo
 
 	session.LastActivity = now
 
+	// Persist to DB in background without blocking the caller.
+	if s.messageRepo != nil {
+		msgType := "text"
+		if hasImage {
+			msgType = "image"
+		}
+		go func() {
+			if _, err := s.messageRepo.SaveMessage(context.Background(), sessionID, role, content, msgType); err != nil {
+				slog.Warn("db: failed to persist message", "session_id", sessionID, "err", err)
+			}
+		}()
+	}
+
 	return nil
 }
 
@@ -155,6 +201,7 @@ func (s *SessionService) UpdateStep(sessionID string, current, total int) error 
 }
 
 // SetProblemDetected records the identified problem for a session.
+// When a DB repo is available, the update is also persisted in the background.
 func (s *SessionService) SetProblemDetected(sessionID, problem string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -166,6 +213,15 @@ func (s *SessionService) SetProblemDetected(sessionID, problem string) error {
 
 	session.ProblemDetected = problem
 	session.LastActivity = time.Now()
+
+	// Persist to DB in background without blocking the caller.
+	if s.sessionRepo != nil {
+		go func() {
+			if err := s.sessionRepo.UpdateSessionStatus(context.Background(), sessionID, "active", problem); err != nil {
+				slog.Warn("db: failed to persist problem detected", "session_id", sessionID, "err", err)
+			}
+		}()
+	}
 
 	return nil
 }
@@ -202,7 +258,9 @@ func (s *SessionService) BuildContextForGemini(sessionID string) (string, error)
 	return strings.Join(lines, "\n"), nil
 }
 
-// DeleteSession removes a session from the store. Returns an error if not found.
+// DeleteSession removes a session from the in-memory cache. In the DB the
+// session is soft-deleted by setting its status to "abandoned" (not physically
+// removed). Returns an error if the session is not found in cache.
 func (s *SessionService) DeleteSession(sessionID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -212,6 +270,16 @@ func (s *SessionService) DeleteSession(sessionID string) error {
 	}
 
 	delete(s.sessions, sessionID)
+
+	// Soft-delete in DB by marking as abandoned.
+	if s.sessionRepo != nil {
+		go func() {
+			if err := s.sessionRepo.UpdateSessionStatus(context.Background(), sessionID, "abandoned", ""); err != nil {
+				slog.Warn("db: failed to mark session as abandoned", "session_id", sessionID, "err", err)
+			}
+		}()
+	}
+
 	return nil
 }
 
@@ -228,4 +296,9 @@ func (s *SessionService) CleanupExpiredSessions(maxAge time.Duration) {
 			delete(s.sessions, id)
 		}
 	}
+}
+
+// generateUUID returns a new random UUID string for in-memory-only sessions.
+func generateUUID() string {
+	return uuid.New().String()
 }
