@@ -23,18 +23,28 @@ type ipEntry struct {
 }
 
 // IPRateLimiter enforces per-IP request rate limits on REST endpoints.
-// Each IP gets a token-bucket limiter refilling at apiRequestsPerMinute/min
-// with a burst allowance of apiLimiterBurst.
+// Each IP gets a token-bucket limiter refilling at ratePerMin/min
+// with a burst allowance of burst tokens.
 type IPRateLimiter struct {
-	mu       sync.Mutex
-	limiters map[string]*ipEntry
+	mu         sync.Mutex
+	limiters   map[string]*ipEntry
+	ratePerMin int
+	burst      int
 }
 
-// NewIPRateLimiter creates a limiter and starts a background goroutine
-// that periodically removes idle per-IP entries.
+// NewIPRateLimiter creates a limiter with the production defaults
+// (60 req/min, burst 10) and starts a background cleanup goroutine.
 func NewIPRateLimiter() *IPRateLimiter {
+	return newIPRateLimiterWith(apiRequestsPerMinute, apiLimiterBurst)
+}
+
+// newIPRateLimiterWith creates a limiter with custom rate and burst values.
+// Intended for use in tests to exercise the 429 path without waiting a full minute.
+func newIPRateLimiterWith(perMin, burst int) *IPRateLimiter {
 	rl := &IPRateLimiter{
-		limiters: make(map[string]*ipEntry),
+		limiters:   make(map[string]*ipEntry),
+		ratePerMin: perMin,
+		burst:      burst,
 	}
 	go rl.cleanupLoop()
 	return rl
@@ -47,8 +57,8 @@ func (rl *IPRateLimiter) getLimiter(ip string) *rate.Limiter {
 	if !ok {
 		e = &ipEntry{
 			limiter: rate.NewLimiter(
-				rate.Every(time.Minute/apiRequestsPerMinute),
-				apiLimiterBurst,
+				rate.Every(time.Minute/time.Duration(rl.ratePerMin)),
+				rl.burst,
 			),
 		}
 		rl.limiters[ip] = e

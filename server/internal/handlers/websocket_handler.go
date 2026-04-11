@@ -132,6 +132,11 @@ type WSHandler struct {
 
 	connsMu sync.Mutex
 	conns   map[*safeConn]struct{}
+
+	// Heartbeat overrides — zero values fall back to the package-level constants.
+	// Set these fields in tests to use short timeouts without mutating globals.
+	PingInterval time.Duration
+	PongWait     time.Duration
 }
 
 // NewWSHandler creates a WSHandler wired to the given conversation
@@ -143,6 +148,20 @@ func NewWSHandler(conversations *services.ConversationService, sessions *service
 		ipConns:       newIPConnTracker(),
 		conns:         make(map[*safeConn]struct{}),
 	}
+}
+
+func (h *WSHandler) effectivePingInterval() time.Duration {
+	if h.PingInterval > 0 {
+		return h.PingInterval
+	}
+	return pingInterval
+}
+
+func (h *WSHandler) effectivePongWait() time.Duration {
+	if h.PongWait > 0 {
+		return h.PongWait
+	}
+	return pongWait
 }
 
 // ActiveConnections returns the current number of open WebSocket connections.
@@ -214,12 +233,13 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	c.SetReadLimit(maxMessageSize)
 
 	// Set initial read deadline; the pong handler resets it on each pong.
-	if err := c.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+	effectivePW := h.effectivePongWait()
+	if err := c.SetReadDeadline(time.Now().Add(effectivePW)); err != nil {
 		slog.Error("failed to set read deadline", "err", err)
 		return
 	}
 	c.SetPongHandler(func(string) error {
-		return c.SetReadDeadline(time.Now().Add(pongWait))
+		return c.SetReadDeadline(time.Now().Add(effectivePW))
 	})
 
 	// ── IP / connection-limit check ──────────────────────────────────────────
@@ -316,10 +336,10 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	}
 }
 
-// pingLoop sends Ping frames every pingInterval until done is closed or a
+// pingLoop sends Ping frames every effectivePingInterval until done is closed or a
 // write fails (which means the connection is gone).
 func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID string) {
-	ticker := time.NewTicker(pingInterval)
+	ticker := time.NewTicker(h.effectivePingInterval())
 	defer ticker.Stop()
 	for {
 		select {
