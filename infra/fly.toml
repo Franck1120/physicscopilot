@@ -1,17 +1,21 @@
-app = "physicscopilot-server"
+app            = "physicscopilot-server"
 primary_region = "ams"
 
+# ── Build ──────────────────────────────────────────────────────────────────────
 [build]
-  dockerfile = "server/Dockerfile"
+  dockerfile = "infra/Dockerfile.fly"
 
+# ── Static env vars (non-secret) ──────────────────────────────────────────────
 [env]
   PORT = "8080"
+  # GEMINI_BASE_URL = "https://generativelanguage.googleapis.com"  # override for proxy
 
+# ── HTTP service ───────────────────────────────────────────────────────────────
 [http_service]
-  internal_port = 8080
-  force_https   = true
-  auto_stop_machines  = true
-  auto_start_machines = true
+  internal_port        = 8080
+  force_https          = true
+  auto_stop_machines   = true
+  auto_start_machines  = true
   min_machines_running = 0
 
   [http_service.concurrency]
@@ -19,6 +23,15 @@ primary_region = "ams"
     soft_limit = 200
     hard_limit = 250
 
+# ── Machine size ───────────────────────────────────────────────────────────────
 [[vm]]
   size   = "shared-cpu-1x"
   memory = "256mb"
+
+# ── Health check ───────────────────────────────────────────────────────────────
+[[services.http_checks]]
+  interval      = "15s"
+  timeout       = "5s"
+  grace_period  = "10s"
+  method        = "GET"
+  path          = "/health"

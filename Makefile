@@ -42,6 +42,21 @@ test-app: ## Run Flutter tests
 deploy: ## Deploy server to Fly.io
 	$(FLY) deploy --config infra/fly.toml
 
+deploy-server: ## Build & deploy Go server to Fly.io (with secrets check)
+	@echo "→ Checking Fly.io auth..."
+	@$(FLY) status --config infra/fly.toml > /dev/null 2>&1 || (echo "Run: flyctl auth login" && exit 1)
+	@echo "→ Deploying physicscopilot-server to Fly.io..."
+	$(FLY) deploy --config infra/fly.toml --dockerfile infra/Dockerfile.fly
+	@echo "✓ Deploy complete. View logs: flyctl logs --config infra/fly.toml"
+
+secrets-set: ## Set required secrets on Fly.io (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY)
+	@echo "Setting secrets on Fly.io..."
+	$(FLY) secrets set \
+		GEMINI_API_KEY="$(GEMINI_API_KEY)" \
+		SUPABASE_URL="$(SUPABASE_URL)" \
+		SUPABASE_ANON_KEY="$(SUPABASE_ANON_KEY)" \
+		--config infra/fly.toml
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 db-migrate: ## Apply Supabase schema
