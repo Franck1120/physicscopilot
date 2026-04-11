@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: physicscopilot-server
+    runtime: docker
+    dockerfilePath: server/Dockerfile
+    dockerContext: server
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: CLIPROXY_URL
+        sync: false
