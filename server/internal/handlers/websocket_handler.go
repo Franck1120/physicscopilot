@@ -20,6 +20,22 @@ const maxFramesPerSecond = 5
 // allowed from a single IP address.
 const maxConnsPerIP = 10
 
+// maxMessageSize is the maximum size of a single WebSocket message (10 MB).
+// Frame messages carry base64-encoded JPEG camera frames; 10 MB is generous
+// headroom even for high-res images.
+const maxMessageSize = 10 << 20 // 10 MB
+
+// Heartbeat timing constants.
+const (
+	// pingInterval is how often the server sends a WebSocket Ping frame.
+	pingInterval = 30 * time.Second
+	// pongWait is the read deadline set after each Ping. If no Pong arrives
+	// within this window the read returns an error and the connection closes.
+	pongWait = 40 * time.Second // pingInterval + 10 s grace
+	// writeWait is the deadline for a single control-frame write.
+	writeWait = 10 * time.Second
+)
+
 // IncomingMessage represents a JSON message received from the client.
 type IncomingMessage struct {
 	Type      string `json:"type"`      // "frame" | "text" | "ping"
@@ -68,6 +84,43 @@ func (t *ipConnTracker) remove(ip string) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// safeConn — gorilla/websocket is not concurrent-safe for writes.
+// safeConn serialises all writes through a mutex so the ping goroutine and
+// the main read-loop goroutine can both write without data races.
+// ---------------------------------------------------------------------------
+
+type safeConn struct {
+	c  *websocket.Conn
+	mu sync.Mutex
+}
+
+func (s *safeConn) writeJSON(v any) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.c.WriteJSON(v)
+}
+
+func (s *safeConn) writePing() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.c.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait))
+}
+
+func (s *safeConn) writeClose(code int, text string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_ = s.c.WriteMessage(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(code, text),
+	)
+	_ = s.c.Close()
+}
+
+// ---------------------------------------------------------------------------
+// WSHandler
+// ---------------------------------------------------------------------------
+
 // WSHandler manages WebSocket connections by coordinating session
 // lifecycle and conversation processing through the service layer.
 type WSHandler struct {
@@ -77,7 +130,7 @@ type WSHandler struct {
 	ipConns       *ipConnTracker
 
 	connsMu sync.Mutex
-	conns   map[*websocket.Conn]struct{}
+	conns   map[*safeConn]struct{}
 }
 
 // NewWSHandler creates a WSHandler wired to the given conversation
@@ -87,7 +140,7 @@ func NewWSHandler(conversations *services.ConversationService, sessions *service
 		conversations: conversations,
 		sessions:      sessions,
 		ipConns:       newIPConnTracker(),
-		conns:         make(map[*websocket.Conn]struct{}),
+		conns:         make(map[*safeConn]struct{}),
 	}
 }
 
@@ -101,27 +154,27 @@ func (h *WSHandler) ActiveConnections() int32 {
 func (h *WSHandler) CloseAll() {
 	h.connsMu.Lock()
 	defer h.connsMu.Unlock()
-	for c := range h.conns {
-		_ = c.WriteMessage(
-			websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseGoingAway, "server shutting down"),
-		)
-		_ = c.Close()
+	for sc := range h.conns {
+		sc.writeClose(websocket.CloseGoingAway, "server shutting down")
 	}
 	slog.Info("closed all WebSocket connections", "count", len(h.conns))
 }
 
-func (h *WSHandler) register(c *websocket.Conn) {
+func (h *WSHandler) register(sc *safeConn) {
 	h.connsMu.Lock()
-	h.conns[c] = struct{}{}
+	h.conns[sc] = struct{}{}
 	h.connsMu.Unlock()
 }
 
-func (h *WSHandler) deregister(c *websocket.Conn) {
+func (h *WSHandler) deregister(sc *safeConn) {
 	h.connsMu.Lock()
-	delete(h.conns, c)
+	delete(h.conns, sc)
 	h.connsMu.Unlock()
 }
+
+// ---------------------------------------------------------------------------
+// Frame rate limiter (per-connection, not concurrent)
+// ---------------------------------------------------------------------------
 
 // frameRateLimiter enforces a per-connection limit on camera frames
 // using a fixed one-second window counter.
@@ -145,11 +198,30 @@ func (r *frameRateLimiter) allow() bool {
 	return true
 }
 
+// ---------------------------------------------------------------------------
+// Handle
+// ---------------------------------------------------------------------------
+
 // Handle is the WebSocket connection handler. It creates a session,
-// reads incoming JSON messages in a loop, dispatches them to the
-// appropriate service method, and writes responses back to the client.
+// configures heartbeat and message-size limits, reads incoming JSON messages
+// in a loop, dispatches them to the appropriate service method, and writes
+// responses back to the client.
 func (h *WSHandler) Handle(c *websocket.Conn) {
-	// Extract IP (RemoteAddr format is "IP:port")
+	// ── Limits & heartbeat setup ─────────────────────────────────────────────
+
+	// Reject messages larger than maxMessageSize (returns CloseMessageTooBig).
+	c.SetReadLimit(maxMessageSize)
+
+	// Set initial read deadline; the pong handler resets it on each pong.
+	if err := c.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		slog.Error("failed to set read deadline", "err", err)
+		return
+	}
+	c.SetPongHandler(func(string) error {
+		return c.SetReadDeadline(time.Now().Add(pongWait))
+	})
+
+	// ── IP / connection-limit check ──────────────────────────────────────────
 	ip, _, err := net.SplitHostPort(c.RemoteAddr().String())
 	if err != nil {
 		ip = c.RemoteAddr().String()
@@ -164,20 +236,22 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		return
 	}
 
+	sc := &safeConn{c: c}
 	h.activeConns.Add(1)
-	h.register(c)
+	h.register(sc)
 
 	slog.Info("WebSocket client connected",
 		"remote_addr", c.RemoteAddr(),
 		"active_conns", h.activeConns.Load(),
 	)
 
+	// ── Session ───────────────────────────────────────────────────────────────
 	session, err := h.sessions.CreateSession("unknown", "unknown")
 	if err != nil {
 		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)
 		h.ipConns.remove(ip)
-		h.deregister(c)
+		h.deregister(sc)
 		return
 	}
 	sessionID := session.SessionID
@@ -188,7 +262,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		}
 		h.activeConns.Add(-1)
 		h.ipConns.remove(ip)
-		h.deregister(c)
+		h.deregister(sc)
 		slog.Info("WebSocket client disconnected",
 			"remote_addr", c.RemoteAddr(),
 			"session_id", sessionID,
@@ -196,6 +270,15 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		)
 	}()
 
+	// ── Ping goroutine ────────────────────────────────────────────────────────
+	// Sends a Ping every pingInterval. If the client doesn't reply with Pong
+	// within pongWait the read deadline expires and the read loop exits,
+	// closing the connection and freeing all resources.
+	done := make(chan struct{})
+	defer close(done)
+	go h.pingLoop(sc, done, sessionID)
+
+	// ── Message loop ──────────────────────────────────────────────────────────
 	rateLimiter := &frameRateLimiter{windowStart: time.Now()}
 
 	for {
@@ -209,11 +292,11 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(c, sessionID, msg, rateLimiter)
+			h.handleFrame(sc, sessionID, msg, rateLimiter)
 		case "text":
-			h.handleText(c, sessionID, msg)
+			h.handleText(sc, sessionID, msg)
 		case "ping":
-			h.handlePing(c)
+			h.handlePing(sc)
 		default:
 			slog.Warn("unknown message type",
 				"type", msg.Type,
@@ -224,9 +307,28 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	}
 }
 
+// pingLoop sends Ping frames every pingInterval until done is closed or a
+// write fails (which means the connection is gone).
+func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID string) {
+	ticker := time.NewTicker(pingInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			if err := sc.writePing(); err != nil {
+				slog.Warn("ping failed — connection likely dead",
+					"session_id", sessionID, "err", err)
+				return
+			}
+		case <-done:
+			return
+		}
+	}
+}
+
 // handleFrame processes a camera frame through the conversation service.
 // Frames that exceed the rate limit are silently dropped.
-func (h *WSHandler) handleFrame(c *websocket.Conn, sessionID string, msg IncomingMessage, rl *frameRateLimiter) {
+func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMessage, rl *frameRateLimiter) {
 	if !rl.allow() {
 		return
 	}
@@ -235,7 +337,7 @@ func (h *WSHandler) handleFrame(c *websocket.Conn, sessionID string, msg Incomin
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
 	if err != nil {
 		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
-		writeError(c, err.Error())
+		writeError(sc, err.Error())
 		return
 	}
 
@@ -244,16 +346,16 @@ func (h *WSHandler) handleFrame(c *websocket.Conn, sessionID string, msg Incomin
 		return
 	}
 
-	writeResponse(c, result)
+	writeResponse(sc, result)
 }
 
 // handleText processes a text-only conversation turn.
-func (h *WSHandler) handleText(c *websocket.Conn, sessionID string, msg IncomingMessage) {
+func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessage) {
 	ctx := context.Background()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
 	if err != nil {
 		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
-		writeError(c, err.Error())
+		writeError(sc, err.Error())
 		return
 	}
 
@@ -261,38 +363,38 @@ func (h *WSHandler) handleText(c *websocket.Conn, sessionID string, msg Incoming
 		return
 	}
 
-	writeResponse(c, result)
+	writeResponse(sc, result)
 }
 
 // handlePing responds to a client ping with a pong message.
-func (h *WSHandler) handlePing(c *websocket.Conn) {
+func (h *WSHandler) handlePing(sc *safeConn) {
 	out := OutgoingMessage{Type: "pong"}
-	if err := c.WriteJSON(out); err != nil {
+	if err := sc.writeJSON(out); err != nil {
 		slog.Warn("failed to write pong", "err", err)
 	}
 }
 
 // writeResponse sends a successful analysis result to the client.
-func writeResponse(c *websocket.Conn, result *services.ProcessResult) {
+func writeResponse(sc *safeConn, result *services.ProcessResult) {
 	out := OutgoingMessage{
 		Type:    "response",
 		Text:    result.Text,
 		Overlay: result.Overlay,
 		Step:    result.Step,
 	}
-	if err := c.WriteJSON(out); err != nil {
+	if err := sc.writeJSON(out); err != nil {
 		slog.Warn("failed to write response", "err", err)
 	}
 }
 
 // writeError sends an error message to the client without closing
 // the connection.
-func writeError(c *websocket.Conn, errMsg string) {
+func writeError(sc *safeConn, errMsg string) {
 	out := OutgoingMessage{
 		Type:  "error",
 		Error: errMsg,
 	}
-	if err := c.WriteJSON(out); err != nil {
+	if err := sc.writeJSON(out); err != nil {
 		slog.Warn("failed to write error", "err", err)
 	}
 }
