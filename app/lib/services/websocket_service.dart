@@ -95,6 +95,20 @@ class WebSocketService {
     }
   }
 
+  /// Sends a voice/text query to the backend.
+  void sendText(String text) {
+    if (_channel == null) return;
+    try {
+      _channel!.sink.add(jsonEncode({
+        'type': 'voice',
+        'text': text,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      }));
+    } catch (_) {
+      // Connection may have dropped; reconnect will be triggered by onDone.
+    }
+  }
+
   void _emit(ConnectionStatus status) {
     if (!_statusController.isClosed) _statusController.add(status);
   }
