@@ -15,6 +15,7 @@ import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/websocket_service.dart';
 import '../widgets/ar_overlay.dart';
+import '../widgets/guidance_overlay.dart';
 import '../widgets/step_progress.dart';
 
 /// Full-screen camera view with AR overlay, voice I/O, step progress, and chat.
@@ -234,15 +235,17 @@ class _CameraBody extends StatelessWidget {
             ),
           ),
 
-        // ── AI processing indicator (bottom-centre, above step bar) ──────
-        if (session.isProcessing)
-          Positioned(
-            bottom: padding.bottom +
-                (stepState.steps.isNotEmpty ? 120 : 40),
-            left: 0,
-            right: 0,
-            child: const Center(child: _AnalyzingIndicator()),
+        // ── AI guidance overlay (bottom, above step bar) ──────────────────
+        Positioned(
+          left: 0,
+          right: isChatOpen ? screenSize.width * 0.45 : 0,
+          bottom: padding.bottom +
+              (stepState.steps.isNotEmpty ? 110 : 80),
+          child: GuidanceOverlay(
+            text: session.responseText,
+            isProcessing: session.isProcessing,
           ),
+        ),
 
         // ── Connection status (top-right) ────────────────────────────────
         Positioned(
@@ -289,41 +292,6 @@ class _CameraBody extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ── Analyzing indicator ───────────────────────────────────────────────────────
-
-class _AnalyzingIndicator extends StatelessWidget {
-  const _AnalyzingIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0x99000000),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white70,
-            ),
-          ),
-          SizedBox(width: 8),
-          Text(
-            'AI sta analizzando...',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-        ],
-      ),
     );
   }
 }
