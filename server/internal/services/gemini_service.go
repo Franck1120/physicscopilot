@@ -14,6 +14,9 @@ import (
 // defaultGeminiURL is the production endpoint for Gemini 2.5 Flash.
 const defaultGeminiURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
+// defaultCLIProxyBaseURL is the base URL for the local CLIProxyAPI Docker container.
+const defaultCLIProxyBaseURL = "http://localhost:8085"
+
 // maxRetries is the number of attempts before giving up on transient errors.
 const maxRetries = 3
 
@@ -23,7 +26,7 @@ const geminiTemperature = 0.2
 // geminiMaxOutputTokens caps the length of Gemini's generated response.
 const geminiMaxOutputTokens = 1024
 
-// httpTimeout is the deadline for each individual HTTP request to Gemini.
+// httpTimeout is the deadline for each individual HTTP request.
 const httpTimeout = 30 * time.Second
 
 // systemPrompt instructs Gemini to behave as a 3D printing technician
@@ -61,31 +64,51 @@ type Arrow struct {
 	Y2 float64 `json:"y2"`
 }
 
-// GeminiService communicates with the Google Gemini Vision API to analyze
-// 3D printer camera frames and return structured repair instructions.
+// GeminiService communicates with the Google Gemini Vision API or a local
+// CLIProxyAPI Docker container to analyze 3D printer camera frames and return
+// structured repair instructions.
+//
+// When GEMINI_API_KEY is set, the service calls the Gemini REST API directly.
+// When it is absent, the service falls back to the CLIProxyAPI container
+// (OpenAI-compatible endpoint) at CLIPROXY_URL (default: http://localhost:8085).
 type GeminiService struct {
 	apiKey     string
 	baseURL    string
+	useProxy   bool
+	proxyURL   string
 	httpClient *http.Client
 }
 
-// NewGeminiService creates a GeminiService by reading configuration from
-// environment variables. Returns an error if GEMINI_API_KEY is not set.
-// GEMINI_BASE_URL overrides the default endpoint (useful for local proxies).
+// NewGeminiService creates a GeminiService from environment variables.
+//
+//   - GEMINI_API_KEY present → Gemini REST API (GEMINI_BASE_URL overrides endpoint)
+//   - GEMINI_API_KEY absent  → CLIProxyAPI at CLIPROXY_URL/v1/chat/completions
 func NewGeminiService() (*GeminiService, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("GEMINI_API_KEY environment variable is required")
+
+	if apiKey != "" {
+		baseURL := os.Getenv("GEMINI_BASE_URL")
+		if baseURL == "" {
+			baseURL = defaultGeminiURL
+		}
+		return &GeminiService{
+			apiKey:  apiKey,
+			baseURL: baseURL,
+			httpClient: &http.Client{
+				Timeout: httpTimeout,
+			},
+		}, nil
 	}
 
-	baseURL := os.Getenv("GEMINI_BASE_URL")
-	if baseURL == "" {
-		baseURL = defaultGeminiURL
+	// Fall back to the local CLIProxyAPI Docker container.
+	proxyBase := os.Getenv("CLIPROXY_URL")
+	if proxyBase == "" {
+		proxyBase = defaultCLIProxyBaseURL
 	}
 
 	return &GeminiService{
-		apiKey:  apiKey,
-		baseURL: baseURL,
+		useProxy: true,
+		proxyURL: proxyBase + "/v1/chat/completions",
 		httpClient: &http.Client{
 			Timeout: httpTimeout,
 		},
@@ -93,24 +116,16 @@ func NewGeminiService() (*GeminiService, error) {
 }
 
 // AnalyzeFrame sends a camera frame (base64-encoded JPEG) and conversation
-// context to Gemini, then parses the structured JSON response.
-// If frameBase64 is empty, only the text prompt is sent (no image).
-// Retries up to 3 times with exponential backoff on HTTP 429 and 5xx errors.
+// context for analysis, then returns the structured result.
+// Routes to Gemini REST API or CLIProxyAPI depending on configuration.
 func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
-	reqBody := g.buildRequestBody(frameBase64, conversationContext)
-
-	payload, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("marshal gemini request: %w", err)
+	if g.useProxy {
+		return g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext)
 	}
-
-	respBody, err := g.doWithRetry(ctx, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseGeminiResponse(respBody)
+	return g.analyzeFrameViaGemini(ctx, frameBase64, conversationContext)
 }
+
+// ── Gemini REST API path ──────────────────────────────────────────────────────
 
 // geminiRequest mirrors the JSON structure expected by the Gemini REST API.
 type geminiRequest struct {
@@ -156,6 +171,19 @@ type geminiCandidatePart struct {
 	Text string `json:"text"`
 }
 
+func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
+	reqBody := g.buildRequestBody(frameBase64, conversationContext)
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshal gemini request: %w", err)
+	}
+	respBody, err := g.doWithRetry(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+	return parseGeminiResponse(respBody)
+}
+
 // buildRequestBody assembles the Gemini request payload.
 // When frameBase64 is non-empty, the image is included as inline_data.
 func (g *GeminiService) buildRequestBody(frameBase64, conversationContext string) geminiRequest {
@@ -167,7 +195,6 @@ func (g *GeminiService) buildRequestBody(frameBase64, conversationContext string
 	parts := []geminiPart{
 		{Text: promptText},
 	}
-
 	if frameBase64 != "" {
 		parts = append(parts, geminiPart{
 			InlineData: &inlineData{
@@ -179,10 +206,7 @@ func (g *GeminiService) buildRequestBody(frameBase64, conversationContext string
 
 	return geminiRequest{
 		Contents: []geminiContent{
-			{
-				Role:  "user",
-				Parts: parts,
-			},
+			{Role: "user", Parts: parts},
 		},
 		GenerationConfig: generationConfig{
 			ResponseMimeType: "application/json",
@@ -194,7 +218,6 @@ func (g *GeminiService) buildRequestBody(frameBase64, conversationContext string
 
 // doWithRetry executes the HTTP POST to Gemini with exponential backoff.
 // Retries on HTTP 429 (rate limit) and 5xx (server error).
-// Does NOT retry on other 4xx client errors.
 func (g *GeminiService) doWithRetry(ctx context.Context, payload []byte) ([]byte, error) {
 	backoff := 1 * time.Second
 
@@ -205,7 +228,6 @@ func (g *GeminiService) doWithRetry(ctx context.Context, payload []byte) ([]byte
 			return body, nil
 		}
 
-		// Only retry on retryable errors
 		retryErr, ok := err.(*retryableError)
 		if !ok {
 			return nil, err
@@ -213,7 +235,6 @@ func (g *GeminiService) doWithRetry(ctx context.Context, payload []byte) ([]byte
 
 		lastErr = retryErr
 
-		// Don't sleep after the final attempt
 		if attempt < maxRetries-1 {
 			select {
 			case <-ctx.Done():
@@ -237,9 +258,8 @@ func (e *retryableError) Error() string {
 	return e.message
 }
 
-// doRequest sends a single HTTP POST and returns the response body.
+// doRequest sends a single HTTP POST to the Gemini API.
 // Returns a retryableError for 429 and 5xx status codes.
-// Returns a plain error for other non-2xx status codes.
 func (g *GeminiService) doRequest(ctx context.Context, url string, payload []byte) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
@@ -280,25 +300,165 @@ func parseGeminiResponse(body []byte) (*GeminiResponse, error) {
 	if err := json.Unmarshal(body, &raw); err != nil {
 		return nil, fmt.Errorf("parse gemini response envelope: %w", err)
 	}
-
 	if len(raw.Candidates) == 0 {
 		return nil, fmt.Errorf("gemini returned no candidates")
 	}
-
 	parts := raw.Candidates[0].Content.Parts
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("gemini candidate has no content parts")
 	}
-
 	text := parts[0].Text
 	if text == "" {
 		return nil, fmt.Errorf("gemini candidate text is empty")
 	}
-
 	var result GeminiResponse
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		return nil, fmt.Errorf("parse gemini structured response: %w", err)
 	}
+	return &result, nil
+}
 
+// ── CLIProxyAPI path (OpenAI-compatible) ─────────────────────────────────────
+
+// openAIRequest is the body sent to the CLIProxyAPI OpenAI-compatible endpoint.
+type openAIRequest struct {
+	Model     string          `json:"model"`
+	Messages  []openAIMessage `json:"messages"`
+	MaxTokens int             `json:"max_tokens"`
+}
+
+// openAIMessage is a single chat message. Content is a JSON-encoded string or
+// array of content parts, depending on whether an image is present.
+type openAIMessage struct {
+	Role    string          `json:"role"`
+	Content json.RawMessage `json:"content"`
+}
+
+// openAIContentPart represents a single part of a multimodal user message.
+type openAIContentPart struct {
+	Type     string          `json:"type"`
+	Text     string          `json:"text,omitempty"`
+	ImageURL *openAIImageURL `json:"image_url,omitempty"`
+}
+
+// openAIImageURL holds the data-URL for an inline image.
+type openAIImageURL struct {
+	URL string `json:"url"`
+}
+
+// openAIResponse is the envelope returned by the CLIProxyAPI.
+type openAIResponse struct {
+	Choices []openAIChoice `json:"choices"`
+}
+
+type openAIChoice struct {
+	Message openAIChoiceMessage `json:"message"`
+}
+
+type openAIChoiceMessage struct {
+	Content string `json:"content"`
+}
+
+func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
+	reqBody, err := g.buildProxyRequestBody(frameBase64, conversationContext)
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshal proxy request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, g.proxyURL, bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("create proxy request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("proxy HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read proxy response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("proxy returned HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	return parseProxyResponse(body)
+}
+
+// buildProxyRequestBody assembles the OpenAI-compatible request for CLIProxyAPI.
+// The system prompt goes in a dedicated system message. The user message content
+// is a plain string when there is no image, or a multipart array when one is present.
+func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext string) (openAIRequest, error) {
+	userText := conversationContext
+	if userText == "" {
+		userText = "Analyze the current 3D printing state"
+	}
+
+	model := os.Getenv("GEMINI_MODEL")
+	if model == "" {
+		model = "gemini-2.5-flash"
+	}
+
+	systemContent, err := json.Marshal(systemPrompt)
+	if err != nil {
+		return openAIRequest{}, fmt.Errorf("marshal system content: %w", err)
+	}
+
+	var userContent []byte
+	if frameBase64 != "" {
+		parts := []openAIContentPart{
+			{Type: "text", Text: userText},
+			{Type: "image_url", ImageURL: &openAIImageURL{
+				URL: "data:image/jpeg;base64," + frameBase64,
+			}},
+		}
+		userContent, err = json.Marshal(parts)
+		if err != nil {
+			return openAIRequest{}, fmt.Errorf("marshal user multipart content: %w", err)
+		}
+	} else {
+		userContent, err = json.Marshal(userText)
+		if err != nil {
+			return openAIRequest{}, fmt.Errorf("marshal user text content: %w", err)
+		}
+	}
+
+	return openAIRequest{
+		Model: model,
+		Messages: []openAIMessage{
+			{Role: "system", Content: json.RawMessage(systemContent)},
+			{Role: "user", Content: json.RawMessage(userContent)},
+		},
+		MaxTokens: geminiMaxOutputTokens,
+	}, nil
+}
+
+// parseProxyResponse extracts the structured JSON from the CLIProxyAPI response
+// envelope: choices[0].message.content -> GeminiResponse.
+func parseProxyResponse(body []byte) (*GeminiResponse, error) {
+	var raw openAIResponse
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("parse proxy response envelope: %w", err)
+	}
+	if len(raw.Choices) == 0 {
+		return nil, fmt.Errorf("proxy returned no choices")
+	}
+	text := raw.Choices[0].Message.Content
+	if text == "" {
+		return nil, fmt.Errorf("proxy response text is empty")
+	}
+	var result GeminiResponse
+	if err := json.Unmarshal([]byte(text), &result); err != nil {
+		return nil, fmt.Errorf("parse proxy structured response: %w", err)
+	}
 	return &result, nil
 }
