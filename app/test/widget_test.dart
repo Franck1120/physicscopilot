@@ -1,14 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:physicscopilot/main.dart';
 
 void main() {
   testWidgets('App mounts without crashing', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
-      const ProviderScope(child: PhysicsCopilotApp()),
+      ProviderScope(child: PhysicsCopilotApp(prefs: prefs)),
     );
-    // Just verify the app widget tree is created.
     expect(find.byType(PhysicsCopilotApp), findsOneWidget);
   });
 }

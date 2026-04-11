@@ -1,0 +1,308 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-11",
+  "total": 9,
+  "profiles": [
+
+    {
+      "id": "bambu_p1s",
+      "name": "Bambu Lab P1S",
+      "manufacturer": "Bambu Lab",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 256, "y": 256, "z": 256},
+      "enclosed": true,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 0.8,
+        "speed_mm_s": 40,
+        "note": "Short retraction due to direct drive; Bambu firmware uses firmware retraction"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 220, "bed_c": 55},
+        "PETG": {"nozzle_c": 235, "bed_c": 70},
+        "ABS":  {"nozzle_c": 255, "bed_c": 100},
+        "ASA":  {"nozzle_c": 260, "bed_c": 100},
+        "TPU":  {"nozzle_c": 230, "bed_c": 35},
+        "Nylon":{"nozzle_c": 265, "bed_c": 80}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "PEI textured or smooth",
+      "firmware": "Bambu proprietary",
+      "special_notes": [
+        "Enclosed chamber — great for ABS/ASA/PA",
+        "Multi-axis vibration compensation built-in",
+        "Use Bambu Studio for best results",
+        "AMS multi-material system available as optional upgrade"
+      ]
+    },
+
+    {
+      "id": "bambu_x1c",
+      "name": "Bambu Lab X1 Carbon",
+      "manufacturer": "Bambu Lab",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 256, "y": 256, "z": 256},
+      "enclosed": true,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 0.8,
+        "speed_mm_s": 40,
+        "note": "Firmware retraction recommended; very short due to direct drive + high-speed system"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 220, "bed_c": 55},
+        "PETG": {"nozzle_c": 235, "bed_c": 70},
+        "ABS":  {"nozzle_c": 255, "bed_c": 100},
+        "ASA":  {"nozzle_c": 260, "bed_c": 100},
+        "PC":   {"nozzle_c": 280, "bed_c": 100},
+        "TPU":  {"nozzle_c": 230, "bed_c": 35},
+        "Nylon":{"nozzle_c": 265, "bed_c": 80}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "PEI textured or smooth",
+      "firmware": "Bambu proprietary",
+      "special_notes": [
+        "Flagship model with AI-assisted print monitoring via LiDAR",
+        "Carbon fiber reinforced construction reduces vibration",
+        "Enclosed chamber supports engineering materials (PC, PA-CF)",
+        "AMS 4-material system standard",
+        "Hardened steel nozzle recommended for abrasive filaments"
+      ]
+    },
+
+    {
+      "id": "bambu_a1",
+      "name": "Bambu Lab A1",
+      "manufacturer": "Bambu Lab",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 256, "y": 256, "z": 256},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 1.0,
+        "speed_mm_s": 40,
+        "note": "Open frame; slightly higher retraction than enclosed models"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 220, "bed_c": 55},
+        "PETG": {"nozzle_c": 235, "bed_c": 70},
+        "TPU":  {"nozzle_c": 225, "bed_c": 35}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "PEI textured",
+      "firmware": "Bambu proprietary",
+      "special_notes": [
+        "Open frame — not suitable for ABS/ASA without enclosure",
+        "AMS Lite 4-material system available",
+        "Best for PLA and PETG",
+        "Quieter operation than X1C/P1S at similar speeds",
+        "Auto bed leveling and vibration compensation included"
+      ]
+    },
+
+    {
+      "id": "prusa_mk4",
+      "name": "Prusa MK4",
+      "manufacturer": "Prusa Research",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 250, "y": 210, "z": 220},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 0.6,
+        "speed_mm_s": 45,
+        "note": "Input shaper eliminates need for high retraction; firmware retraction available"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 215, "bed_c": 60},
+        "PETG": {"nozzle_c": 230, "bed_c": 85},
+        "ABS":  {"nozzle_c": 255, "bed_c": 110},
+        "ASA":  {"nozzle_c": 260, "bed_c": 100},
+        "TPU":  {"nozzle_c": 235, "bed_c": 50},
+        "Nylon":{"nozzle_c": 260, "bed_c": 80}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "Smooth PEI, textured PEI, or satin PEI sheet",
+      "firmware": "Prusa proprietary (Marlin fork)",
+      "special_notes": [
+        "Load cell-based bed leveling — extremely accurate Z offset",
+        "Input shaper for high-speed quality printing",
+        "Nextruder with lower gear ratio for precise extrusion",
+        "Compatible with Prusa MMU3 for multi-material printing",
+        "Open frame — use enclosure or cardboard tent for ABS/ASA"
+      ]
+    },
+
+    {
+      "id": "prusa_mk3s_plus",
+      "name": "Prusa MK3S+",
+      "manufacturer": "Prusa Research",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 250, "y": 210, "z": 210},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 0.8,
+        "speed_mm_s": 35,
+        "note": "Standard direct drive retraction; Bondtech BMG extruder"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 215, "bed_c": 60},
+        "PETG": {"nozzle_c": 230, "bed_c": 85},
+        "ABS":  {"nozzle_c": 255, "bed_c": 110},
+        "ASA":  {"nozzle_c": 260, "bed_c": 100},
+        "TPU":  {"nozzle_c": 235, "bed_c": 50},
+        "Nylon":{"nozzle_c": 260, "bed_c": 80}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 200,
+      "bed_surface": "Smooth PEI, textured PEI, or satin PEI sheet (magnetic)",
+      "firmware": "Marlin (Prusa fork)",
+      "special_notes": [
+        "Bondtech BMG extruder with dual-drive grip",
+        "PINDA 2 probe for mesh bed leveling",
+        "Compatible with Prusa MMU2S for multi-material",
+        "Well-tested, reliable workhorse printer",
+        "Many community mods and upgrades available"
+      ]
+    },
+
+    {
+      "id": "prusa_mini_plus",
+      "name": "Prusa Mini+",
+      "manufacturer": "Prusa Research",
+      "extruder_type": "bowden",
+      "build_volume_mm": {"x": 180, "y": 180, "z": 180},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 3.2,
+        "speed_mm_s": 35,
+        "note": "Short Bowden (~30cm); lower retraction than typical Bowden printers"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 215, "bed_c": 60},
+        "PETG": {"nozzle_c": 230, "bed_c": 85},
+        "ABS":  {"nozzle_c": 255, "bed_c": 100},
+        "TPU":  {"nozzle_c": 230, "bed_c": 50}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 180,
+      "bed_surface": "Smooth PEI or textured PEI (magnetic)",
+      "firmware": "Marlin (Prusa fork)",
+      "special_notes": [
+        "Compact form factor with short Bowden tube",
+        "MINTEMP/MAXTEMP protection with SuperPINDA",
+        "Good entry point into Prusa ecosystem",
+        "Not ideal for flexible filaments due to Bowden design",
+        "Small build plate limits part size"
+      ]
+    },
+
+    {
+      "id": "creality_ender3_v3",
+      "name": "Creality Ender 3 V3",
+      "manufacturer": "Creality",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 220, "y": 220, "z": 250},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 1.0,
+        "speed_mm_s": 45,
+        "note": "Direct drive with Creality Sprite extruder; short retraction needed"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 220, "bed_c": 60},
+        "PETG": {"nozzle_c": 235, "bed_c": 75},
+        "ABS":  {"nozzle_c": 250, "bed_c": 100},
+        "TPU":  {"nozzle_c": 225, "bed_c": 40}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "PEI flexible spring steel",
+      "firmware": "Marlin (Creality fork with Klipper option)",
+      "special_notes": [
+        "Input shaper for high-speed printing",
+        "CoreXZ kinematic system for fast, quiet movement",
+        "CR Touch auto leveling included",
+        "Open frame — ABS/ASA requires enclosure",
+        "Good value for speed; Klipper firmware available as alternative"
+      ]
+    },
+
+    {
+      "id": "creality_ender3_s1",
+      "name": "Creality Ender 3 S1",
+      "manufacturer": "Creality",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 220, "y": 220, "z": 270},
+      "enclosed": false,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 1.0,
+        "speed_mm_s": 40,
+        "note": "Sprite Pro direct drive extruder with dual-drive gears"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 220, "bed_c": 60},
+        "PETG": {"nozzle_c": 235, "bed_c": 75},
+        "ABS":  {"nozzle_c": 250, "bed_c": 100},
+        "TPU":  {"nozzle_c": 225, "bed_c": 40}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 150,
+      "bed_surface": "PEI flexible spring steel or glass",
+      "firmware": "Marlin (Creality fork)",
+      "special_notes": [
+        "Sprite Pro extruder with high-temperature capability (300°C max)",
+        "CR Touch auto bed leveling",
+        "Lead screw Z axis — prone to Z wobble if not maintained",
+        "Good for flexible filaments due to direct drive",
+        "Popular community printer with extensive mod support"
+      ]
+    },
+
+    {
+      "id": "voron_2_4",
+      "name": "Voron 2.4",
+      "manufacturer": "Voron Design (community)",
+      "extruder_type": "direct_drive",
+      "build_volume_mm": {"x": 350, "y": 350, "z": 350},
+      "enclosed": true,
+      "multi_material": false,
+      "retraction": {
+        "distance_mm": 0.4,
+        "speed_mm_s": 30,
+        "note": "Stealthburner with Clockwork 2 extruder; firmware retraction + pressure advance in Klipper"
+      },
+      "temperatures": {
+        "PLA":  {"nozzle_c": 215, "bed_c": 60},
+        "PETG": {"nozzle_c": 235, "bed_c": 85},
+        "ABS":  {"nozzle_c": 250, "bed_c": 100},
+        "ASA":  {"nozzle_c": 260, "bed_c": 100},
+        "PC":   {"nozzle_c": 280, "bed_c": 110},
+        "Nylon":{"nozzle_c": 265, "bed_c": 100},
+        "TPU":  {"nozzle_c": 230, "bed_c": 50}
+      },
+      "nozzle_diameter_mm": 0.4,
+      "max_print_speed_mm_s": 500,
+      "bed_surface": "Textured PEI, smooth PEI, or G10",
+      "firmware": "Klipper",
+      "special_notes": [
+        "Fully enclosed CoreXY for high-temp engineering materials",
+        "Klipper firmware with full configurability: input shaping, pressure advance, resonance compensation",
+        "Magnetic bed with removable spring steel PEI sheet",
+        "Self-sourced community build — requires advanced mechanical and electrical knowledge",
+        "4-point independent Z leveling (Quad Gantry Level)",
+        "Multiple build volumes available: 250, 300, 350mm",
+        "Print quality comparable to commercial printers costing 3-5x more"
+      ]
+    }
+
+  ]
+}
