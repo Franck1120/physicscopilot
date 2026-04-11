@@ -1,155 +1,124 @@
 # PhysicsCopilot
 
-> Real-time AI repair guidance — point your phone at the problem, get step-by-step voice instructions.
+### Your AI-powered repair assistant
 
-![CI](https://github.com/Franck1120/physicscopilot/actions/workflows/ci.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter)
-![Go](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go)
+[![CI](https://github.com/Franck1120/physicscopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Franck1120/physicscopilot/actions)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Go](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+
+**Point your phone at a broken machine. Get step-by-step repair guidance in real time.**
+
+PhysicsCopilot turns any smartphone into an AI repair technician — streaming live camera frames to Gemini Vision, diagnosing problems instantly, and walking users through fixes with voice + visual overlays. No manual needed.
 
 ---
 
-<!-- Screenshot placeholder — replace with actual screenshot before launch -->
-<!--
-![PhysicsCopilot screenshot](docs/screenshot.png)
--->
+## Why It Exists
 
-## What It Does
+$400B is spent annually on appliance and equipment repairs. Most of it goes to technicians for jobs that owners could fix themselves — if they had guidance. Repair manuals are static PDFs. YouTube tutorials don't know what *your* machine looks like right now.
 
-PhysicsCopilot uses your phone's camera and AI to guide you through physical repairs in real time. First vertical: **3D printer troubleshooting**.
+PhysicsCopilot is the copilot for the physical world.
 
-Point the camera at your printer → AI detects the problem → step-by-step voice + visual instructions appear on screen.
+---
 
 ## Features
 
-- **Real-time vision** — streams camera frames to Gemini Vision for instant diagnosis
-- **Voice guidance** — text-to-speech reads each repair step aloud
-- **Session history** — every repair is logged for future reference
-- **Knowledge base** — curated 3D printer repair database with RAG retrieval
-- **Offline-first design** — core flows degrade gracefully without connectivity
+- **📷 Live vision diagnosis** — streams camera frames over WebSocket to Gemini 2.5 Flash for real-time problem detection
+- **🔊 Voice-guided repair steps** — text-to-speech walks users through each action hands-free
+- **🧠 RAG knowledge base** — 44 curated 3D printer failure modes with pgvector semantic search
+- **📋 Session history** — every repair logged to Supabase for reference and model improvement
+- **🔌 Works on your LAN** — zero cloud dependency for local testing; designed for offline-first degradation
 
-## Tech Stack
-
-| Layer      | Technology                            |
-|------------|---------------------------------------|
-| Mobile     | Flutter 3.41 (iOS + Android)          |
-| Backend    | Go 1.22 + Fiber + WebSocket           |
-| AI         | Google Gemini Vision API              |
-| Database   | Supabase (Postgres + Auth + pgvector) |
-| Hosting    | Fly.io (server) · Vercel (landing)    |
-| RAG        | pgvector + custom embeddings          |
+---
 
 ## Architecture
 
 ```
-physicscopilot/
-├── app/          # Flutter mobile app (camera, voice, AR overlay)
-│   ├── lib/
-│   └── test/
-├── server/       # Go backend (WebSocket, REST, RAG)
-│   ├── cmd/server/
-│   └── internal/
-│       ├── handlers/
-│       ├── middleware/
-│       ├── models/
-│       └── services/
-├── kb/           # Knowledge base scrapers & embeddings pipeline
-├── infra/        # Infrastructure config
-│   ├── Dockerfile.fly      # Fly.io optimised build
-│   ├── fly.toml            # Fly.io app config
-│   ├── docker-compose.yml  # Local dev stack
-│   └── supabase/           # DB schema & migrations
-└── web/          # Static landing page
-    ├── index.html
-    └── vercel.json
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER'S PHONE                            │
+│                                                                 │
+│   Camera frames ──►  Flutter App  ──► TTS / AR overlay         │
+│                           │                                     │
+└───────────────────────────┼─────────────────────────────────────┘
+                            │  WebSocket (ws://)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       GO SERVER (Fiber)                         │
+│                                                                 │
+│   WebSocket handler ──► Frame processor ──► Gemini 2.5 Flash   │
+│                                │                                │
+│                                ▼                                │
+│                    pgvector RAG (44 KB entries)                 │
+│                                │                                │
+│                                ▼                                │
+│                    Supabase (session log + auth)                │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Data flow:
-```
-Flutter app  ──WS──►  Go server  ──►  Gemini Vision API
-                          │
-                          ▼
-                      Supabase (session log + pgvector RAG)
-```
+---
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
-
-- [Flutter 3.41+](https://flutter.dev/docs/get-started/install)
-- [Go 1.22+](https://go.dev/dl/)
-- [Docker](https://docs.docker.com/get-docker/)
-- [Supabase account](https://supabase.com) or local Supabase CLI
-- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
-
-### Local Development
+### 1. Run the server
 
 ```bash
-# Clone
 git clone https://github.com/Franck1120/physicscopilot.git
 cd physicscopilot
 
-# Copy env template and fill in your secrets
+# Set environment variables
 cp .env.example .env
-# Required: SUPABASE_URL, SUPABASE_ANON_KEY, GEMINI_API_KEY
+# Fill in: GEMINI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
 
-# Option A — Docker Compose (backend + local Postgres)
+# Start with Docker Compose (server + local Postgres)
 docker compose -f infra/docker-compose.yml up
 
-# Option B — bare metal
-make dev-server          # starts Go server on :8080
-make dev-app             # starts Flutter app (requires device/emulator)
+# Or bare metal
+make dev-server   # Go server on :8080
 ```
 
-### Running Tests
+### 2. Run the app
 
 ```bash
-make test          # all tests (Go + Flutter)
-make test-server   # Go unit tests only
-make test-app      # Flutter tests only
+# Point the app at your server (edit before building)
+# app/lib/utils/constants.dart → _serverHost
+
+cd app
+flutter pub get
+flutter run                      # on connected device/emulator
+
+# Build APK for Android
+flutter build apk --debug
 ```
 
-### Deploy
+---
 
-#### Server → Fly.io
+## Tech Stack
 
-```bash
-# First time: create the app and set secrets
-flyctl auth login
-flyctl apps create physicscopilot-server --config infra/fly.toml
-make secrets-set GEMINI_API_KEY=... SUPABASE_URL=... SUPABASE_ANON_KEY=...
+| Layer       | Technology                               |
+|-------------|------------------------------------------|
+| Mobile      | Flutter 3.41 · iOS + Android             |
+| Backend     | Go 1.22 · Fiber · WebSocket              |
+| AI          | Gemini 2.5 Flash (vision + reasoning)    |
+| Database    | Supabase · Postgres · pgvector           |
+| RAG         | 44-entry KB · custom embeddings pipeline |
+| Hosting     | Fly.io (server) · Vercel (landing)       |
+| Codebase    | ~7,400 LOC across Flutter + Go           |
 
-# Subsequent deploys
-make deploy-server
-```
+---
 
-Required secrets (set via `flyctl secrets set` or `make secrets-set`):
+## Roadmap
 
-| Secret              | Description                              |
-|---------------------|------------------------------------------|
-| `GEMINI_API_KEY`    | Google Gemini Vision API key             |
-| `SUPABASE_URL`      | Supabase project URL                     |
-| `SUPABASE_ANON_KEY` | Supabase anon/public key                 |
-| `GEMINI_BASE_URL`   | *(optional)* Custom Gemini proxy base URL |
+| Vertical        | Status        |
+|-----------------|---------------|
+| 🖨 3D Printing  | ✅ Live        |
+| 🚗 Automotive   | Q3 2026       |
+| ❄️ HVAC         | Q4 2026       |
+| 🔌 Electronics  | 2027          |
 
-#### Landing Page → Vercel
+Each vertical adds a domain-specific knowledge base and fine-tuned diagnostic prompts. The core vision + WebSocket pipeline is shared.
 
-```bash
-cd web
-vercel deploy --prod
-```
-
-Or connect the `web/` directory to a Vercel project via the dashboard — `vercel.json` is already configured.
-
-## Contributing
-
-1. Fork the repository
-2. Create your branch: `git checkout -b feature/your-feature`
-3. Write tests first (TDD)
-4. Commit with [Conventional Commits](https://www.conventionalcommits.org/): `git commit -m "feat: add X"`
-5. Push and open a Pull Request against `main`
-
-Please run `make test` and ensure all checks pass before opening a PR.
+---
 
 ## License
 
