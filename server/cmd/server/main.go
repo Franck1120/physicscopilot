@@ -3,14 +3,36 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/websocket/v2"
+
+	"github.com/Franck1120/physicscopilot/server/internal/handlers"
+	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
 func main() {
+	// Initialize services
+	sessionSvc := services.NewSessionService()
+	geminiSvc, err := services.NewGeminiService()
+	if err != nil {
+		log.Fatal("Gemini service init failed:", err)
+	}
+	convSvc := services.NewConversationService(sessionSvc, geminiSvc)
+	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
+
+	// Background cleanup of expired sessions every 5 minutes
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			sessionSvc.CleanupExpiredSessions(30 * time.Minute)
+		}
+	}()
+
 	app := fiber.New(fiber.Config{
 		AppName: "PhysicsCopilot Server v0.1.0",
 	})
@@ -35,25 +57,7 @@ func main() {
 	})
 
 	// WebSocket endpoint — real-time repair guidance session
-	app.Get("/ws", websocket.New(func(c *websocket.Conn) {
-		// TODO: handle incoming camera frames, call Gemini, stream instructions back
-		log.Println("WebSocket client connected:", c.RemoteAddr())
-		defer func() {
-			log.Println("WebSocket client disconnected:", c.RemoteAddr())
-			c.Close()
-		}()
-
-		for {
-			mt, msg, err := c.ReadMessage()
-			if err != nil {
-				break
-			}
-			// Echo for now — replace with AI pipeline
-			if err := c.WriteMessage(mt, msg); err != nil {
-				break
-			}
-		}
-	}))
+	app.Get("/ws", websocket.New(wsHandler.Handle))
 
 	port := os.Getenv("PORT")
 	if port == "" {
