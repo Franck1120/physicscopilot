@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/voice_service.dart';
@@ -42,8 +44,24 @@ class VoiceState {
 
 class VoiceNotifier extends StateNotifier<VoiceState> {
   final VoiceService _service;
+  late final StreamSubscription<bool> _speakingSub;
 
-  VoiceNotifier(this._service) : super(const VoiceState());
+  VoiceNotifier(this._service) : super(const VoiceState()) {
+    // Keep isSpeaking in sync with TTS completion/error callbacks from the
+    // service layer. Without this subscription, speak() sets isSpeaking=true
+    // but the state is never reset when TTS finishes naturally.
+    _speakingSub = _service.speakingStream.listen((speaking) {
+      if (state.isSpeaking != speaking) {
+        state = state.copyWith(isSpeaking: speaking);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _speakingSub.cancel();
+    super.dispose();
+  }
 
   Future<void> toggleListening() async {
     if (state.isListening) {
@@ -62,6 +80,7 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 
   Future<void> stopSpeaking() async {
     await _service.stop();
+    // Stream subscription handles the state reset; explicit call for clarity.
     state = state.copyWith(isSpeaking: false);
   }
 

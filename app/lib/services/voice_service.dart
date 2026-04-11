@@ -13,6 +13,11 @@ class VoiceService {
   final _tts = FlutterTts();
 
   final _recognizedTextController = StreamController<String>.broadcast();
+
+  /// Emits `true` when TTS starts speaking, `false` when it stops.
+  /// VoiceNotifier subscribes to this to keep [VoiceState.isSpeaking] in sync.
+  final _speakingController = StreamController<bool>.broadcast();
+
   final List<String> _ttsQueue = [];
 
   bool _isListening = false;
@@ -21,6 +26,9 @@ class VoiceService {
 
   /// Emits finalised, non-empty recognised words from the microphone.
   Stream<String> get recognizedText => _recognizedTextController.stream;
+
+  /// Emits speaking state changes so callers can stay in sync.
+  Stream<bool> get speakingStream => _speakingController.stream;
 
   bool get isListening => _isListening;
   bool get isSpeaking => _isSpeaking;
@@ -48,11 +56,13 @@ class VoiceService {
 
     _tts.setCompletionHandler(() {
       _isSpeaking = false;
+      _speakingController.add(false);
       _processQueue();
     });
 
     _tts.setErrorHandler((_) {
       _isSpeaking = false;
+      _speakingController.add(false);
       _processQueue();
     });
   }
@@ -102,6 +112,7 @@ class VoiceService {
     if (_ttsQueue.isEmpty) return;
     final text = _ttsQueue.removeAt(0);
     _isSpeaking = true;
+    _speakingController.add(true);
     _tts.speak(text);
   }
 
@@ -109,6 +120,7 @@ class VoiceService {
   Future<void> stop() async {
     _ttsQueue.clear();
     _isSpeaking = false;
+    _speakingController.add(false);
     await _tts.stop();
   }
 
@@ -119,6 +131,9 @@ class VoiceService {
     await stop();
     if (!_recognizedTextController.isClosed) {
       await _recognizedTextController.close();
+    }
+    if (!_speakingController.isClosed) {
+      await _speakingController.close();
     }
   }
 }
