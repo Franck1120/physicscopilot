@@ -95,13 +95,13 @@ class WebSocketService {
     }
   }
 
-  /// Sends a voice/text query to the backend.
+  /// Sends a text query to the backend.
   void sendText(String text) {
     if (_channel == null) return;
     try {
       _channel!.sink.add(jsonEncode({
-        'type': 'voice',
-        'text': text,
+        'type': 'text',
+        'content': text,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       }));
     } catch (_) {
