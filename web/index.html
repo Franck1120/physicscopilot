@@ -510,7 +510,11 @@
       background: var(--border);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      overflow: hidden;
+      /* overflow:hidden clips the reveal translateY() animation, creating
+         black gaps inside the grid. Use clip-path to keep the rounded corners
+         without affecting animation or IntersectionObserver calculations. */
+      overflow: visible;
+      clip-path: inset(0 round var(--radius-lg));
     }
 
     .stat {
@@ -862,31 +866,25 @@
 </footer>
 
 <script>
-  // Intersection Observer — fade-up reveals
+  // Intersection Observer — fade-up reveals.
+  // threshold:0.05 fires as soon as 5% of the element enters the viewport;
+  // rootMargin bottom margin pre-triggers 40px before the element reaches
+  // the viewport edge, preventing empty sections on fast scrolls.
   const observer = new IntersectionObserver(
     (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
-    { threshold: 0.12 }
+    { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
   );
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  // Form submit — show success without page reload
+  // Form submit — placeholder mode: always show success state.
+  // Swap form.action to a real Formspree endpoint when ready.
   const form = document.getElementById('cta-form');
   const success = document.getElementById('cta-success');
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const data = new FormData(form);
-    try {
-      const res = await fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
-      if (res.ok) {
-        form.classList.add('submitted');
-        success.classList.add('visible');
-      } else {
-        form.submit(); // fallback
-      }
-    } catch {
-      form.submit(); // offline fallback
-    }
+    form.classList.add('submitted');
+    success.classList.add('visible');
   });
 </script>
 </body>
