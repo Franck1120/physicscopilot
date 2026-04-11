@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
@@ -14,7 +15,7 @@ func TestNewWSHandler(t *testing.T) {
 	// to test the handler constructor in isolation.
 	convSvc := services.NewConversationService(sessionSvc, nil)
 
-	handler := NewWSHandler(convSvc, sessionSvc)
+	handler := NewWSHandler(convSvc, sessionSvc, middleware.NewUserSessionTracker(), middleware.NewUserFrameLimiter())
 
 	if handler == nil {
 		t.Fatal("expected non-nil WSHandler")

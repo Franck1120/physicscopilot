@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
+	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/websocket/v2"
 )
@@ -129,6 +130,8 @@ type WSHandler struct {
 	sessions      *services.SessionService
 	activeConns   atomic.Int32
 	ipConns       *ipConnTracker
+	userSessions  *middleware.UserSessionTracker
+	userFrames    *middleware.UserFrameLimiter
 
 	connsMu sync.Mutex
 	conns   map[*safeConn]struct{}
@@ -139,13 +142,21 @@ type WSHandler struct {
 	PongWait     time.Duration
 }
 
-// NewWSHandler creates a WSHandler wired to the given conversation
-// and session services.
-func NewWSHandler(conversations *services.ConversationService, sessions *services.SessionService) *WSHandler {
+// NewWSHandler creates a WSHandler wired to the given conversation and session
+// services. userSessions and userFrames enforce per-user limits across all
+// concurrent WebSocket connections.
+func NewWSHandler(
+	conversations *services.ConversationService,
+	sessions *services.SessionService,
+	userSessions *middleware.UserSessionTracker,
+	userFrames *middleware.UserFrameLimiter,
+) *WSHandler {
 	return &WSHandler{
 		conversations: conversations,
 		sessions:      sessions,
 		ipConns:       newIPConnTracker(),
+		userSessions:  userSessions,
+		userFrames:    userFrames,
 		conns:         make(map[*safeConn]struct{}),
 	}
 }
@@ -227,6 +238,9 @@ func (r *frameRateLimiter) allow() bool {
 // in a loop, dispatches them to the appropriate service method, and writes
 // responses back to the client.
 func (h *WSHandler) Handle(c *websocket.Conn) {
+	// ── User identity (set by WSJWTAuth middleware before the WS upgrade) ────
+	userID, _ := c.Locals("user_id").(string)
+
 	// ── Limits & heartbeat setup ─────────────────────────────────────────────
 
 	// Reject messages larger than maxMessageSize (returns CloseMessageTooBig).
@@ -257,6 +271,17 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		return
 	}
 
+	// ── Per-user session limit (max 3 concurrent sessions) ───────────────────
+	if userID != "" && !h.userSessions.Add(userID) {
+		slog.Warn("user session limit reached", "user_id", userID, "limit", 3)
+		h.ipConns.remove(ip)
+		_ = c.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "session limit reached"),
+		)
+		return
+	}
+
 	sc := &safeConn{c: c}
 	h.activeConns.Add(1)
 	metrics.WsActiveConnections.Inc()
@@ -264,14 +289,19 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	slog.Info("WebSocket client connected",
 		"remote_addr", c.RemoteAddr(),
+		"user_id", userID,
 		"active_conns", h.activeConns.Load(),
 	)
 
 	// ── Session ───────────────────────────────────────────────────────────────
-	session, err := h.sessions.CreateSession("unknown", "unknown")
+	if userID == "" {
+		userID = "anonymous"
+	}
+	session, err := h.sessions.CreateSession(userID, userID)
 	if err != nil {
 		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)
+		h.userSessions.Remove(userID)
 		h.ipConns.remove(ip)
 		h.deregister(sc)
 		return
@@ -284,11 +314,13 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		}
 		h.activeConns.Add(-1)
 		metrics.WsActiveConnections.Dec()
+		h.userSessions.Remove(userID)
 		h.ipConns.remove(ip)
 		h.deregister(sc)
 		slog.Info("WebSocket client disconnected",
 			"remote_addr", c.RemoteAddr(),
 			"session_id", sessionID,
+			"user_id", userID,
 			"active_conns", h.activeConns.Load(),
 		)
 	}()
@@ -321,7 +353,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(sc, sessionID, msg, rateLimiter)
+			h.handleFrame(sc, sessionID, userID, msg, rateLimiter)
 		case "text":
 			h.handleText(sc, sessionID, msg)
 		case "ping":
@@ -356,9 +388,14 @@ func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID strin
 }
 
 // handleFrame processes a camera frame through the conversation service.
-// Frames that exceed the rate limit are silently dropped.
-func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMessage, rl *frameRateLimiter) {
+// Frames that exceed either the per-connection or per-user rate limit are
+// silently dropped.
+func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter) {
 	if !rl.allow() {
+		return
+	}
+	// Per-user limit across all concurrent connections (100 frames/min).
+	if userID != "anonymous" && !h.userFrames.Allow(userID) {
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	fiberws "github.com/gofiber/websocket/v2"
 	gorilla "github.com/gorilla/websocket"
 
+	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
@@ -40,7 +41,7 @@ func startTestWSServer(t *testing.T, handler func(*fiberws.Conn)) (addr string, 
 func TestHeartbeatPingLoopExitsWhenDoneClosed(t *testing.T) {
 	sessionSvc := services.NewSessionService()
 	convSvc := services.NewConversationService(sessionSvc, nil)
-	h := NewWSHandler(convSvc, sessionSvc)
+	h := NewWSHandler(convSvc, sessionSvc, middleware.NewUserSessionTracker(), middleware.NewUserFrameLimiter())
 	h.PingInterval = time.Hour // very long — won't fire in the test
 
 	done := make(chan struct{})
@@ -79,7 +80,7 @@ func TestHeartbeatPingLoopExitsWhenDoneClosed(t *testing.T) {
 func TestHeartbeatClosesConnectionOnNoPong(t *testing.T) {
 	sessionSvc := services.NewSessionService()
 	convSvc := services.NewConversationService(sessionSvc, nil)
-	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler := NewWSHandler(convSvc, sessionSvc, middleware.NewUserSessionTracker(), middleware.NewUserFrameLimiter())
 
 	// Use short timeouts so the test completes in under a second.
 	wsHandler.PingInterval = 80 * time.Millisecond

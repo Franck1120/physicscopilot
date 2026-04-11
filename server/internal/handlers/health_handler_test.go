@@ -10,13 +10,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
 func newHealthApp(version string, startTime time.Time) (*fiber.App, *WSHandler) {
 	sessionSvc := services.NewSessionService()
 	convSvc := services.NewConversationService(sessionSvc, nil)
-	ws := NewWSHandler(convSvc, sessionSvc)
+	ws := NewWSHandler(convSvc, sessionSvc, middleware.NewUserSessionTracker(), middleware.NewUserFrameLimiter())
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Get("/health", NewHealthHandler(version, startTime, ws))

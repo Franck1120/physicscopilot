@@ -40,7 +40,11 @@ func main() {
 		os.Exit(1)
 	}
 	convSvc := services.NewConversationService(sessionSvc, geminiSvc)
-	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
+
+	// Per-user limits shared across all WebSocket connections.
+	userSessions := middleware.NewUserSessionTracker()
+	userFrames := middleware.NewUserFrameLimiter()
+	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc, userSessions, userFrames)
 
 	// Background cleanup of expired sessions every 5 minutes
 	go func() {
@@ -112,6 +116,19 @@ func main() {
 
 	// Prometheus metrics endpoint — exposes default registry
 	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+
+	// JWT auth for future REST endpoints (skips /health, /metrics, /ws which has its own auth).
+	jwtAuth := middleware.JWTAuth()
+	app.Use(func(c *fiber.Ctx) error {
+		p := c.Path()
+		if p == "/health" || p == "/metrics" || p == "/ws" {
+			return c.Next()
+		}
+		return jwtAuth(c)
+	})
+
+	// WebSocket — validate JWT from ?token= query param before upgrade.
+	app.Use("/ws", middleware.WSJWTAuth())
 
 	// WebSocket upgrade guard
 	app.Use("/ws", func(c *fiber.Ctx) error {

@@ -15,8 +15,17 @@ enum ConnectionStatus { disconnected, connecting, connected }
 ///
 /// On disconnection the service reconnects automatically using exponential
 /// back-off capped at 60 seconds.
+///
+/// Authentication: the JWT token is sent as a `?token=` query parameter on
+/// every connection attempt, including reconnects (always reads the latest
+/// token so refresh tokens are picked up automatically).
 class WebSocketService {
   final String _baseUrl;
+
+  /// Returns the current JWT token for the WebSocket connection.
+  /// Called on every connect/reconnect to pick up refreshed tokens.
+  /// Return null to connect without a token (server will reject with 401).
+  final String? Function() _getToken;
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
@@ -28,7 +37,8 @@ class WebSocketService {
   final _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  WebSocketService(this._baseUrl);
+  WebSocketService(this._baseUrl, {required String? Function() getToken})
+      : _getToken = getToken;
 
   /// Connection status changes (connecting → connected → disconnected → …).
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
@@ -37,13 +47,19 @@ class WebSocketService {
   Stream<Map<String, dynamic>> get messages => _messageController.stream;
 
   /// Opens the WebSocket connection. Calls [_scheduleReconnect] on failure.
+  ///
+  /// The JWT token is appended as `?token=<jwt>` on every call, so refreshed
+  /// tokens are picked up automatically on reconnects.
   Future<void> connect() async {
     if (_disposed) return;
     _emit(ConnectionStatus.connecting);
 
     try {
-      _channel =
-          WebSocketChannel.connect(Uri.parse('$_baseUrl/ws'));
+      final token = _getToken();
+      final wsUri = Uri.parse('$_baseUrl/ws').replace(
+        queryParameters: token != null ? {'token': token} : null,
+      );
+      _channel = WebSocketChannel.connect(wsUri);
       await _channel!.ready;
 
       _reconnectAttempts = 0;
