@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -410,7 +411,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
-		writeError(sc, err.Error())
+		writeError(sc, sanitizeError(err))
 		return
 	}
 
@@ -439,7 +440,7 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessa
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
-		writeError(sc, err.Error())
+		writeError(sc, sanitizeError(err))
 		return
 	}
 
@@ -468,6 +469,22 @@ func writeResponse(sc *safeConn, result *services.ProcessResult) {
 	}
 	if err := sc.writeJSON(out); err != nil {
 		slog.Warn("failed to write response", "err", err)
+	}
+}
+
+// sanitizeError returns a safe, user-facing error message.
+// Internal error details are logged but never sent to the client.
+func sanitizeError(err error) string {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "429") || strings.Contains(msg, "rate limit") || strings.Contains(msg, "quota"):
+		return "Service temporarily unavailable, please retry in a few seconds"
+	case strings.Contains(msg, "context deadline exceeded") || strings.Contains(msg, "timeout"):
+		return "Request timed out, please retry"
+	case strings.Contains(msg, "context canceled"):
+		return "Request was cancelled"
+	default:
+		return "Internal server error"
 	}
 }
 
