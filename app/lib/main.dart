@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,35 +63,49 @@ void main() async {
 // App widget
 // ---------------------------------------------------------------------------
 
-class PhysicsCopilotApp extends ConsumerWidget {
+/// [PhysicsCopilotApp] is a [ConsumerStatefulWidget] so that [GoRouter] is
+/// created once in [initState] and stored as a field.
+///
+/// Previously [GoRouter] was instantiated inside [build], which recreated it
+/// on every rebuild — resetting navigation state on provider changes.
+/// [ref.listenManual] triggers [_router.refresh()] when the redirect-relevant
+/// providers change, so the guard logic re-runs without recreating the router.
+class PhysicsCopilotApp extends ConsumerStatefulWidget {
   const PhysicsCopilotApp({super.key, required this.prefs});
 
   final SharedPreferences prefs;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final onboardingDone = ref.watch(onboardingCompletedProvider);
-    final selectedPrinter = ref.watch(printerProvider);
+  ConsumerState<PhysicsCopilotApp> createState() => _PhysicsCopilotAppState();
+}
 
-    final router = GoRouter(
+class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
+  late final GoRouter _router;
+  late final ProviderSubscription<bool> _onboardingSub;
+  late final ProviderSubscription<PrinterProfile?> _printerSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _router = GoRouter(
       initialLocation: '/splash',
       redirect: (BuildContext ctx, GoRouterState state) {
+        // Read current values; safe because refresh() is called on changes.
+        final onboardingDone = ref.read(onboardingCompletedProvider);
+        final selectedPrinter = ref.read(printerProvider);
         final location = state.matchedLocation;
 
-        // Allow the splash screen to render freely.
         if (location == '/splash') return null;
 
-        // 1. Onboarding not completed → redirect there (unless already there).
         if (!onboardingDone) {
           return location == '/onboarding' ? null : '/onboarding';
         }
 
-        // 2. No printer selected → redirect to printer selection.
         if (selectedPrinter == null) {
           return location == '/printer-select' ? null : '/printer-select';
         }
 
-        // 3. Everything is set up — allow navigation freely.
         return null;
       },
       routes: [
@@ -136,11 +152,36 @@ class PhysicsCopilotApp extends ConsumerWidget {
       ],
     );
 
+    // Re-run redirect guards when auth-related state changes.
+    _onboardingSub = ref.listenManual(
+      onboardingCompletedProvider,
+      (prev, next) {
+        if (prev != next) _router.refresh();
+      },
+    );
+    _printerSub = ref.listenManual(
+      printerProvider,
+      (prev, next) {
+        if (prev?.id != next?.id) _router.refresh();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _onboardingSub.close();
+    _printerSub.close();
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'PhysicsCopilot',
       debugShowCheckedModeBanner: false,
       theme: _buildDarkTheme(),
-      routerConfig: router,
+      routerConfig: _router,
     );
   }
 
