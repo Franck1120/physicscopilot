@@ -1,0 +1,87 @@
+# ── Flutter ───────────────────────────────────────────────────────────────────
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/android/.gradle/
+app/android/local.properties
+app/android/key.properties
+app/ios/.symlinks/
+app/ios/Flutter/App.framework
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Flutter/Generated.xcconfig
+app/ios/Runner/GeneratedPluginRegistrant.*
+app/ios/Pods/
+app/ios/.bundle/
+app/*.g.dart
+app/*.freezed.dart
+app/coverage/
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+server/vendor/
+server/bin/
+server/coverage.txt
+server/*.test
+server/physicscopilot-server
+
+# ── Python (kb/) ──────────────────────────────────────────────────────────────
+kb/__pycache__/
+kb/**/__pycache__/
+kb/*.pyc
+kb/**/*.pyc
+kb/.venv/
+kb/venv/
+kb/*.egg-info/
+kb/.pytest_cache/
+kb/data/raw/
+kb/data/processed/
+kb/embeddings/*.jsonl
+
+# ── Node / Web ────────────────────────────────────────────────────────────────
+web/node_modules/
+web/.next/
+web/dist/
+web/.env.local
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.vs/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.keystore
+service-account.json
+google-services.json
+GoogleService-Info.plist
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+infra/postgres_data/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.swp
+*~
