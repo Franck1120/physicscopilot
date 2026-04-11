@@ -149,15 +149,17 @@ Sent after a `frame` or `text` message has been processed by Gemini.
   "type": "response",
   "text": "Your extruder is clicking because of filament grinding. Check that the idler arm tension is not too tight and that the filament diameter is consistent.",
   "overlay": {
-    "regions": [
+    "boxes": [
       {
         "x": 0.32,
         "y": 0.45,
-        "width": 0.15,
-        "height": 0.10,
-        "label": "Idler arm",
-        "severity": "warning"
+        "w": 0.15,
+        "h": 0.10,
+        "label": "Idler arm"
       }
+    ],
+    "arrows": [
+      { "x1": 0.40, "y1": 0.50, "x2": 0.55, "y2": 0.60 }
     ]
   },
   "step": {
@@ -173,8 +175,9 @@ Sent after a `frame` or `text` message has been processed by Gemini.
 |-------|------|-------------|
 | `type` | string | Always `"response"` |
 | `text` | string | Human-readable AI guidance text (spoken aloud via TTS) |
-| `overlay` | object | Optional. AR overlay data (regions to highlight on camera feed) |
-| `overlay.regions[]` | array | Normalised bounding boxes (0.0–1.0) with labels |
+| `overlay` | object | Optional. AR overlay data rendered on the camera feed |
+| `overlay.boxes[]` | array | Bounding boxes in normalised coords (0.0–1.0): `x`, `y`, `w`, `h`, `label` |
+| `overlay.arrows[]` | array | Directional arrows in normalised coords: `x1`, `y1`, `x2`, `y2` |
 | `step` | object | Optional. Current repair procedure step |
 | `step.index` | int | Current step (0-based) |
 | `step.total` | int | Total steps in the procedure |
