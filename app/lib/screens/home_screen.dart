@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
 import '../providers/printer_provider.dart';
+import '../providers/websocket_provider.dart';
+import '../services/websocket_service.dart';
 import '../models/session_record.dart';
 import 'history_screen.dart';
 
@@ -139,6 +142,7 @@ class _HomeTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final printer = ref.watch(printerProvider);
+    final connectionStatus = ref.watch(connectionStatusProvider);
 
     return Scaffold(
       backgroundColor: kBgPrimary,
@@ -153,6 +157,12 @@ class _HomeTab extends ConsumerWidget {
             letterSpacing: 0.5,
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: _WsStatusChip(status: connectionStatus),
+          ),
+        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -187,7 +197,10 @@ class _NewSessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -298,7 +311,7 @@ class _PrinterSection extends StatelessWidget {
                   style: TextStyle(
                     color: hasPrinter
                         ? Colors.white
-                        : const kTextMuted,
+                        : kTextMuted,
                     fontSize: 15,
                     fontWeight:
                         hasPrinter ? FontWeight.w500 : FontWeight.normal,
@@ -576,7 +589,7 @@ class _ProfileTileList extends StatelessWidget {
         border: Border.all(color: const kBgCardBorder, width: 1),
       ),
       child: ListTile(
-        leading: Icon(t.icon, color: const kTextMuted),
+        leading: Icon(t.icon, color: kTextMuted),
         title: Text(
           t.label,
           style: const TextStyle(color: Colors.white, fontSize: 15),
@@ -597,4 +610,60 @@ class _ProfileTileData {
   const _ProfileTileData({required this.icon, required this.label});
   final IconData icon;
   final String label;
+}
+
+// ---------------------------------------------------------------------------
+// WebSocket Status Chip — shown in AppBar
+// ---------------------------------------------------------------------------
+
+class _WsStatusChip extends StatelessWidget {
+  const _WsStatusChip({required this.status});
+
+  final AsyncValue<ConnectionStatus> status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, label, icon) = status.when(
+      data: (s) => switch (s) {
+        ConnectionStatus.connected => (kAccent, 'Online', Icons.wifi),
+        ConnectionStatus.connecting => (
+          Colors.orangeAccent,
+          'Connessione...',
+          Icons.wifi_off,
+        ),
+        ConnectionStatus.disconnected => (
+          Colors.redAccent,
+          'Offline',
+          Icons.wifi_off,
+        ),
+      },
+      loading: () => (Colors.orangeAccent, 'Connessione...', Icons.wifi_off),
+      error: (_, __) => (Colors.redAccent, 'Errore', Icons.error_outline),
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withAlpha(80), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
