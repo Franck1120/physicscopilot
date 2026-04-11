@@ -62,6 +62,22 @@ class CameraService {
         Timer.periodic(_captureInterval, (_) => _captureFrame());
   }
 
+  /// Captures a single frame immediately and returns the processed bytes.
+  /// Returns null when the camera is busy or not initialised.
+  Future<Uint8List?> captureFrame() async {
+    if (_isBusy || !isInitialized) return null;
+    _isBusy = true;
+    try {
+      final xFile = await _controller!.takePicture();
+      final rawBytes = await xFile.readAsBytes();
+      return await compute(_processFrameIsolate, rawBytes);
+    } catch (_) {
+      return null;
+    } finally {
+      _isBusy = false;
+    }
+  }
+
   Future<void> _captureFrame() async {
     if (_isBusy || !isInitialized) return;
     _isBusy = true;

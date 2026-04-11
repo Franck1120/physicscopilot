@@ -7,6 +7,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/printer_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
+import 'screens/session_screen.dart';
 import 'screens/history_screen.dart';
 import 'providers/printer_provider.dart';
 
@@ -116,9 +117,13 @@ class PhysicsCopilotApp extends ConsumerWidget {
             state,
             HomeScreen(
               onChangePrinter: () => ctx.push('/printer-select'),
-              onStartCamera: () => ctx.push('/camera'),
+              onStartCamera: () => ctx.push('/session'),
             ),
           ),
+        ),
+        GoRoute(
+          path: '/session',
+          pageBuilder: (_, state) => _fadePage(state, const SessionScreen()),
         ),
         GoRoute(
           path: '/camera',
