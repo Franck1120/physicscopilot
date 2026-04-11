@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"net"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Franck1120/physicscopilot/server/internal/services"
@@ -12,6 +15,10 @@ import (
 // maxFramesPerSecond is the maximum number of camera frames a single
 // WebSocket connection may send within a one-second sliding window.
 const maxFramesPerSecond = 5
+
+// maxConnsPerIP is the maximum number of concurrent WebSocket connections
+// allowed from a single IP address.
+const maxConnsPerIP = 10
 
 // IncomingMessage represents a JSON message received from the client.
 type IncomingMessage struct {
@@ -23,11 +30,42 @@ type IncomingMessage struct {
 
 // OutgoingMessage represents a JSON message sent to the client.
 type OutgoingMessage struct {
-	Type    string              `json:"type"`              // "response" | "error" | "pong"
-	Text    string              `json:"text,omitempty"`
+	Type    string               `json:"type"`            // "response" | "error" | "pong"
+	Text    string               `json:"text,omitempty"`
 	Overlay services.OverlayData `json:"overlay,omitempty"`
 	Step    services.StepInfo    `json:"step,omitempty"`
-	Error   string              `json:"error,omitempty"`
+	Error   string               `json:"error,omitempty"`
+}
+
+// ipConnTracker enforces a per-IP limit on concurrent WebSocket connections.
+type ipConnTracker struct {
+	mu    sync.Mutex
+	conns map[string]int
+}
+
+func newIPConnTracker() *ipConnTracker {
+	return &ipConnTracker{conns: make(map[string]int)}
+}
+
+// add increments the connection count for ip and returns true if within
+// the limit. Returns false if the limit is already reached.
+func (t *ipConnTracker) add(ip string) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.conns[ip] >= maxConnsPerIP {
+		return false
+	}
+	t.conns[ip]++
+	return true
+}
+
+// remove decrements the connection count for ip.
+func (t *ipConnTracker) remove(ip string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.conns[ip] > 0 {
+		t.conns[ip]--
+	}
 }
 
 // WSHandler manages WebSocket connections by coordinating session
@@ -35,6 +73,11 @@ type OutgoingMessage struct {
 type WSHandler struct {
 	conversations *services.ConversationService
 	sessions      *services.SessionService
+	activeConns   atomic.Int32
+	ipConns       *ipConnTracker
+
+	connsMu sync.Mutex
+	conns   map[*websocket.Conn]struct{}
 }
 
 // NewWSHandler creates a WSHandler wired to the given conversation
@@ -43,7 +86,41 @@ func NewWSHandler(conversations *services.ConversationService, sessions *service
 	return &WSHandler{
 		conversations: conversations,
 		sessions:      sessions,
+		ipConns:       newIPConnTracker(),
+		conns:         make(map[*websocket.Conn]struct{}),
 	}
+}
+
+// ActiveConnections returns the current number of open WebSocket connections.
+func (h *WSHandler) ActiveConnections() int32 {
+	return h.activeConns.Load()
+}
+
+// CloseAll sends a close frame to all active connections.
+// Used during graceful shutdown.
+func (h *WSHandler) CloseAll() {
+	h.connsMu.Lock()
+	defer h.connsMu.Unlock()
+	for c := range h.conns {
+		_ = c.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseGoingAway, "server shutting down"),
+		)
+		_ = c.Close()
+	}
+	slog.Info("closed all WebSocket connections", "count", len(h.conns))
+}
+
+func (h *WSHandler) register(c *websocket.Conn) {
+	h.connsMu.Lock()
+	h.conns[c] = struct{}{}
+	h.connsMu.Unlock()
+}
+
+func (h *WSHandler) deregister(c *websocket.Conn) {
+	h.connsMu.Lock()
+	delete(h.conns, c)
+	h.connsMu.Unlock()
 }
 
 // frameRateLimiter enforces a per-connection limit on camera frames
@@ -72,20 +149,51 @@ func (r *frameRateLimiter) allow() bool {
 // reads incoming JSON messages in a loop, dispatches them to the
 // appropriate service method, and writes responses back to the client.
 func (h *WSHandler) Handle(c *websocket.Conn) {
-	log.Println("WebSocket client connected:", c.RemoteAddr())
+	// Extract IP (RemoteAddr format is "IP:port")
+	ip, _, err := net.SplitHostPort(c.RemoteAddr().String())
+	if err != nil {
+		ip = c.RemoteAddr().String()
+	}
+
+	if !h.ipConns.add(ip) {
+		slog.Warn("WebSocket connection limit reached for IP", "ip", ip, "limit", maxConnsPerIP)
+		_ = c.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "connection limit reached"),
+		)
+		return
+	}
+
+	h.activeConns.Add(1)
+	h.register(c)
+
+	slog.Info("WebSocket client connected",
+		"remote_addr", c.RemoteAddr(),
+		"active_conns", h.activeConns.Load(),
+	)
 
 	session, err := h.sessions.CreateSession("unknown", "unknown")
 	if err != nil {
-		log.Println("failed to create session:", err)
+		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
+		h.activeConns.Add(-1)
+		h.ipConns.remove(ip)
+		h.deregister(c)
 		return
 	}
 	sessionID := session.SessionID
 
 	defer func() {
 		if delErr := h.sessions.DeleteSession(sessionID); delErr != nil {
-			log.Println("failed to delete session:", delErr)
+			slog.Warn("failed to delete session", "session_id", sessionID, "err", delErr)
 		}
-		log.Println("WebSocket client disconnected:", c.RemoteAddr())
+		h.activeConns.Add(-1)
+		h.ipConns.remove(ip)
+		h.deregister(c)
+		slog.Info("WebSocket client disconnected",
+			"remote_addr", c.RemoteAddr(),
+			"session_id", sessionID,
+			"active_conns", h.activeConns.Load(),
+		)
 	}()
 
 	rateLimiter := &frameRateLimiter{windowStart: time.Now()}
@@ -93,9 +201,8 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	for {
 		var msg IncomingMessage
 		if err := c.ReadJSON(&msg); err != nil {
-			// Connection closed or malformed message — exit the loop
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-				log.Println("unexpected WebSocket close:", err)
+				slog.Warn("unexpected WebSocket close", "err", err, "session_id", sessionID)
 			}
 			break
 		}
@@ -108,7 +215,11 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		case "ping":
 			h.handlePing(c)
 		default:
-			log.Printf("unknown message type %q from %s", msg.Type, c.RemoteAddr())
+			slog.Warn("unknown message type",
+				"type", msg.Type,
+				"remote_addr", c.RemoteAddr(),
+				"session_id", sessionID,
+			)
 		}
 	}
 }
@@ -123,7 +234,7 @@ func (h *WSHandler) handleFrame(c *websocket.Conn, sessionID string, msg Incomin
 	ctx := context.Background()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
 	if err != nil {
-		log.Printf("ProcessFrame error (session %s): %v", sessionID, err)
+		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
 		writeError(c, err.Error())
 		return
 	}
@@ -141,7 +252,7 @@ func (h *WSHandler) handleText(c *websocket.Conn, sessionID string, msg Incoming
 	ctx := context.Background()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
 	if err != nil {
-		log.Printf("ProcessTextMessage error (session %s): %v", sessionID, err)
+		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
 		writeError(c, err.Error())
 		return
 	}
@@ -157,7 +268,7 @@ func (h *WSHandler) handleText(c *websocket.Conn, sessionID string, msg Incoming
 func (h *WSHandler) handlePing(c *websocket.Conn) {
 	out := OutgoingMessage{Type: "pong"}
 	if err := c.WriteJSON(out); err != nil {
-		log.Println("failed to write pong:", err)
+		slog.Warn("failed to write pong", "err", err)
 	}
 }
 
@@ -170,7 +281,7 @@ func writeResponse(c *websocket.Conn, result *services.ProcessResult) {
 		Step:    result.Step,
 	}
 	if err := c.WriteJSON(out); err != nil {
-		log.Println("failed to write response:", err)
+		slog.Warn("failed to write response", "err", err)
 	}
 }
 
@@ -182,6 +293,6 @@ func writeError(c *websocket.Conn, errMsg string) {
 		Error: errMsg,
 	}
 	if err := c.WriteJSON(out); err != nil {
-		log.Println("failed to write error:", err)
+		slog.Warn("failed to write error", "err", err)
 	}
 }
