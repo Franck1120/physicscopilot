@@ -113,8 +113,9 @@ func main() {
 	// Prometheus metrics endpoint — exposes default registry
 	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
-	// WebSocket upgrade guard
-	app.Use("/ws", func(c *fiber.Ctx) error {
+	// WebSocket: JWT auth → upgrade guard → handler
+	// WSAuthMiddleware is a no-op when SUPABASE_JWT_SECRET is unset (dev mode).
+	app.Use("/ws", handlers.WSAuthMiddleware(), func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
 		}
