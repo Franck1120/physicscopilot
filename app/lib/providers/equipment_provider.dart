@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Riverpod provider for the equipment/device profile selected by the user.
 // EquipmentProfile represents the first supported vertical: 3D printers.
 // The schema is defined in assets/data/printer_profiles.json.
