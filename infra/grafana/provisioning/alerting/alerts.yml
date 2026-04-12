@@ -149,3 +149,93 @@ groups:
         labels:
           severity: warning
           team: physicscopilot
+
+      # Alert 4: Server memory usage > 80%
+      # Fires when heap allocation exceeds 80% of GOMEMLIMIT.
+      - uid: physicscopilot-memory-high
+        title: High Memory Usage (>80%)
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: go_heap_objects_custom / 1048576
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [400]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [B]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: $A
+              refId: B
+              type: math
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Server memory usage is high"
+          description: "Heap object count is high (>400M objects) for 5 minutes. Check for memory leaks or unusually large sessions."
+        labels:
+          severity: critical
+          team: physicscopilot
+
+      # Alert 5: Active sessions > 1000
+      # Fires when in-memory session count exceeds the per-server safety limit.
+      - uid: physicscopilot-sessions-high
+        title: Active Sessions > 1000
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: sessions_active_total
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1000]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [B]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: $A
+              refId: B
+              type: math
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: "Active session count exceeded 1000"
+          description: "There are more than 1000 active sessions in memory. Consider horizontal scaling or investigating session cleanup."
+        labels:
+          severity: critical
+          team: physicscopilot
