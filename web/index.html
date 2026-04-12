@@ -822,6 +822,67 @@
       font-weight: 600;
     }
 
+    /* ── Testimonials ──────────────────────────────────────────── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 56px;
+    }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .testimonial-text {
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.7;
+      font-style: italic;
+      flex: 1;
+    }
+    .testimonial-author { display: flex; flex-direction: column; gap: 4px; }
+    .testimonial-name { font-weight: 600; font-size: 14px; color: var(--accent); }
+    .testimonial-role { font-size: 13px; color: var(--text-muted); }
+    @media (max-width: 768px) { .testimonials-grid { grid-template-columns: 1fr; } }
+
+    /* ── Comparison table ─────────────────────────────────────── */
+    .comparison-table-wrap { margin-top: 56px; overflow-x: auto; }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 14px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .comparison-table th:first-child, .comparison-table td:first-child {
+      text-align: left;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .comparison-table thead th {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: var(--bg-2);
+    }
+    .comparison-table th.col-us, .comparison-table td.col-us {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .comparison-table .check { color: var(--accent); font-size: 16px; }
+    .comparison-table .cross { color: var(--text-muted); font-size: 14px; }
+
     /* ── Pricing ─────────────────────────────────────────────── */
     .pricing-grid {
       display: grid;
@@ -1375,6 +1436,108 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Testimonials ──────────────────────────────────────────────── -->
+<section id="testimonials">
+  <div class="container">
+    <div class="section-header centered reveal">
+      <p class="section-eyebrow">Testimonials</p>
+      <h2 class="section-title">Trusted by technicians</h2>
+      <p class="section-desc">Real feedback from early users in the field.</p>
+    </div>
+    <div class="testimonials-grid reveal reveal-delay-1">
+      <div class="testimonial-card">
+        <p class="testimonial-text">"Diagnosed a failed thermistor in under 90 seconds. Would have taken me 20 minutes with a multimeter and the service manual."</p>
+        <div class="testimonial-author">
+          <span class="testimonial-name">Marco R.</span>
+          <span class="testimonial-role">Appliance technician, Milan</span>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-2">
+        <p class="testimonial-text">"I used it on a Bambu X1C showing random layer shifts. It spotted the vibration damper issue from the camera feed. Impressive."</p>
+        <div class="testimonial-author">
+          <span class="testimonial-name">Léa D.</span>
+          <span class="testimonial-role">3D printing workshop, Lyon</span>
+        </div>
+      </div>
+      <div class="testimonial-card reveal reveal-delay-3">
+        <p class="testimonial-text">"My junior techs use it as a second opinion. It catches things they miss and explains why — better than any training manual."</p>
+        <div class="testimonial-author">
+          <span class="testimonial-name">Ahmed K.</span>
+          <span class="testimonial-role">Workshop owner, Berlin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Comparison ────────────────────────────────────────────────── -->
+<section id="comparison">
+  <div class="container">
+    <div class="section-header centered reveal">
+      <p class="section-eyebrow">Why PhysicsCopilot</p>
+      <h2 class="section-title">Not just another chatbot</h2>
+      <p class="section-desc">See how we compare to alternatives technicians use today.</p>
+    </div>
+    <div class="comparison-table-wrap reveal reveal-delay-1">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="col-us">PhysicsCopilot</th>
+            <th>YouTube tutorials</th>
+            <th>ChatGPT / text AI</th>
+            <th>Service manuals</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sees your specific problem</td>
+            <td class="col-us"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Real-time guidance</td>
+            <td class="col-us"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Hands-free (voice)</td>
+            <td class="col-us"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Works offline</td>
+            <td class="col-us"><span class="cross">Partial</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Covers any machine</td>
+            <td class="col-us"><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Step-by-step repair flow</td>
+            <td class="col-us"><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="check">✓</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
