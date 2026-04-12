@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -28,7 +27,10 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../utils/strings.dart';
+import '../widgets/connection_banner.dart';
+import '../widgets/guidance_panel.dart';
 import '../widgets/safe_screen.dart';
+import '../widgets/tutorial_overlay.dart';
 
 /// Active repair session screen.
 ///
@@ -363,11 +365,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
             children: [
               wsStatus.when(
                 data: (s) => s != ConnectionStatus.connected
-                    ? _ConnectionBanner(status: s)
+                    ? ConnectionBanner(status: s)
                     : const SizedBox.shrink(),
-                loading: () => const _ConnectionBanner(
+                loading: () => const ConnectionBanner(
                     status: ConnectionStatus.connecting),
-                error: (_, __) => const _ConnectionBanner(
+                error: (_, __) => const ConnectionBanner(
                     status: ConnectionStatus.disconnected),
               ),
               Expanded(
@@ -376,7 +378,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
               ),
               Expanded(
                 flex: 4,
-                child: _GuidancePanel(
+                child: GuidancePanel(
                   textController: _textController,
                   onSendText: _sendText,
                   cachedResponse: _cachedResponse,
@@ -386,48 +388,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
             ],
           ),
           if (_showTutorial)
-            _TutorialOverlay(onDismiss: _dismissTutorial),
+            TutorialOverlay(onDismiss: _dismissTutorial),
         ],
-      ),
-    );
-  }
-}
-
-// ── Connection banner ────────────────────────────────────────────────────────
-
-class _ConnectionBanner extends StatelessWidget {
-  const _ConnectionBanner({required this.status});
-  final ConnectionStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final isConnecting = status == ConnectionStatus.connecting;
-    final color = isConnecting ? Colors.orangeAccent : Colors.redAccent;
-    final icon = isConnecting ? Icons.wifi_find : Icons.wifi_off;
-    final message = isConnecting
-        ? 'Connessione al server in corso…'
-        : 'Server non raggiungibile — i dati non vengono inviati';
-
-    return Semantics(
-      liveRegion: true,
-      label: message,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-        color: color.withAlpha(30),
-        child: ExcludeSemantics(
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 14),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(message,
-                    style: TextStyle(
-                        color: color, fontSize: 12, fontWeight: FontWeight.w500)),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -944,15 +906,8 @@ class _ResponseArea extends StatelessWidget {
           ],
         ),
       );
-    } else if (session.responseText != null) {
-      // _TypewriterResponse carries the ValueKey so AnimatedSwitcher recreates
-      // it (and restarts the animation) whenever the text changes.
-      child = _TypewriterResponse(
-        key: ValueKey(session.responseText),
-        text: session.responseText!,
-      );
     } else if (isOffline && cachedResponse != null) {
-      // Offline fallback: show last cached response with a banner.
+      // Offline fallback: show last cached response when disconnected.
       child = Column(
         key: const ValueKey('offline'),
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,15 +941,14 @@ class _ResponseArea extends StatelessWidget {
           ),
         ],
       );
+    } else if (session.responseText != null) {
       final steps = _parseSteps(session.responseText!);
       if (steps != null) {
-        // Multi-step response: render interactive step cards.
         child = _MultiStepView(
           key: ValueKey('steps_${session.responseText.hashCode}'),
           steps: steps,
         );
       } else {
-        // Plain text: animate char-by-char with typewriter effect.
         child = _TypewriterResponse(
           key: ValueKey(session.responseText),
           text: session.responseText!,
@@ -1848,127 +1802,3 @@ class _PinPainter extends CustomPainter {
   bool shouldRepaint(_PinPainter old) => old.pins != pins;
 }
 
-// ── Tutorial overlay ──────────────────────────────────────────────────────────
-
-/// Shown once on the first use of the session screen.
-/// Tapping anywhere dismisses it and marks it as seen in SharedPreferences.
-class _TutorialOverlay extends StatefulWidget {
-  const _TutorialOverlay({required this.onDismiss});
-
-  final VoidCallback onDismiss;
-
-  @override
-  State<_TutorialOverlay> createState() => _TutorialOverlayState();
-}
-
-class _TutorialOverlayState extends State<_TutorialOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-  late final Animation<double> _pulseScale;
-  late final Animation<double> _arrowBounce;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _pulseScale = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
-    _arrowBounce = Tween<double>(begin: 0, end: 8).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    // Camera section occupies the top ~60 % of the body.
-    // The capture FAB is near the bottom-right of that section.
-    final fabAreaTop = size.height * 0.55;
-
-    return GestureDetector(
-      onTap: widget.onDismiss,
-      child: Container(
-        color: Colors.black.withAlpha(160),
-        width: double.infinity,
-        height: double.infinity,
-        child: Stack(
-          children: [
-            // Hint badge + bouncing arrow anchored near the capture FAB
-            Positioned(
-              top: fabAreaTop - 110,
-              right: 20,
-              child: AnimatedBuilder(
-                animation: _pulse,
-                builder: (_, __) {
-                  return Transform.translate(
-                    offset: Offset(0, -_arrowBounce.value),
-                    child: ScaleTransition(
-                      scale: _pulseScale,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: kAccent,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: kAccent.withAlpha(100),
-                                  blurRadius: 16,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Text(
-                              AppStrings.tutorialHint,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Icon(Icons.arrow_downward_rounded,
-                              color: kAccent, size: 28),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            // Dismiss hint
-            Positioned(
-              bottom: size.height * 0.42,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  AppStrings.tutorialDismiss,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(140),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
