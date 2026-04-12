@@ -1,0 +1,24 @@
+# Exclude version control and CI artefacts
+.git
+.gitignore
+.github
+
+# Flutter app and web landing page — not needed in the Go server image
+../app
+../web
+../docs
+
+# Claude AI workspace files
+../.claude
+
+# Test and development artefacts
+*_test.go
+coverage.out
+*.exe
+
+# Editor and OS metadata
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
