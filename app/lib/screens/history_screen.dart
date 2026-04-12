@@ -30,7 +30,25 @@ final _serverSessionsProvider = FutureProvider<List<SessionRecord>>((ref) async 
   )).toList();
 });
 
+/// Screen that displays the user's session history.
+///
+/// Merges locally stored sessions ([sessionHistoryProvider]) with sessions
+/// fetched from the REST API ([_serverSessionsProvider]). Server-only sessions
+/// (not yet in local storage) appear at the top of the list.
+///
+/// Features:
+/// - Full-text search across device name, problem description, and summary.
+/// - Filter chips for resolved / unresolved status and by domain (equipment name).
+/// - Infinite scroll with client-side pagination ([_pageSize] items per page).
+/// - Pull-to-refresh that re-fetches server sessions.
+/// - Swipe-to-delete with undo via [ScaffoldMessenger] snack bar.
+/// - Tap on a card navigates to [SessionDetailScreen] via [slideFromRight].
+///
+/// See also:
+/// - [SessionDetailScreen] for the per-session detail view.
+/// - [sessionHistoryProvider] for the local persistence layer.
 class HistoryScreen extends ConsumerStatefulWidget {
+  /// Creates the history screen.
   const HistoryScreen({super.key});
 
   @override
