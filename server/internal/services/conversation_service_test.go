@@ -392,3 +392,13 @@ func TestProcessFrameClearsHashOnGeminiError(t *testing.T) {
 		t.Errorf("expected 2 Gemini calls (fail + retry), got %d", callCount)
 	}
 }
+
+func TestComputeFrameFingerprintNonJPEGFallsBackToSHA256(t *testing.T) {
+	sha256Hash, _, hasPHash := computeFrameFingerprint("not-a-jpeg-base64")
+	if sha256Hash == "" {
+		t.Error("expected non-empty SHA-256 fallback hash")
+	}
+	if hasPHash {
+		t.Error("expected hasPHash=false for non-JPEG input")
+	}
+}
