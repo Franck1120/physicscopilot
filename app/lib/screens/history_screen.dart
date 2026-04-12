@@ -27,6 +27,10 @@ final _serverSessionsProvider = FutureProvider<List<SessionRecord>>((ref) async 
   )).toList();
 });
 
+/// Screen that displays the full session history, merging local records with
+/// server-side sessions fetched from the REST API.
+///
+/// Supports pull-to-refresh, swipe-to-delete, and exporting individual sessions.
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
