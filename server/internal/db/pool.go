@@ -1,3 +1,6 @@
+// Package db provides PostgreSQL connectivity primitives for the
+// PhysicsCopilot server. It exposes a connection-pool constructor and
+// repository types for sessions and messages.
 package db
 
 import (
