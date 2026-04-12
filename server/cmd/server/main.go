@@ -12,7 +12,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/websocket/v2"
@@ -49,6 +48,7 @@ func main() {
 	}
 	convSvc := services.NewConversationService(sessionSvc, geminiSvc, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
+	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 
 	// Background cleanup of expired sessions every 5 minutes
 	go func() {
@@ -104,10 +104,10 @@ func main() {
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
-	// HTTP request logger
-	app.Use(fiberlogger.New(fiberlogger.Config{
-		Format: "[${time}] ${status} ${latency} ${method} ${path}\n",
-	}))
+	// Structured request logger — replaces the default Fiber text logger.
+	// Emits JSON in production (APP_ENV=production), text otherwise.
+	// Each request gets a random request_id for correlation.
+	app.Use(middleware.StructuredLogger())
 
 	// Prometheus metrics middleware — records request count and latency for
 	// every non-/metrics route (recording /metrics itself would be noisy).
@@ -130,6 +130,13 @@ func main() {
 
 	// Health check — version, uptime, active connections, memory
 	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
+
+	// Session REST API — rate-limited
+	api := app.Group("/api", apiLimiter.Middleware())
+	api.Post("/sessions", sessionHandler.CreateSession)
+	api.Get("/sessions", sessionHandler.ListSessions)
+	api.Get("/sessions/:id", sessionHandler.GetSession)
+	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
 
 	// Prometheus metrics endpoint — protected by HTTP Basic Auth.
 	// Credentials: user=admin, password=$METRICS_PASSWORD.

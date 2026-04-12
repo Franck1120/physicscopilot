@@ -54,6 +54,19 @@ func NewSessionService() *SessionService {
 	}
 }
 
+// ListSessions returns a snapshot of every in-memory session, ordered
+// arbitrarily. Each entry is a shallow copy safe for concurrent reads.
+func (s *SessionService) ListSessions() []SessionState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]SessionState, 0, len(s.sessions))
+	for _, session := range s.sessions {
+		result = append(result, *session)
+	}
+	return result
+}
+
 // CreateSession initializes a new repair session for the given device.
 func (s *SessionService) CreateSession(deviceBrand, deviceModel string) (*SessionState, error) {
 	now := time.Now()
