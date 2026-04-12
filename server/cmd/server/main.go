@@ -166,6 +166,17 @@ func newFiberApp(
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
+	// Security headers — applied to every response to harden the HTTP surface.
+	// CSRF protection is provided by the JWT Authorization-header auth scheme
+	// (stateless, not cookie-based), so dedicated CSRF tokens are not required.
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("X-Frame-Options", "DENY")
+		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Set("Content-Security-Policy", "default-src 'none'")
+		return c.Next()
+	})
+
 	app.Use(middleware.StructuredLogger())
 
 	// Request timeout — abort handlers that take longer than 30 s.

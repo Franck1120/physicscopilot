@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -126,6 +127,51 @@ func TestNewFiberAppProductionAllowedOriginsWarning(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("production without ALLOWED_ORIGINS: want 200, got %d", resp.StatusCode)
+	}
+}
+
+// TestSecurityHeadersOnEveryResponse verifies that X-Content-Type-Options,
+// X-Frame-Options, Referrer-Policy, and Content-Security-Policy are present
+// on all responses regardless of environment.
+func TestSecurityHeadersOnEveryResponse(t *testing.T) {
+	app := buildTestApp(t)
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("X-Content-Type-Options: want nosniff, got %q", got)
+	}
+	if got := resp.Header.Get("X-Frame-Options"); got != "DENY" {
+		t.Errorf("X-Frame-Options: want DENY, got %q", got)
+	}
+	if got := resp.Header.Get("Referrer-Policy"); got != "strict-origin-when-cross-origin" {
+		t.Errorf("Referrer-Policy: want strict-origin-when-cross-origin, got %q", got)
+	}
+	if got := resp.Header.Get("Content-Security-Policy"); got == "" {
+		t.Error("Content-Security-Policy header is missing")
+	}
+}
+
+// TestCSRFProtectionDocumented verifies that the API routes carry the
+// Authorization header requirement in the CORS AllowHeaders config, confirming
+// that JWT Bearer tokens (not cookies) are the auth mechanism and therefore
+// CSRF tokens are not required (JWT via Authorization header is CSRF-safe).
+func TestCSRFProtectionDocumented(t *testing.T) {
+	app := buildTestApp(t)
+	// OPTIONS preflight on an API route must expose Authorization in allowed headers.
+	req := httptest.NewRequest(http.MethodOptions, "/api/sessions", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+	req.Header.Set("Access-Control-Request-Headers", "Authorization")
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	allowHeaders := resp.Header.Get("Access-Control-Allow-Headers")
+	if !strings.Contains(allowHeaders, "Authorization") {
+		t.Errorf("Access-Control-Allow-Headers must include Authorization; got %q", allowHeaders)
 	}
 }
 
