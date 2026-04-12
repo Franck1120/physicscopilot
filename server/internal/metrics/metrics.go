@@ -95,4 +95,28 @@ var (
 			Help: "Total number of sessions removed by the expiry cleanup goroutine.",
 		},
 	)
+
+	// MemHeapAllocBytes tracks the current bytes allocated on the Go heap.
+	MemHeapAllocBytes = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "process_heap_alloc_bytes",
+			Help: "Heap memory currently allocated (live objects) in bytes.",
+		},
+	)
+
+	// MemSysBytes tracks the total memory obtained from the OS.
+	MemSysBytes = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "process_sys_bytes",
+			Help: "Total memory obtained from the OS in bytes.",
+		},
+	)
+
+	// MemNumGCTotal tracks the cumulative number of completed GC cycles.
+	MemNumGCTotal = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "process_num_gc_total",
+			Help: "Cumulative number of completed garbage collection cycles.",
+		},
+	)
 )

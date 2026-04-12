@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/debug"
 	"strconv"
 	"syscall"
 	"time"
@@ -75,6 +78,39 @@ func main() {
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
+
+	// Background memory metrics collection every 30 seconds.
+	// Warns at slog.Warn level when heap usage exceeds 80 % of GOMEMLIMIT.
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				var m runtime.MemStats
+				runtime.ReadMemStats(&m)
+				metrics.MemHeapAllocBytes.Set(float64(m.HeapAlloc))
+				metrics.MemSysBytes.Set(float64(m.Sys))
+				metrics.MemNumGCTotal.Set(float64(m.NumGC))
+
+				// GOMEMLIMIT=-1 reads current limit without changing it.
+				// Default is math.MaxInt64 (no limit set).
+				limit := debug.SetMemoryLimit(-1)
+				if limit > 0 && limit != math.MaxInt64 {
+					usagePct := float64(m.HeapAlloc) / float64(limit) * 100
+					if usagePct > 80 {
+						slog.Warn("high memory usage",
+							"heap_alloc_mb", m.HeapAlloc/1024/1024,
+							"limit_mb", uint64(limit)/1024/1024,
+							"usage_pct", int(usagePct),
+						)
+					}
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 
 	// Background cleanup of expired sessions every 5 minutes.
 	// CleanupExpiredSessions removes them from RAM and marks them 'expired' in DB.
