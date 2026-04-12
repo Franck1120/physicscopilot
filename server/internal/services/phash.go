@@ -24,9 +24,36 @@ const (
 	PHashDuplicateThreshold = 5
 )
 
-// pHashFrame computes a DCT-based perceptual hash (pHash) of a base64-encoded
-// JPEG frame. Returns an error if the data cannot be decoded as JPEG.
-// Only standard and URL-safe base64 encodings are tried.
+// pHashFrame computes a 64-bit DCT-based perceptual hash (pHash) of a
+// base64-encoded JPEG frame.
+//
+// Perceptual hashing is used for frame deduplication: ConversationService
+// compares consecutive frames with [hammingDistance] and skips sending a
+// frame to the Gemini API when the distance is at or below
+// [PHashDuplicateThreshold], reducing inference cost and latency without
+// discarding visually distinct frames.
+//
+// Algorithm:
+//  1. Decode base64 (standard encoding tried first, then URL-safe) → raw bytes
+//  2. Decode raw bytes as JPEG → image.Image
+//  3. Resize to 32×32 using nearest-neighbour sampling with Rec. 601 luma
+//     conversion (Y = 0.299R + 0.587G + 0.114B)
+//  4. Apply the separable 2D DCT-II to the 32×32 grayscale matrix
+//  5. Extract the top-left 8×8 block of low-frequency DCT coefficients
+//  6. Compute the mean of the 63 AC coefficients (DC at index [0][0] skipped
+//     to improve robustness against global brightness changes)
+//  7. Build the 64-bit hash: bit i = 1 if coefficient[i] > mean, else 0
+//     (i=0 / DC component is always 0)
+//
+// Two frames are considered perceptually identical when
+// HammingDistance(a, b) ≤ [PHashDuplicateThreshold] (default 5 bits).
+//
+// Input: frameBase64 must be a base64-encoded JPEG. Both standard
+// (RFC 4648 §4) and URL-safe (RFC 4648 §5) alphabets are accepted.
+//
+// Errors:
+//   - base64 decode failure: neither standard nor URL-safe decoding succeeded
+//   - image decode failure: the decoded bytes are not a valid JPEG
 func pHashFrame(frameBase64 string) (uint64, error) {
 	data, err := base64.StdEncoding.DecodeString(frameBase64)
 	if err != nil {
