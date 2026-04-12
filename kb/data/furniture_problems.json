@@ -1,0 +1,743 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "furniture",
+  "total": 15,
+  "problems": [
+    {
+      "id": "cassetto_bloccato",
+      "name": "Cassetto che si blocca durante l'apertura",
+      "category": "cassetti",
+      "severity": "warning",
+      "description": "Il cassetto si inceppa durante l'apertura o la chiusura, richiedendo forza eccessiva o rimanendo bloccato a metà corsa.",
+      "visual_symptoms": [
+        "Cassetto che si inclina su un lato durante lo scorrimento",
+        "Segni di sfregamento sui lati del cassetto",
+        "Guida di scorrimento visibilmente fuori allineamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Guide di scorrimento sporche o senza lubrificazione",
+          "probability": 0.45,
+          "test": "Rimuovere il cassetto ed esaminare le guide: verificare presenza di sporco, polvere o assenza di lubrificante"
+        },
+        {
+          "cause": "Cassetto sovraccarico che deforma le guide",
+          "probability": 0.35,
+          "test": "Svuotare completamente il cassetto e testare lo scorrimento senza contenuto"
+        },
+        {
+          "cause": "Guide di scorrimento allentate o mal fissate al telaio",
+          "probability": 0.20,
+          "test": "Verificare con mano che le guide siano fissate solidamente alle pareti laterali del mobile"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere completamente il cassetto. Pulire le guide con un panno asciutto rimuovendo polvere e detriti.",
+              "verification": "Guide pulite e visibilmente prive di sporco",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Applicare una cera per mobili o un bastoncino di candela sulle guide e sui bordi del cassetto per ridurre l'attrito",
+              "verification": "Superficie delle guide leggermente cerosa al tatto",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Reinserire il cassetto e testare lo scorrimento 5 volte consecutive",
+              "verification": "Cassetto scorre fluidamente senza incepparsi",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sedia_scricchiola",
+      "name": "Sedia che scricchiola ad ogni movimento",
+      "category": "struttura",
+      "severity": "warning",
+      "description": "La sedia produce rumori di scricchiolio o cigolii quando ci si siede, ci si alza o ci si muove sul sedile.",
+      "visual_symptoms": [
+        "Giunzioni visibilmente allentate tra gambe e seduta",
+        "Piccoli movimenti nella struttura durante l'uso",
+        "Segni di usura alle giunture in legno"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Giunzioni in legno allentate per secchezza o usura",
+          "probability": 0.55,
+          "test": "Muovere delicatamente ogni giunzione con le mani per identificare dove si produce il rumore"
+        },
+        {
+          "cause": "Viti o bulloni allentati nelle connessioni metalliche",
+          "probability": 0.30,
+          "test": "Controllare tutte le viti visibili con un cacciavite: verificare se si avvitano ulteriormente"
+        },
+        {
+          "cause": "Slittamento tra superfici di legno secco in contatto",
+          "probability": 0.15,
+          "test": "Spruzzare acqua sulle giunzioni e verificare se lo scricchiolio diminuisce temporaneamente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Stringere tutte le viti e bulloni accessibili utilizzando il cacciavite o chiave appropriata",
+              "verification": "Tutte le viti visibili stringite, nessuna ruota a vuoto",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Applicare colla vinilica per legno nelle giunzioni allentate, clampare e lasciare asciugare 24 ore",
+              "verification": "Colla applicata in tutte le giunzioni mobili",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Dopo asciugatura, testare la sedia con peso progressivo",
+              "verification": "Nessuno scricchiolio con peso normale d'uso",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ante_non_chiudono",
+      "name": "Ante dell'armadio che non chiudono allineate",
+      "category": "ante",
+      "severity": "info",
+      "description": "Le ante dell'armadio non si chiudono correttamente, risultando disallineate, con spazi irregolari o che non raggiungono il telaio.",
+      "visual_symptoms": [
+        "Spazio non uniforme tra l'anta e il telaio",
+        "Anta che sporge o è rientrata rispetto al piano",
+        "Cerniere visibilmente inclinate o piegate"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cerniere a regolazione non calibrate correttamente",
+          "probability": 0.60,
+          "test": "Aprire l'anta e osservare le cerniere: verificare se hanno viti di regolazione accessibili"
+        },
+        {
+          "cause": "Dilatazione o ritiro del legno per variazioni di umidità",
+          "probability": 0.25,
+          "test": "Verificare se il problema è stagionale o è comparso dopo cambiamenti ambientali"
+        },
+        {
+          "cause": "Struttura del mobile deformata o fuori piombo",
+          "probability": 0.15,
+          "test": "Usare una livella per verificare che il mobile sia in piano sia in orizzontale che verticale"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire l'anta e identificare le 3 viti di regolazione della cerniera (profondità, altezza, laterale). Con un cacciavite Torx o Phillips, regolare la vite laterale per allineare l'anta al telaio.",
+              "verification": "Anta allineata con spazio uniforme di 2mm dal telaio",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Chiudere l'anta lentamente e verificare il contatto uniforme con il telaio su tutta la lunghezza",
+              "verification": "Anta chiude senza forzare e rimane chiusa",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lampadina_ikea_non_accende",
+      "name": "Lampadina integrata IKEA non si accende",
+      "category": "accessori",
+      "severity": "info",
+      "description": "La lampadina integrata in un mobile o lampada IKEA non si accende nonostante l'interruttore sia attivato.",
+      "visual_symptoms": [
+        "Nessuna luce quando l'interruttore è su ON",
+        "Lampada che funzionava e si è spenta improvvisamente",
+        "Piccolo bagliore o sfarfallio prima dello spegnimento definitivo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lampadina LED esaurita per fine vita",
+          "probability": 0.55,
+          "test": "Verificare se la lampadina si illumina connettendola ad un altro attacco dello stesso tipo"
+        },
+        {
+          "cause": "Connettore allentato o ossidato",
+          "probability": 0.30,
+          "test": "Ruotare leggermente la lampadina nell'attacco e verificare se si illumina momentaneamente"
+        },
+        {
+          "cause": "Driver LED del trasformatore interno guasto",
+          "probability": 0.15,
+          "test": "Misurare la tensione in uscita dal driver con un tester: deve essere 12V o 230V secondo il tipo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere la corrente e rimuovere la lampadina. Annotare il codice IKEA (es. RYET E27 LED) dal corpo della lampadina.",
+              "verification": "Codice lampadina identificato",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Acquistare la lampadina sostitutiva identica per attacco e wattaggio e installarla",
+              "verification": "Lampadina installata e luce funzionante",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vite_non_tiene",
+      "name": "Vite che non tiene nel legno truciolato",
+      "category": "struttura",
+      "severity": "warning",
+      "description": "Una vite nel pannello in truciolato o MDF ruota a vuoto senza fare presa, causando instabilità nel collegamento tra i pezzi.",
+      "visual_symptoms": [
+        "Vite che ruota senza resistenza nel foro",
+        "Foro di vite visibilmente allargato o sbriciolato",
+        "Giunzione del mobile che si muove liberamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Foro di vite usurato per rimozioni e reinserimenti ripetuti",
+          "probability": 0.50,
+          "test": "Verificare visivamente se il foro è più grande del diametro della vite"
+        },
+        {
+          "cause": "Truciolato fragile o deteriorato dall'umidità",
+          "probability": 0.35,
+          "test": "Premere il truciolato intorno al foro: se si sbricola facilmente, è degradato"
+        },
+        {
+          "cause": "Vite troppo corta o con filetto inadeguato per il materiale",
+          "probability": 0.15,
+          "test": "Misurare la lunghezza della vite: deve penetrare almeno 25mm nel pannello"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Riempire il foro con stuzzicadenti di legno e colla vinilica. Lasciar asciugare 2 ore.",
+              "verification": "Foro riempito solidamente con legno e colla",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Tagliare gli stuzzicadenti a filo con il pannello e avvitare nuovamente la vite originale",
+              "verification": "Vite fa resistenza e si stringe solidamente",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scaffale_traballa",
+      "name": "Scaffale a muro che traballa",
+      "category": "struttura",
+      "severity": "error",
+      "description": "Lo scaffale a parete oscilla o si muove quando viene toccato o caricato, rischiando di staccarsi dalla parete.",
+      "visual_symptoms": [
+        "Scaffale che oscilla anche con carichi leggeri",
+        "Tasselli che mostrano segni di estrazione dalla parete",
+        "Crepe o intonaco sbriciolato intorno ai fori di fissaggio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Tasselli non adeguati al tipo di parete (es. cartongesso vs muratura)",
+          "probability": 0.45,
+          "test": "Battere la parete con le nocche: suono pieno = muratura, suono vuoto = cartongesso o intercapedine"
+        },
+        {
+          "cause": "Fori praticati in posizione errata (piastrelle cave, mattone forato)",
+          "probability": 0.35,
+          "test": "Osservare se i tasselli hanno gioco laterale nel foro: indica che hanno preso una cavità"
+        },
+        {
+          "cause": "Carico eccessivo rispetto alla portata del sistema di ancoraggio",
+          "probability": 0.20,
+          "test": "Calcolare il peso totale degli oggetti sullo scaffale e confrontare con la portata indicata"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Svuotare completamente lo scaffale. Rimuovere la staffa e i tasselli esistenti.",
+              "verification": "Staffa rimossa, fori vecchi visibili",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Identificare il tipo di parete e selezionare i tasselli appropriati (Fisher S per muratura, Molly per cartongesso). Praticare nuovi fori con trapano a percussione.",
+              "verification": "Tasselli inseriti saldamente, non si estraggono tirando",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Rimontare lo scaffale con viti di misura adeguata e caricare gradualmente verificando la stabilità",
+              "verification": "Scaffale non oscilla con carico nominale",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "porta_scorrevole_deragliata",
+      "name": "Porta scorrevole uscita dalla guida superiore",
+      "category": "ante",
+      "severity": "error",
+      "description": "La porta scorrevole è uscita dalla rotaia superiore o dal binario inferiore, impedendone il normale scorrimento.",
+      "visual_symptoms": [
+        "Porta inclinata verso il basso da un lato",
+        "Rullo o pattino visibilmente fuori dalla guida",
+        "Porta che si trascina sul pavimento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Porta sollevata accidentalmente oltre il limite del fermo",
+          "probability": 0.50,
+          "test": "Verificare se la porta può essere riposizionata alzandola e inserendo nuovamente i rulli nella guida"
+        },
+        {
+          "cause": "Rulli usurati o rotti che non mantengono la presa sulla guida",
+          "probability": 0.35,
+          "test": "Ispezionare i rulli superiori: verificare se girano liberamente o se sono piatti/rotti"
+        },
+        {
+          "cause": "Guida superiore deformata o con ostruzione",
+          "probability": 0.15,
+          "test": "Esaminare tutta la lunghezza della guida per deformazioni, ammaccature o oggetti bloccati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Con l'aiuto di una seconda persona, sollevare la porta e inclinare la parte superiore verso la guida",
+              "verification": "Porta mantenuta verticale con entrambe le mani",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Inserire i rulli superiori nella guida facendo scorrere la porta lungo il binario",
+              "verification": "Entrambi i rulli inseriti nella guida, porta appesa correttamente",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Verificare che il fermo anti-uscita sia presente e funzionante per evitare future fuoriuscite",
+              "verification": "Fermo posizionato correttamente, porta non può uscire dalla guida",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cerniera_porta_rotta",
+      "name": "Cerniera della porta di armadio rotta",
+      "category": "ante",
+      "severity": "warning",
+      "description": "Una o più cerniere dell'anta dell'armadio sono rotte, piegate o staccate, causando cedimento dell'anta.",
+      "visual_symptoms": [
+        "Anta che pende verso il basso da un lato",
+        "Cerniera visibilmente piegata o con parti rotte",
+        "Fori di fissaggio della cerniera nel pannello allargati"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cerniera rotta per overload o uso improprio",
+          "probability": 0.50,
+          "test": "Esaminare visivamente la cerniera: verificare se ha parti metalliche rotte o deformate"
+        },
+        {
+          "cause": "Viti di fissaggio della cerniera estratte dal pannello",
+          "probability": 0.35,
+          "test": "Verificare se le viti girano a vuoto nel pannello del mobile"
+        },
+        {
+          "cause": "Cerniera di qualità insufficiente per il peso dell'anta",
+          "probability": 0.15,
+          "test": "Pesare l'anta e confrontare con la portata nominale della cerniera (solitamente 20-40kg per coppia)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Misurare il diametro del foro cerniera (standard 35mm per cerniere a coppella) e acquistare cerniera sostitutiva identica",
+              "verification": "Cerniera sostitutiva dello stesso tipo disponibile",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Rimuovere la cerniera rotta svitando le viti. Se i fori sono usurati, riempirli con stuzzicadenti e colla prima di reinserire le viti.",
+              "verification": "Vecchia cerniera rimossa, fori rinforzati se necessario",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Installare la nuova cerniera e regolare i 3 assi di posizionamento per allineare l'anta",
+              "verification": "Anta allineata, cerniera funzionante senza gioco",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "piedino_mancante",
+      "name": "Piedino del mobile mancante o rotto",
+      "category": "struttura",
+      "severity": "warning",
+      "description": "Uno o più piedini regolabili del mobile sono mancanti o rotti, causando instabilità o contatto del pannello inferiore con il pavimento.",
+      "visual_symptoms": [
+        "Mobile che oscilla appoggiandosi su tre punti invece di quattro",
+        "Angolo del mobile che tocca direttamente il pavimento",
+        "Segni di usura o graffi sul pannello inferiore"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Piedino rotto o caduto durante spostamento del mobile",
+          "probability": 0.60,
+          "test": "Verificare se il foro del piedino nel pannello è integro o danneggiato"
+        },
+        {
+          "cause": "Piedino svitato progressivamente per vibrazioni",
+          "probability": 0.30,
+          "test": "Verificare sotto il mobile se il piedino è presente ma completamente svitato"
+        },
+        {
+          "cause": "Filetto nel pannello danneggiato che non tiene il piedino",
+          "probability": 0.10,
+          "test": "Avvitare un piedino di prova: se non fa resistenza, il filetto è consumato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Misurare il diametro del foro piedino (solitamente M8 o M10) e acquistare piedini sostitutivi dello stesso tipo",
+              "verification": "Piedini sostitutivi della misura corretta disponibili",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Avvitare il piedino sostitutivo nel foro e regolare l'altezza per livellare il mobile",
+              "verification": "Mobile stabile su tutti e quattro i piedini, senza oscillazioni",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rivestimento_si_solleva",
+      "name": "Rivestimento laminato che si solleva",
+      "category": "rivestimento",
+      "severity": "warning",
+      "description": "Il bordo o la superficie del laminato del mobile si solleva formando bolle o rigonfiamenti, con possibile distacco progressivo.",
+      "visual_symptoms": [
+        "Bordo del pannello con laminato che si stacca",
+        "Bolle o rigonfiamenti visibili sulla superficie",
+        "Zone opache dove il laminato ha perso adesione"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Umidità che penetra nel truciolato facendolo gonfiare",
+          "probability": 0.50,
+          "test": "Verificare se il sollevamento è vicino a fonti d'acqua o zone umide"
+        },
+        {
+          "cause": "Colla di fabbrica deteriorata per età o calore eccessivo",
+          "probability": 0.35,
+          "test": "Premere sulla zona sollevata: se fa rumore di vuoto, la colla ha ceduto"
+        },
+        {
+          "cause": "Impatto fisico che ha staccato il laminato dal substrato",
+          "probability": 0.15,
+          "test": "Verificare la presenza di segni di impatto nella zona interessata"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usando una siringa o spatola sottile, iniettare colla vinilica sotto il laminato sollevato",
+              "verification": "Colla distribuita sotto tutto il lembo sollevato",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Premere fermamente il laminato e applicare pressione con morsetti o nastro resistente per 24 ore",
+              "verification": "Laminato aderente senza bolle d'aria",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Rimuovere i morsetti e sigillare il bordo con sigillante trasparente per prevenire infiltrazioni future",
+              "verification": "Bordo sigillato, laminato perfettamente aderente",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cassetto_esce_guida",
+      "name": "Cassetto che esce completamente dalla guida",
+      "category": "cassetti",
+      "severity": "warning",
+      "description": "Il cassetto quando viene aperto completamente esce dalla guida e cade, mancando il meccanismo di arresto.",
+      "visual_symptoms": [
+        "Cassetto che si estrae completamente senza fermarsi",
+        "Guida visibilmente priva di fermo di fine corsa",
+        "Segni di cadute precedenti del cassetto"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Fermo di fine corsa della guida mancante o rotto",
+          "probability": 0.65,
+          "test": "Estrarre le guide vuote e verificare la presenza del meccanismo di arresto all'estremità"
+        },
+        {
+          "cause": "Guide montate al contrario (senso di corsa invertito)",
+          "probability": 0.25,
+          "test": "Verificare che le frecce di montaggio sulle guide corrispondano al senso corretto"
+        },
+        {
+          "cause": "Cassetto troppo leggero che non attiva il meccanismo soft-close",
+          "probability": 0.10,
+          "test": "Provare con il cassetto carico: se il fermo funziona con peso, il sistema soft-close è mal regolato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere le guide e verificare la presenza di fermi di fine corsa. Se mancanti, acquistare fermi compatibili con la marca della guida.",
+              "verification": "Fermi di fine corsa installati alle estremità delle guide",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Reinstallare guide e cassetto. Aprire lentamente il cassetto fino al punto di arresto.",
+              "verification": "Cassetto si ferma saldamente prima di uscire dalla guida",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "maniglia_allentata",
+      "name": "Maniglia di porta o cassetto allentata",
+      "category": "accessori",
+      "severity": "info",
+      "description": "La maniglia di una porta, cassetto o anta si muove, oscilla o ruota senza fare presa, rendendo difficile l'apertura.",
+      "visual_symptoms": [
+        "Maniglia che oscilla lateralmente quando tirata",
+        "Vite di fissaggio visibilmente allentata o mancante",
+        "Gioco tra maniglia e pannello del mobile"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Vite di fissaggio allentata dall'uso ripetuto",
+          "probability": 0.65,
+          "test": "Tirare la maniglia e verificare se la vite sul retro del pannello è accessibile e allentata"
+        },
+        {
+          "cause": "Filetto della vite usurato nel pannello",
+          "probability": 0.25,
+          "test": "Avvitare la vite: se non fa resistenza anche dopo aver stretto, il filetto è consumato"
+        },
+        {
+          "cause": "Maniglia con dadi o inserti allentati internamente",
+          "probability": 0.10,
+          "test": "Verificare se ci sono componenti interni della maniglia che hanno gioco"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Dal retro del pannello, stringere la vite di fissaggio con cacciavite Phillips o esagonale, tenendo la maniglia ferma dal davanti",
+              "verification": "Maniglia salda, nessun gioco laterale o verticale",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se la vite ruota a vuoto, applicare del Loctite threadlocker blu sulla vite e serrare nuovamente",
+              "verification": "Vite serrata con bloccante, maniglia stabile dopo 1 ora di asciugatura",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "specchio_scheggiato",
+      "name": "Specchio del mobile con scheggia o crepa",
+      "category": "rivestimento",
+      "severity": "warning",
+      "description": "Lo specchio integrato in un mobile presenta una scheggia, crepa o zona di riflessione distorta che ne compromette l'utilizzo.",
+      "visual_symptoms": [
+        "Crepa visibile che si irradia da un punto di impatto",
+        "Scheggia sul bordo con rischio di taglio",
+        "Zona di riflessione distorta o con macchie argentate"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Impatto fisico diretto sullo specchio",
+          "probability": 0.60,
+          "test": "Identificare il punto di impatto: la crepa si irradia generalmente dal punto colpito"
+        },
+        {
+          "cause": "Pressione eccessiva durante il montaggio o trasporto",
+          "probability": 0.25,
+          "test": "Verificare se ci sono punti di pressione dei supporti che potrebbero aver causato stress al vetro"
+        },
+        {
+          "cause": "Deterioramento del rivestimento argenteo per umidità",
+          "probability": 0.15,
+          "test": "Verificare se le macchie sono sui bordi (umidità) o al centro (impatto)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Coprire la zona scheggiata con nastro adesivo trasparente per prevenire tagli in attesa della sostituzione",
+              "verification": "Bordi scheggiati coperti e non accessibili",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Misurare lo specchio (larghezza x altezza x spessore in mm) e ordinare uno specchio sostitutivo da un vetraio",
+              "verification": "Misure prese correttamente, preventivo vetraio ricevuto",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Far installare il nuovo specchio dal vetraio o smontare l'anta e portarla direttamente",
+              "verification": "Nuovo specchio installato senza gioco nel telaio",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lettino_cigola",
+      "name": "Lettino o letto che cigola di notte",
+      "category": "struttura",
+      "severity": "warning",
+      "description": "Il letto produce cigolio o scricchiolio ad ogni movimento durante la notte, disturbando il sonno.",
+      "visual_symptoms": [
+        "Rumore ritmico a ogni movimento sul materasso",
+        "Giunzioni della testiera visibilmente allentate",
+        "Doghe che sfregano contro il telaio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Giunzioni bullonate allentate nel telaio del letto",
+          "probability": 0.45,
+          "test": "Verificare tutti i bulloni del telaio: solitamente angolari e centrali sotto la struttura"
+        },
+        {
+          "cause": "Doghe che sfregano contro il telaio per mancanza di feltri",
+          "probability": 0.35,
+          "test": "Sollevare il materasso e muovere le doghe singolarmente per identificare quelle rumorose"
+        },
+        {
+          "cause": "Telaio metallico con parti che vibrano a contatto",
+          "probability": 0.20,
+          "test": "Applicare pressione sui diversi punti del telaio: se il rumore cambia, identificare il punto di contatto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere il materasso e le doghe. Stringere tutti i bulloni e le viti del telaio.",
+              "verification": "Tutti i bulloni serrati, nessuno ruota a vuoto",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Applicare un feltro adesivo sotto ogni doga nei punti di contatto con il telaio",
+              "verification": "Feltri applicati su tutti i punti di appoggio delle doghe",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Rimontare il letto e testare premendo in diverse zone del materasso",
+              "verification": "Nessun cigolìo durante i movimenti normali di rotazione notturna",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tavolo_instabile",
+      "name": "Tavolo che balla su un angolo",
+      "category": "struttura",
+      "severity": "warning",
+      "description": "Il tavolo oscilla quando appoggiato sul pavimento perché uno o più piedini non toccano contemporaneamente la superficie.",
+      "visual_symptoms": [
+        "Tavolo che oscilla premendo su angoli opposti",
+        "Piedino che si solleva visibilmente da terra",
+        "Bicchieri e oggetti che si muovono sul piano"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pavimento non perfettamente piano con avvallamento sotto un piedino",
+          "probability": 0.45,
+          "test": "Spostare il tavolo di 30cm: se il problema si sposta con esso, il difetto è nel tavolo"
+        },
+        {
+          "cause": "Piedini regolabili fuori calibrazione",
+          "probability": 0.40,
+          "test": "Verificare se il tavolo ha piedini avvitati: girare quello corto in senso antiorario per allungarlo"
+        },
+        {
+          "cause": "Struttura del tavolo deformata per carico asimmetrico prolungato",
+          "probability": 0.15,
+          "test": "Capovolgere il tavolo e appoggiare una livella sul piano: verificare se è deformato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Capovolgere il tavolo. Identificare il piedino corto avvitandolo verso il basso (senso antiorario) fino a che tutti e quattro toccano il piano.",
+              "verification": "Tutti i piedini toccano il piano, non c'è oscillazione capovolta",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Raddrizzare il tavolo e testare la stabilità premendo su ogni angolo",
+              "verification": "Nessun piedino si solleva, il tavolo è completamente stabile",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se non ci sono piedini regolabili, applicare una rondella di feltro adesivo spessa sotto il piedino corto",
+              "verification": "Tavolo stabile con tutti i piedini in appoggio",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
