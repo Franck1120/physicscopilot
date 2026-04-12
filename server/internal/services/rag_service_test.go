@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // writeTestKB writes a temporary KB JSON file with the given entries and
@@ -163,6 +164,74 @@ func TestQueryKBCacheHitReturnsSameResults(t *testing.T) {
 	r2 := svc.QueryKB("clogged nozzle", 3)
 	if len(r1) != len(r2) {
 		t.Errorf("cache hit returned different result length: %d vs %d", len(r1), len(r2))
+	}
+}
+
+// ── LRU cache internals ───────────────────────────────────────────────────────
+
+func TestRAGLRUCacheEvictionAtCapacity(t *testing.T) {
+	cache := newRAGLRU(2, 5*time.Minute) // capacity = 2
+
+	entry1 := []KBEntry{{ID: "e1", Name: "Entry 1"}}
+	entry2 := []KBEntry{{ID: "e2", Name: "Entry 2"}}
+	entry3 := []KBEntry{{ID: "e3", Name: "Entry 3"}}
+
+	cache.set("query1", 1, entry1)
+	cache.set("query2", 1, entry2)
+
+	// Access query1 to make it recently used.
+	cache.get("query1", 1)
+
+	// Inserting a third entry should evict the LRU entry (query2).
+	cache.set("query3", 1, entry3)
+
+	if _, ok := cache.get("query1", 1); !ok {
+		t.Error("query1 should still be in cache (recently accessed)")
+	}
+	if _, ok := cache.get("query3", 1); !ok {
+		t.Error("query3 should be in cache (just inserted)")
+	}
+	if _, ok := cache.get("query2", 1); ok {
+		t.Error("query2 should have been evicted as the LRU entry")
+	}
+}
+
+func TestRAGLRUCacheTTLExpiry(t *testing.T) {
+	ttl := 10 * time.Millisecond
+	cache := newRAGLRU(10, ttl)
+
+	entry := []KBEntry{{ID: "ttl-entry", Name: "TTL Entry"}}
+	cache.set("ttl-query", 1, entry)
+
+	// Entry should be present immediately.
+	if _, ok := cache.get("ttl-query", 1); !ok {
+		t.Fatal("entry should be present immediately after set")
+	}
+
+	// Wait for TTL to expire.
+	time.Sleep(ttl + 5*time.Millisecond)
+
+	// Entry should now be expired.
+	if _, ok := cache.get("ttl-query", 1); ok {
+		t.Error("entry should have been evicted after TTL expiry")
+	}
+}
+
+func TestRAGLRUCacheUpdateExistingEntry(t *testing.T) {
+	cache := newRAGLRU(10, 5*time.Minute)
+
+	first := []KBEntry{{ID: "first"}}
+	second := []KBEntry{{ID: "second"}, {ID: "third"}}
+
+	cache.set("same-query", 1, first)
+	cache.set("same-query", 1, second) // update
+
+	results, ok := cache.get("same-query", 1)
+	if !ok {
+		t.Fatal("entry should be in cache after update")
+	}
+	if len(results) != 2 {
+		t.Errorf("expected updated results (len 2), got %d", len(results))
 	}
 }
 

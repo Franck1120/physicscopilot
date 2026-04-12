@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"testing"
 )
 
@@ -94,5 +95,31 @@ func TestNewAIBackendUnknownReturnsError(t *testing.T) {
 	_, err := NewAIBackend()
 	if err == nil {
 		t.Fatal("expected error for unknown backend, got nil")
+	}
+}
+
+// ── Stub AnalyzeFrame implementations ────────────────────────────────────────
+
+func TestOpenAIBackendAnalyzeFrameNotImplemented(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "sk-test")
+	b, err := NewOpenAIBackend()
+	if err != nil {
+		t.Fatalf("NewOpenAIBackend: %v", err)
+	}
+	_, err = b.AnalyzeFrame(context.Background(), "", "", "")
+	if err == nil {
+		t.Fatal("expected error from unimplemented OpenAI AnalyzeFrame")
+	}
+}
+
+func TestClaudeBackendAnalyzeFrameNotImplemented(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+	b, err := NewClaudeBackend()
+	if err != nil {
+		t.Fatalf("NewClaudeBackend: %v", err)
+	}
+	_, err = b.AnalyzeFrame(context.Background(), "", "", "")
+	if err == nil {
+		t.Fatal("expected error from unimplemented Claude AnalyzeFrame")
 	}
 }
