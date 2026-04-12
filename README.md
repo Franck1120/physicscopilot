@@ -44,6 +44,7 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 - **🔌 Session REST API** — `POST/GET/DELETE /api/sessions` for session lifecycle management
 - **💾 Optional Postgres persistence** — session history stored in Postgres/Supabase when `DATABASE_URL` is set
 - **📖 OpenAPI spec** — full API documentation served at `GET /api/docs` (OpenAPI 3.0.3, YAML)
+- **📡 WebSocket protocol** — complete frame-level protocol documented in [`docs/WEBSOCKET_PROTOCOL.md`](docs/WEBSOCKET_PROTOCOL.md)
 
 **Planned (not yet live):**
 - Semantic search over uploaded manuals (pgvector)
