@@ -13,6 +13,7 @@ import '../providers/equipment_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
+import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
 /// Active repair session screen.
@@ -135,7 +136,28 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       status: SessionStatus.resolved,
       duration: duration,
     );
+    // Persist locally (always).
     ref.read(sessionHistoryProvider.notifier).add(record);
+    // Best-effort sync to server (fire-and-forget, no UI blocking).
+    _syncSessionToServer(
+      deviceBrand: equipment?.manufacturer ?? '',
+      deviceModel: equipment?.name ?? '',
+    );
+  }
+
+  /// Posts the finished session to the server for server-side tracking.
+  /// Failures are silently swallowed — local storage is the source of truth.
+  Future<void> _syncSessionToServer({
+    required String deviceBrand,
+    required String deviceModel,
+  }) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.createSession(
+        deviceBrand: deviceBrand,
+        deviceModel: deviceModel,
+      );
+    } catch (_) {}
   }
 
   String _formatElapsed(Duration d) {
@@ -164,6 +186,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
               color: Colors.white, size: 20),
+          tooltip: 'Termina sessione',
           onPressed: () {
             _saveSessionIfNeeded();
             Navigator.of(context).pop();
@@ -294,6 +317,7 @@ class _CameraSection extends ConsumerWidget {
             heroTag: 'session_capture',
             backgroundColor: kAccent,
             foregroundColor: Colors.white,
+            tooltip: 'Cattura frame e invia all\'AI',
             onPressed: onCapture,
             child: const Icon(Icons.camera_alt),
           ),
@@ -547,31 +571,34 @@ class _TextInputRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Descrivi il problema…',
-                hintStyle: const TextStyle(color: kTextMuted, fontSize: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: kBgCardBorder),
+            child: Semantics(
+              label: 'Descrivi il problema',
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Descrivi il problema…',
+                  hintStyle: const TextStyle(color: kTextMuted, fontSize: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kAccent),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  filled: true,
+                  fillColor: const Color(0xFF111111),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: kBgCardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: kAccent),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                filled: true,
-                fillColor: const Color(0xFF111111),
+                onSubmitted: (_) => onSend(),
+                textInputAction: TextInputAction.send,
               ),
-              onSubmitted: (_) => onSend(),
-              textInputAction: TextInputAction.send,
             ),
           ),
           const SizedBox(width: 8),
@@ -579,6 +606,7 @@ class _TextInputRow extends StatelessWidget {
             onPressed: onSend,
             icon: const Icon(Icons.send_rounded),
             color: kAccent,
+            tooltip: 'Invia messaggio',
             style: IconButton.styleFrom(
               backgroundColor: kAccent.withAlpha(20),
               shape: const CircleBorder(),

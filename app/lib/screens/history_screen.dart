@@ -3,24 +3,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
+import '../services/api_service.dart';
+
+// ---------------------------------------------------------------------------
+// Server sessions provider — fetches from REST API and converts to SessionRecord.
+// Falls back gracefully to an empty list on any error.
+// ---------------------------------------------------------------------------
+
+final _serverSessionsProvider = FutureProvider<List<SessionRecord>>((ref) async {
+  final api = ref.watch(apiServiceProvider);
+  final remotes = await api.listSessions();
+  return remotes.map((r) => SessionRecord(
+    id: r.sessionId,
+    date: r.createdAt,
+    equipmentName: r.deviceName,
+    problemDescription: r.problemDetected,
+    summary: r.problemDetected,
+    status: SessionStatus.resolved,
+    duration: Duration.zero,
+  )).toList();
+});
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessions = ref.watch(sessionHistoryProvider);
+    final localSessions = ref.watch(sessionHistoryProvider);
+    final serverAsync = ref.watch(_serverSessionsProvider);
+
+    // Merge: server sessions not already in local appear at the top
+    // (they lack a summary/duration but represent active server-side sessions).
+    final sessions = serverAsync.when(
+      data: (serverSessions) {
+        final localIds = localSessions.map((s) => s.id).toSet();
+        final extra = serverSessions
+            .where((s) => !localIds.contains(s.id))
+            .toList();
+        return [...extra, ...localSessions];
+      },
+      loading: () => localSessions,
+      error: (_, __) => localSessions,
+    );
+
+    final isSyncing = serverAsync.isLoading;
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text(
-          'Sessioni',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        title: Row(
+          children: [
+            const Text(
+              'Sessioni',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            if (isSyncing) ...[
+              const SizedBox(width: 10),
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white54,
+                ),
+              ),
+            ],
+          ],
         ),
         elevation: 0,
-        actions: sessions.isEmpty
+        actions: localSessions.isEmpty
             ? null
             : [
                 IconButton(
