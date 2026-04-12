@@ -175,4 +175,16 @@ var (
 			Help: "Total number of RAG KB query cache misses.",
 		},
 	)
+
+	// DBQueryDuration tracks the latency distribution of Postgres queries,
+	// labelled by operation name (e.g. "save_session", "list_sessions").
+	// Buckets are tuned for typical Postgres latencies (1 ms - 1 s).
+	DBQueryDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "db_query_duration_seconds",
+			Help:    "Latency distribution of Postgres DB queries by operation.",
+			Buckets: []float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0},
+		},
+		[]string{"operation"},
+	)
 )

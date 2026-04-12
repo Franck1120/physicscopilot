@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -114,6 +115,9 @@ func (d *DBService) Close() {
 // Columns device_brand, device_model, and last_activity are required by the
 // migration 20260413000000_add_session_device_fields.
 func (d *DBService) SaveSession(ctx context.Context, s *SessionState) error {
+	t0 := time.Now()
+	defer func() { metrics.DBQueryDuration.WithLabelValues("save_session").Observe(time.Since(t0).Seconds()) }()
+
 	_, err := d.pool.Exec(ctx, `
 		INSERT INTO sessions
 			(id, device_brand, device_model, status, problem_detected, created_at, last_activity)
@@ -156,6 +160,9 @@ func (d *DBService) GetSession(ctx context.Context, id string) (*SessionState, e
 
 // ListSessions returns all active sessions ordered newest-first.
 func (d *DBService) ListSessions(ctx context.Context) ([]SessionState, error) {
+	t0 := time.Now()
+	defer func() { metrics.DBQueryDuration.WithLabelValues("list_sessions").Observe(time.Since(t0).Seconds()) }()
+
 	rows, err := d.pool.Query(ctx, `
 		SELECT id, device_brand, device_model, problem_detected, created_at, last_activity
 		FROM   sessions
@@ -199,6 +206,9 @@ func (d *DBService) ExpireSession(ctx context.Context, id string) error {
 // DeleteSession soft-deletes the session (status → 'completed').
 // Returns an error if no active session with that ID exists.
 func (d *DBService) DeleteSession(ctx context.Context, id string) error {
+	t0 := time.Now()
+	defer func() { metrics.DBQueryDuration.WithLabelValues("delete_session").Observe(time.Since(t0).Seconds()) }()
+
 	tag, err := d.pool.Exec(ctx, `
 		UPDATE sessions
 		SET    status = 'completed', last_activity = $2
@@ -231,6 +241,9 @@ func (d *DBService) SaveSessionStep(ctx context.Context, sessionID string, stepN
 
 // SaveFeedback inserts a feedback row. comment may be nil for anonymous ratings.
 func (d *DBService) SaveFeedback(ctx context.Context, f *FeedbackEntry) error {
+	t0 := time.Now()
+	defer func() { metrics.DBQueryDuration.WithLabelValues("save_feedback").Observe(time.Since(t0).Seconds()) }()
+
 	_, err := d.pool.Exec(ctx, `
 		INSERT INTO feedback (session_id, step_number, rating, comment, created_at)
 		VALUES ($1, $2, $3, $4, now())

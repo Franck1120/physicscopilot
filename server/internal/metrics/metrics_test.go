@@ -66,6 +66,7 @@ func TestCustomMetricsRegistered(t *testing.T) {
 	metrics.HttpRequestsTotal.WithLabelValues("GET", "/_test", "200").Add(0)
 	metrics.HttpRequestDuration.WithLabelValues("GET", "/_test").Observe(0)
 	metrics.WsMessagesTotal.WithLabelValues("_test").Add(0)
+	metrics.DBQueryDuration.WithLabelValues("_test").Observe(0)
 
 	app := metricsApp()
 
@@ -84,6 +85,7 @@ func TestCustomMetricsRegistered(t *testing.T) {
 		"# HELP ws_active_connections",
 		"# HELP ws_messages_total",
 		"# HELP ai_inference_duration_seconds",
+		"# HELP db_query_duration_seconds",
 	}
 	for _, name := range want {
 		if !strings.Contains(s, name) {
