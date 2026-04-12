@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -337,6 +339,81 @@ func TestIPBanResponseIsForbiddenJSON(t *testing.T) {
 	if _, ok := payload["error"]; !ok {
 		t.Error("ban response JSON must have 'error' key")
 	}
+}
+
+// TestIsBannedExpiredBanIsRemoved verifies that isBanned removes an expired ban
+// and returns false so the IP can reconnect after the ban duration.
+func TestIsBannedExpiredBanIsRemoved(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+	ip := "192.0.2.99"
+
+	// Manually insert an already-expired ban.
+	rl.mu.Lock()
+	rl.bans[ip] = time.Now().Add(-1 * time.Second)
+	rl.mu.Unlock()
+
+	if rl.isBanned(ip) {
+		t.Error("expected isBanned to return false for an expired ban")
+	}
+
+	// Expired entry must be removed from the map.
+	rl.mu.Lock()
+	_, exists := rl.bans[ip]
+	rl.mu.Unlock()
+	if exists {
+		t.Error("expected expired ban entry to be removed from the bans map")
+	}
+}
+
+// TestViolationWindowReset verifies that a violation after the window has
+// expired resets the counter to 1 rather than continuing to accumulate.
+func TestViolationWindowReset(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+	ip := "10.0.1.1"
+
+	// Record violations-1 violations (not enough to trigger a ban).
+	for i := 0; i < banViolationThreshold-1; i++ {
+		rl.recordViolation(ip)
+	}
+
+	// Age the violation window past banViolationWindow.
+	rl.mu.Lock()
+	rl.violations[ip].windowStart = time.Now().Add(-banViolationWindow - time.Second)
+	rl.mu.Unlock()
+
+	// One more violation after the window expires should reset the counter to 1.
+	rl.recordViolation(ip)
+
+	if rl.isBanned(ip) {
+		t.Error("IP must not be banned after violation window reset")
+	}
+
+	rl.mu.Lock()
+	count := rl.violations[ip].count
+	rl.mu.Unlock()
+	if count != 1 {
+		t.Errorf("expected violation count 1 after window reset, got %d", count)
+	}
+}
+
+// TestIPRateLimiterConcurrentAccess verifies that concurrent getLimiter calls
+// for multiple IPs do not race or corrupt the internal map.
+func TestIPRateLimiterConcurrentAccess(t *testing.T) {
+	rl := newIPRateLimiterWith(60, 60)
+
+	var wg sync.WaitGroup
+	const goroutines = 100
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			ip := fmt.Sprintf("10.0.0.%d", i%10)
+			rl.getLimiter(ip)
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 // TestBanConstants verifies the production ban constants have sensible values.
