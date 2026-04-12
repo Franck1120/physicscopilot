@@ -1,0 +1,33 @@
+# Dockerfile.dev — Development container for the PhysicsCopilot Go server.
+#
+# Differences from the production Dockerfile:
+#   - Includes Air (hot-reload) for live development
+#   - Debug symbols not stripped
+#   - Exposes profiling port 6060 (pprof)
+#   - Mounts source code via volume (docker-compose.dev.yml)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+FROM golang:1.25-alpine AS dev
+
+# Install development tools
+RUN apk add --no-cache git make curl bash && \
+    go install github.com/air-verse/air@latest && \
+    go install github.com/securego/gosec/v2/cmd/gosec@latest && \
+    go install golang.org/x/vuln/cmd/govulncheck@latest
+
+WORKDIR /app/server
+
+# Pre-download dependencies (cached layer)
+COPY server/go.mod server/go.sum ./
+RUN go mod download
+
+# Air config will mount this at runtime
+# Source mounted via docker-compose volume
+
+EXPOSE 8080
+EXPOSE 6060
+
+# Air watches for changes and restarts automatically
+CMD ["air", "-c", ".air.toml"]
