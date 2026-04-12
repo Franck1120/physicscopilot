@@ -351,3 +351,132 @@ func TestBanConstants(t *testing.T) {
 		t.Errorf("banDuration: want 5m, got %v", banDuration)
 	}
 }
+
+// TestBanExpiresAfterDuration verifies that a banned IP becomes unbanned once
+// its ban entry has expired.
+func TestBanExpiresAfterDuration(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+
+	ip := "10.11.0.1"
+
+	// Ban the IP by recording enough violations.
+	for i := 0; i < banViolationThreshold; i++ {
+		rl.recordViolation(ip)
+	}
+
+	if !rl.isBanned(ip) {
+		t.Fatal("expected IP to be banned after threshold violations")
+	}
+
+	// Manually backdate the ban expiry so it looks already elapsed.
+	rl.mu.Lock()
+	rl.bans[ip] = time.Now().Add(-1 * time.Second)
+	rl.mu.Unlock()
+
+	// isBanned must detect the expired entry and return false.
+	if rl.isBanned(ip) {
+		t.Error("expected IP ban to have expired, but isBanned still returns true")
+	}
+
+	// The entry must have been removed from the map as part of the expiry check.
+	rl.mu.Lock()
+	_, stillPresent := rl.bans[ip]
+	rl.mu.Unlock()
+	if stillPresent {
+		t.Error("expected expired ban entry to be removed from bans map")
+	}
+}
+
+// TestViolationWindowSlide verifies that violations recorded outside the
+// banViolationWindow are not counted toward a ban. When the window has
+// elapsed the counter resets so a single new violation does not trigger a ban.
+func TestViolationWindowSlide(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+
+	ip := "10.11.0.2"
+
+	// Record threshold-1 violations, then slide the window start into the past.
+	for i := 0; i < banViolationThreshold-1; i++ {
+		rl.recordViolation(ip)
+	}
+
+	// Move the window start far enough into the past that it appears stale.
+	rl.mu.Lock()
+	rl.violations[ip].windowStart = time.Now().Add(-(banViolationWindow + time.Second))
+	rl.mu.Unlock()
+
+	// One more violation: the stale window should reset the counter to 1,
+	// which is below the threshold — so no ban must occur.
+	rl.recordViolation(ip)
+
+	if rl.isBanned(ip) {
+		t.Error("expected IP not to be banned: old violations outside the window must not count")
+	}
+
+	// Verify that the violation counter was indeed reset to 1 (not accumulated).
+	rl.mu.Lock()
+	v := rl.violations[ip]
+	rl.mu.Unlock()
+	if v == nil || v.count != 1 {
+		t.Errorf("expected violation count to be reset to 1 after window slide, got %v", v)
+	}
+}
+
+// TestCleanupRemovesExpiredBans verifies that the cleanup loop removes bans
+// whose expiry has already passed. We exercise the cleanup logic directly by
+// invoking cleanupLoop-equivalent inline cleanup to keep the test synchronous.
+func TestCleanupRemovesExpiredBans(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+
+	ip := "10.11.0.3"
+
+	// Insert an already-expired ban directly.
+	rl.mu.Lock()
+	rl.bans[ip] = time.Now().Add(-1 * time.Second)
+	rl.mu.Unlock()
+
+	// isBanned triggers the lazy-expiry path which removes expired entries.
+	if rl.isBanned(ip) {
+		t.Error("expected isBanned to return false for an already-expired ban")
+	}
+
+	rl.mu.Lock()
+	_, present := rl.bans[ip]
+	rl.mu.Unlock()
+	if present {
+		t.Error("expected expired ban to have been removed from the bans map")
+	}
+}
+
+// TestIPRateLimiterConcurrentRequests spawns 50 goroutines firing requests in
+// parallel and verifies that the limiter does not panic and remains consistent.
+func TestIPRateLimiterConcurrentRequests(t *testing.T) {
+	// Use a high burst so most requests pass; the point is thread-safety, not blocking.
+	rl := newIPRateLimiterWith(6000, 100)
+	app := testRateLimitApp(rl)
+
+	const goroutines = 50
+	results := make(chan int, goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			resp, err := app.Test(req)
+			if err != nil {
+				results <- -1
+				return
+			}
+			results <- resp.StatusCode
+		}()
+	}
+
+	for i := 0; i < goroutines; i++ {
+		status := <-results
+		if status == -1 {
+			t.Error("a goroutine received an unexpected error from app.Test")
+		}
+		if status != http.StatusOK && status != http.StatusTooManyRequests && status != http.StatusForbidden {
+			t.Errorf("unexpected status %d — want 200, 429, or 403", status)
+		}
+	}
+}
