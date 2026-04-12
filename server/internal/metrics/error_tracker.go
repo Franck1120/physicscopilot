@@ -33,9 +33,25 @@ var appErrorsTotal = promauto.NewCounterVec(
 	[]string{"category"},
 )
 
-// TrackError increments the app_errors_total counter for category and emits a
-// structured log line at ERROR level. Callers pass extra key-value pairs (e.g.
-// "session_id", id, "user_id", uid) that are forwarded to slog verbatim.
+// TrackError increments the app_errors_total Prometheus counter for the given
+// category and emits a structured log line at ERROR level via slog.
+//
+// Use TrackError instead of plain slog.Error whenever an error should be
+// visible in Prometheus dashboards or alerts — for example, failed Gemini
+// calls, database timeouts, auth rejections, and WebSocket I/O errors.
+// Use plain slog.Error (without TrackError) for informational or expected
+// conditions (e.g. a client disconnecting cleanly) that do not warrant a
+// counter increment.
+//
+// category must be one of the predefined [ErrorCategory] constants:
+//   - [CategoryAI]   — Gemini inference and AI-pipeline failures
+//   - [CategoryDB]   — Postgres / Supabase query and connectivity failures
+//   - [CategoryAuth] — JWT validation, missing credentials, auth middleware
+//   - [CategoryWS]   — WebSocket protocol, connection-limit, and I/O errors
+//
+// logAttrs are forwarded verbatim to slog as additional key-value pairs.
+// High-cardinality identifiers (session_id, user_id) belong here, not as
+// Prometheus label values, to keep label cardinality bounded.
 //
 // Example:
 //
