@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewWSHandler(t *testing.T) {
-	sessionSvc := services.NewSessionService(nil, nil)
+	sessionSvc := services.NewSessionService()
 	// NewGeminiService requires GEMINI_API_KEY, so we pass nil for gemini
 	// to test the handler constructor in isolation.
 	convSvc := services.NewConversationService(sessionSvc, nil, nil)

@@ -16,8 +16,8 @@ const (
 	// userMaxSessions is the maximum number of concurrent WebSocket sessions
 	// allowed per authenticated user.
 	userMaxSessions = 3
-	// userLimiterExpiry removes idle per-user limiters to prevent memory growth.
-	userLimiterExpiry = 5 * time.Minute
+	// userSessionLimiterExpiry removes idle per-user limiters to prevent memory growth.
+	userSessionLimiterExpiry = 5 * time.Minute
 )
 
 // ---------------------------------------------------------------------------
@@ -58,12 +58,12 @@ func (u *UserFrameLimiter) Allow(userID string) bool {
 }
 
 func (u *UserFrameLimiter) cleanupLoop() {
-	ticker := time.NewTicker(userLimiterExpiry)
+	ticker := time.NewTicker(userSessionLimiterExpiry)
 	defer ticker.Stop()
 	for range ticker.C {
 		u.mu.Lock()
 		for id, e := range u.limiters {
-			if time.Since(e.lastSeen) > userLimiterExpiry {
+			if time.Since(e.lastSeen) > userSessionLimiterExpiry {
 				delete(u.limiters, id)
 			}
 		}
