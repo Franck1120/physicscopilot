@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/session_record.dart';
+import '../providers/session_history_provider.dart';
 import '../providers/settings_provider.dart';
 import '../../main.dart'
     show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kTextMuted;
@@ -66,11 +68,18 @@ class _DomainSelectionScreenState extends ConsumerState<DomainSelectionScreen> {
         .toList();
   }
 
+  int _sessionCountForDomain(
+      String domainId, List<SessionRecord> sessions) =>
+      sessions
+          .where((s) => s.equipmentName.toLowerCase().contains(domainId.toLowerCase()))
+          .length;
+
   @override
   Widget build(BuildContext context) {
     final currentDomain = ref.watch(
       settingsProvider.select((s) => s.selectedDomain),
     );
+    final sessions = ref.watch(sessionHistoryProvider);
     final filtered = _filtered;
 
     return Scaffold(
@@ -179,6 +188,8 @@ class _DomainSelectionScreenState extends ConsumerState<DomainSelectionScreen> {
                         return _DomainCard(
                           item: domain,
                           selected: isSelected,
+                          sessionCount: _sessionCountForDomain(
+                              domain.id, sessions),
                           onTap: () async {
                             await ref
                                 .read(settingsProvider.notifier)
@@ -202,11 +213,13 @@ class _DomainCard extends StatelessWidget {
   const _DomainCard({
     required this.item,
     required this.selected,
+    required this.sessionCount,
     required this.onTap,
   });
 
   final _DomainItem item;
   final bool selected;
+  final int sessionCount;
   final VoidCallback onTap;
 
   @override
@@ -224,28 +237,53 @@ class _DomainCard extends StatelessWidget {
             width: selected ? 1.5 : 1,
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Icon(
-              item.icon,
-              size: 32,
-              color: selected ? kAccent : Colors.white70,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  item.icon,
+                  size: 32,
+                  color: selected ? kAccent : Colors.white70,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    color: selected ? kAccent : Colors.white,
+                    fontSize: 12,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w400,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              item.label,
-              style: TextStyle(
-                color: selected ? kAccent : Colors.white,
-                fontSize: 12,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
-                height: 1.2,
+            if (sessionCount > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: kAccent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$sessionCount',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
           ],
         ),
       ),
