@@ -6,29 +6,38 @@ import 'prefs_provider.dart';
 
 const _kServerUrlKey = 'server_url_override';
 const _kVoiceEnabledKey = 'voice_enabled';
+const _kLanguageKey = 'language';
 const _kThemeModeKey = 'theme_mode'; // 'dark' | 'light'
+
+/// Supported response languages (BCP-47 code to display name).
+const Map<String, String> kSupportedLanguages = {
+  'it': 'Italiano',
+  'en': 'English',
+  'fr': 'Francais',
+  'de': 'Deutsch',
+  'es': 'Espanol',
+};
 
 /// User-configurable settings backed by SharedPreferences.
 class AppSettings {
-  /// Runtime override for the server URL.
-  /// When null, [AppConstants.wsBaseUrl] / [AppConstants.apiBaseUrl] are used.
   final String? serverUrlOverride;
-
-  /// Whether voice synthesis is active during sessions.
   final bool voiceEnabled;
-
+  /// BCP-47 language code for Gemini responses and TTS (default: "it").
+  final String language;
   /// App-wide theme mode (dark by default).
   final ThemeMode themeMode;
 
   const AppSettings({
     this.serverUrlOverride,
     this.voiceEnabled = true,
+    this.language = 'it',
     this.themeMode = ThemeMode.dark,
   });
 
   AppSettings copyWith({
     String? Function()? serverUrlOverride,
     bool? voiceEnabled,
+    String? language,
     ThemeMode? themeMode,
   }) =>
       AppSettings(
@@ -36,6 +45,7 @@ class AppSettings {
             ? serverUrlOverride()
             : this.serverUrlOverride,
         voiceEnabled: voiceEnabled ?? this.voiceEnabled,
+        language: language ?? this.language,
         themeMode: themeMode ?? this.themeMode,
       );
 }
@@ -45,6 +55,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       : super(AppSettings(
           serverUrlOverride: _prefs.getString(_kServerUrlKey),
           voiceEnabled: _prefs.getBool(_kVoiceEnabledKey) ?? true,
+          language: _prefs.getString(_kLanguageKey) ?? 'it',
           themeMode: _prefs.getString(_kThemeModeKey) == 'light'
               ? ThemeMode.light
               : ThemeMode.dark,
@@ -66,6 +77,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setVoiceEnabled(bool enabled) async {
     await _prefs.setBool(_kVoiceEnabledKey, enabled);
     state = state.copyWith(voiceEnabled: enabled);
+  }
+
+  Future<void> setLanguage(String lang) async {
+    await _prefs.setString(_kLanguageKey, lang);
+    state = state.copyWith(language: lang);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
