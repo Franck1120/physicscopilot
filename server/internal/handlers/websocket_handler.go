@@ -2,10 +2,13 @@ package handlers
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,6 +18,48 @@ import (
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/websocket/v2"
 )
+
+// maxTextContentLen is the maximum allowed length (in bytes) of a text message.
+const maxTextContentLen = 5000
+
+// reHTMLTag matches any HTML/XML opening or closing tag.
+var reHTMLTag = regexp.MustCompile(`<[^>]+>`)
+
+// sanitizeText strips HTML tags and enforces the length cap.
+// Returns the sanitised string and false when the content is empty after stripping.
+func sanitizeText(s string) (string, bool) {
+	s = reHTMLTag.ReplaceAllString(s, "")
+	s = strings.TrimSpace(s)
+	if len(s) > maxTextContentLen {
+		s = s[:maxTextContentLen]
+	}
+	return s, s != ""
+}
+
+// isValidJPEG checks whether the base64-encoded frame starts with the JPEG
+// magic bytes (FF D8 FF). Returns false for empty or non-JPEG data.
+func isValidJPEG(frameBase64 string) bool {
+	if frameBase64 == "" {
+		return false
+	}
+	// Decode only the first 4 bytes — enough to check the magic number.
+	sample := frameBase64
+	if len(sample) > 8 {
+		sample = sample[:8] // base64: 8 chars ~ 6 bytes decoded
+	}
+	dec, err := base64.StdEncoding.DecodeString(sample + strings.Repeat("=", (4-len(sample)%4)%4))
+	if err != nil {
+		// Try URL-safe variant.
+		dec, err = base64.URLEncoding.DecodeString(sample + strings.Repeat("=", (4-len(sample)%4)%4))
+		if err != nil || len(dec) < 3 {
+			return false
+		}
+	}
+	if len(dec) < 3 {
+		return false
+	}
+	return dec[0] == 0xFF && dec[1] == 0xD8 && dec[2] == 0xFF
+}
 
 // defaultMaxFPS is the default per-connection frame rate limit.
 // Override with the WS_MAX_FPS environment variable (min 1, max 30).
@@ -408,6 +453,13 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 		return
 	}
 
+	// Reject frames that don't begin with the JPEG magic bytes (FF D8 FF).
+	if !isValidJPEG(msg.Data) {
+		slog.Warn("frame rejected: not a valid JPEG", "session_id", sessionID)
+		writeError(sc, "frame must be a base64-encoded JPEG image")
+		return
+	}
+
 	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
@@ -435,9 +487,16 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg Incom
 		return
 	}
 
+	// Strip HTML and enforce length cap before forwarding to the AI backend.
+	content, ok := sanitizeText(msg.Content)
+	if !ok {
+		writeError(sc, "message content is empty after sanitization")
+		return
+	}
+
 	ctx := context.Background()
 	t0 := time.Now()
-	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
+	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, content)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)

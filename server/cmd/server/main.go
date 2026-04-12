@@ -33,6 +33,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Warn loudly in production when SUPABASE_JWT_SECRET is absent — the
+	// WebSocket auth middleware falls back to dev mode (no authentication).
+	if os.Getenv("APP_ENV") == "production" && os.Getenv("SUPABASE_JWT_SECRET") == "" {
+		slog.Warn("SUPABASE_JWT_SECRET is not set — WebSocket connections are not authenticated; all clients can connect without a valid JWT")
+	}
+
 	// ── Services ────────────────────────────────────────────────────────────
 	sessionSvc := services.NewSessionService()
 

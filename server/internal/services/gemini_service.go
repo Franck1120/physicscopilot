@@ -44,8 +44,8 @@ func systemPromptForLanguage(lang string) string {
 	return systemPromptBase + fmt.Sprintf(` The "analysis" and "instruction" fields MUST be written in the language with BCP-47 code "%s".`, lang)
 }
 
-// GeminiResponse is the structured analysis returned by AnalyzeFrame.
-type GeminiResponse struct {
+// AIResponse is the structured analysis returned by AnalyzeFrame.
+type AIResponse struct {
 	Analysis    string      `json:"analysis"`
 	Problem     *string     `json:"problem"`
 	Instruction string      `json:"instruction"`
@@ -164,7 +164,7 @@ func NewGeminiService() (*GeminiService, error) {
 // The call blocks until the shared token-bucket rate limiter grants a token,
 // respecting Google's GEMINI_RPM limit across all concurrent sessions.
 // If the context is cancelled while waiting, an error is returned immediately.
-func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*AIResponse, error) {
 	if g.apiLimiter != nil {
 		if err := g.apiLimiter.Wait(ctx); err != nil {
 			return nil, fmt.Errorf("gemini rate limiter: %w", err)
@@ -222,7 +222,7 @@ type geminiCandidatePart struct {
 	Text string `json:"text"`
 }
 
-func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, conversationContext, language string) (*AIResponse, error) {
 	reqBody := g.buildRequestBody(frameBase64, conversationContext, language)
 	payload, err := json.Marshal(reqBody)
 	if err != nil {
@@ -232,7 +232,7 @@ func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, 
 	if err != nil {
 		return nil, err
 	}
-	return parseGeminiResponse(respBody)
+	return parseAIResponse(respBody)
 }
 
 // buildRequestBody assembles the Gemini request payload.
@@ -344,9 +344,9 @@ func (g *GeminiService) doRequest(ctx context.Context, url string, payload []byt
 	return nil, fmt.Errorf("gemini API returned HTTP %d: %s", resp.StatusCode, string(body))
 }
 
-// parseGeminiResponse extracts the structured JSON from the Gemini API
-// raw response envelope: candidates[0].content.parts[0].text -> GeminiResponse.
-func parseGeminiResponse(body []byte) (*GeminiResponse, error) {
+// parseAIResponse extracts the structured JSON from the Gemini API
+// raw response envelope: candidates[0].content.parts[0].text -> AIResponse.
+func parseAIResponse(body []byte) (*AIResponse, error) {
 	var raw geminiRawResponse
 	if err := json.Unmarshal(body, &raw); err != nil {
 		return nil, fmt.Errorf("parse gemini response envelope: %w", err)
@@ -362,7 +362,7 @@ func parseGeminiResponse(body []byte) (*GeminiResponse, error) {
 	if text == "" {
 		return nil, fmt.Errorf("gemini candidate text is empty")
 	}
-	var result GeminiResponse
+	var result AIResponse
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		return nil, fmt.Errorf("parse gemini structured response: %w", err)
 	}
@@ -410,7 +410,7 @@ type openAIChoiceMessage struct {
 	Content string `json:"content"`
 }
 
-func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, conversationContext, language string) (*AIResponse, error) {
 	reqBody, err := g.buildProxyRequestBody(frameBase64, conversationContext, language)
 	if err != nil {
 		return nil, err
@@ -494,8 +494,8 @@ func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext, 
 }
 
 // parseProxyResponse extracts the structured JSON from the CLIProxyAPI response
-// envelope: choices[0].message.content -> GeminiResponse.
-func parseProxyResponse(body []byte) (*GeminiResponse, error) {
+// envelope: choices[0].message.content -> AIResponse.
+func parseProxyResponse(body []byte) (*AIResponse, error) {
 	var raw openAIResponse
 	if err := json.Unmarshal(body, &raw); err != nil {
 		return nil, fmt.Errorf("parse proxy response envelope: %w", err)
@@ -507,7 +507,7 @@ func parseProxyResponse(body []byte) (*GeminiResponse, error) {
 	if text == "" {
 		return nil, fmt.Errorf("proxy response text is empty")
 	}
-	var result GeminiResponse
+	var result AIResponse
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		return nil, fmt.Errorf("parse proxy structured response: %w", err)
 	}
