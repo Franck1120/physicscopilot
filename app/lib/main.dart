@@ -247,7 +247,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         ),
 
         // Card — matches kBgCard with rounded corners and a subtle border.
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: kBgCard,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -312,7 +312,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         ),
 
         // Dialog
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           backgroundColor: kBgCard,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
