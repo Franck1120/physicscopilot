@@ -211,6 +211,7 @@ make clean            Remove all build artefacts
 | Mobile   | Flutter 3.41 · iOS + Android            |
 | Backend  | Go 1.25 · Fiber v2 · WebSocket          |
 | AI       | Gemini 2.5 Flash (vision + reasoning)   |
+| Database | Supabase · Postgres · pgvector          |
 | KB / RAG | JSON knowledge base · keyword ranking   |
 | Hosting  | Render (server) · Vercel (landing page) |
 
@@ -225,6 +226,32 @@ make clean            Remove all build artefacts
 | 🧠 RAG semantic search | Q3 2026 |
 | 🚗 Automotive        | Q4 2026 |
 | ❄️ HVAC              | 2027    |
+
+---
+
+## Deploy on Render (free tier)
+
+The repo includes a `render.yaml` — Render picks it up automatically.
+
+1. Go to [render.com](https://render.com) and sign in
+2. Click **New → Web Service** → **Connect a repository**
+3. Select `Franck1120/physicscopilot` and click **Connect**
+4. Render detects `render.yaml` and pre-fills all settings — click **Deploy**
+5. In the **Environment** tab, add the secret variables:
+   - `GEMINI_API_KEY` — your Google AI Studio key
+   - `SUPABASE_URL` and `SUPABASE_ANON_KEY` — from your Supabase project
+6. The service will be live at `https://physicscopilot-server.onrender.com`
+
+**Build the Flutter app for production:**
+
+```bash
+cd app
+flutter build apk --release \
+  --dart-define=BACKEND_URL=wss://physicscopilot-server.onrender.com/ws
+```
+
+> **Note:** The free Render tier spins down after 15 minutes of inactivity.
+> The first request after a cold start may take ~30 seconds.
 
 ---
 
