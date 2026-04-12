@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot contributors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // phash.go implements DCT-based perceptual hashing (pHash) for camera frames.
 // Perceptual hashing lets ConversationService skip duplicate or near-identical
 // frames without calling the Gemini API, reducing cost and latency.
