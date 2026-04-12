@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// Connection state exposed to the rest of the application.
@@ -32,6 +33,7 @@ class WebSocketService {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   bool _disposed = false;
+  Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
 
   final _statusController =
@@ -84,8 +86,8 @@ class WebSocketService {
       if (decoded is Map<String, dynamic> && !_messageController.isClosed) {
         _messageController.add(decoded);
       }
-    } catch (_) {
-      // Ignore malformed messages.
+    } catch (e) {
+      debugPrint('[WS] malformed message ignored: $e\nraw=$raw');
     }
   }
 
@@ -95,7 +97,9 @@ class WebSocketService {
     // Exponential back-off: 1 s, 2 s, 4 s, 8 s … capped at 30 s.
     final delaySecs = min(1 << _reconnectAttempts, 30);
     _reconnectAttempts++;
-    Future.delayed(Duration(seconds: delaySecs), connect);
+    _reconnectTimer = Timer(Duration(seconds: delaySecs), () {
+      if (!_disposed) connect();
+    });
   }
 
   /// Encodes [frameBytes] as base64 and sends it to the backend.
@@ -131,6 +135,7 @@ class WebSocketService {
   }
 
   Future<void> disconnect() async {
+    _reconnectTimer?.cancel();
     _disposed = true;
     await _subscription?.cancel();
     await _channel?.sink.close();
