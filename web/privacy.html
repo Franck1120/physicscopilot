@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — PhysicsCopilot</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; line-height: 1.7; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 60px 24px; }
+    h1 { font-size: 2rem; color: #fff; margin-bottom: 8px; }
+    .meta { color: #666; margin-bottom: 48px; font-size: 0.9rem; }
+    h2 { font-size: 1.1rem; color: #fff; margin: 36px 0 12px; }
+    p, li { color: #aaa; margin-bottom: 12px; }
+    ul { padding-left: 20px; }
+    a { color: #4f9cf9; }
+    nav { margin-bottom: 40px; } nav a { color: #4f9cf9; text-decoration: none; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav><a href="/">← Back to PhysicsCopilot</a></nav>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: April 2026</p>
+
+    <h2>1. Who we are</h2>
+    <p>PhysicsCopilot ("we", "us") is an AI-powered field assistance tool. This policy explains how we handle data collected through the mobile app and web service.</p>
+
+    <h2>2. Data we collect</h2>
+    <ul>
+      <li><strong>Camera frames</strong> — sent over WebSocket to our server for real-time analysis. Frames are processed by Google Gemini and are not stored by us.</li>
+      <li><strong>Session data</strong> — device type, problem description, repair steps. Stored in-memory and discarded when the session ends (no persistent DB in the current version).</li>
+      <li><strong>Email address</strong> — only if you join the waitlist. Used solely to contact you about early access.</li>
+      <li><strong>Server logs</strong> — request method, path, status, latency, and a hashed (SHA-256) IP address. Raw IPs are never logged.</li>
+    </ul>
+
+    <h2>3. Data we do NOT collect</h2>
+    <ul>
+      <li>We do not sell or share your data with third parties.</li>
+      <li>We do not use cookies or tracking pixels on the landing page.</li>
+      <li>We do not store biometric data or voice recordings.</li>
+    </ul>
+
+    <h2>4. Third-party services</h2>
+    <ul>
+      <li><strong>Google Gemini API</strong> — camera frames are processed by Google. See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
+      <li><strong>Render</strong> — server hosting. See <a href="https://render.com/privacy" target="_blank" rel="noopener">Render's Privacy Policy</a>.</li>
+    </ul>
+
+    <h2>5. Data retention</h2>
+    <p>In-memory session data is discarded automatically after 30 minutes of inactivity. Server logs are retained for 30 days.</p>
+
+    <h2>6. Your rights</h2>
+    <p>To request deletion of your waitlist email or any other data, contact us at <a href="mailto:hello@physicscopilot.app">hello@physicscopilot.app</a>.</p>
+
+    <h2>7. Changes to this policy</h2>
+    <p>We may update this policy as the product evolves. Material changes will be announced on the website.</p>
+
+    <h2>8. Contact</h2>
+    <p><a href="mailto:hello@physicscopilot.app">hello@physicscopilot.app</a></p>
+  </div>
+</body>
+</html>
