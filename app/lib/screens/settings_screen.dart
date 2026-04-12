@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
@@ -339,6 +340,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Domain ────────────────────────────────────────────────────────
+          _Card(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                context.push('/domain-selection');
+              },
+              child: Row(
+                children: [
+                  const Icon(Icons.category_outlined,
+                      color: kAccent, size: 22),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Dominio conoscenza',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(
+                          settings.selectedDomain != null &&
+                                  settings.selectedDomain!.isNotEmpty
+                              ? settings.selectedDomain!
+                              : 'Globale (tutti i domini)',
+                          style: const TextStyle(
+                              color: kTextMuted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: kTextMuted, size: 16),
+                ],
+              ),
             ),
           ),
 
