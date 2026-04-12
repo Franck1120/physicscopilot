@@ -36,6 +36,10 @@ import (
 
 const version = "0.1.0"
 
+// buildDate is injected at build time via -ldflags "-X main.buildDate=...".
+// Defaults to "unknown" when building locally without the flag.
+var buildDate = "unknown" //nolint:gochecknoglobals
+
 var startTime = time.Now()
 
 func main() {
