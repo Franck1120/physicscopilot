@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Dart extension methods for common types.
 // Pure Dart utilities (no Flutter dependencies).
 
