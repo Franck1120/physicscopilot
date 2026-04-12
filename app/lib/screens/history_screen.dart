@@ -38,19 +38,25 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   static const int _pageSize = 20;
 
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   int _page = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text);
+    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -110,11 +116,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
     final isSyncing = serverAsync.isLoading;
 
+    // Apply search filter (case-insensitive, matches device name or problem).
+    final filteredSessions = _searchQuery.isEmpty
+        ? allSessions
+        : allSessions.where((s) {
+            final q = _searchQuery.toLowerCase();
+            return s.equipmentName.toLowerCase().contains(q) ||
+                s.problemDescription.toLowerCase().contains(q) ||
+                s.summary.toLowerCase().contains(q);
+          }).toList();
+
     // Paginate locally: show up to _page * _pageSize items.
-    final visibleCount = (_page * _pageSize).clamp(0, allSessions.length);
-    final sessions = allSessions.take(visibleCount).toList();
+    final visibleCount = (_page * _pageSize).clamp(0, filteredSessions.length);
+    final sessions = filteredSessions.take(visibleCount).toList();
     // Update _hasMore without triggering an extra setState during build.
-    final hasMore = visibleCount < allSessions.length;
+    final hasMore = visibleCount < filteredSessions.length;
     if (_hasMore != hasMore) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _hasMore = hasMore);
@@ -156,7 +172,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 ),
               ],
       ),
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          _SearchBar(controller: _searchController),
+          Expanded(
+            child: RefreshIndicator(
         color: const Color(0xFF10B981),
         backgroundColor: const Color(0xFF1E1E1E),
         onRefresh: () async {
@@ -203,6 +223,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   );
                 },
               ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -614,6 +637,44 @@ class _EmptyState extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF121212),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Cerca per dispositivo o problema...',
+          hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
+          suffixIcon: controller.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white38, size: 18),
+                  onPressed: controller.clear,
+                )
+              : null,
+          filled: true,
+          fillColor: const Color(0xFF1E1E1E),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }
