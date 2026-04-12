@@ -27,25 +27,76 @@ final _serverSessionsProvider = FutureProvider<List<SessionRecord>>((ref) async 
   )).toList();
 });
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  static const int _pageSize = 20;
+
+  final ScrollController _scrollController = ScrollController();
+  int _page = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxExtent = _scrollController.position.maxScrollExtent;
+    final current = _scrollController.offset;
+    if (current >= maxExtent - 200 && _hasMore && !_isLoadingMore) {
+      _loadNextPage();
+    }
+  }
+
+  Future<void> _loadNextPage() async {
+    setState(() => _isLoadingMore = true);
+    // Simulate async page load (local pagination — no server paging API).
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    setState(() {
+      _page += 1;
+      _isLoadingMore = false;
+    });
+  }
+
+  void _resetPagination() {
+    setState(() {
+      _page = 1;
+      _hasMore = true;
+      _isLoadingMore = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     try {
-      return _buildContent(context, ref);
+      return _buildContent(context);
     } catch (e) {
       return screenError(e, context);
     }
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref) {
+  Widget _buildContent(BuildContext context) {
     final localSessions = ref.watch(sessionHistoryProvider);
     final serverAsync = ref.watch(_serverSessionsProvider);
 
-    // Merge: server sessions not already in local appear at the top
-    // (they lack a summary/duration but represent active server-side sessions).
-    final sessions = serverAsync.when(
+    // Merge: server sessions not already in local appear at the top.
+    final allSessions = serverAsync.when(
       data: (serverSessions) {
         final localIds = localSessions.map((s) => s.id).toSet();
         final extra = serverSessions
@@ -58,6 +109,17 @@ class HistoryScreen extends ConsumerWidget {
     );
 
     final isSyncing = serverAsync.isLoading;
+
+    // Paginate locally: show up to _page * _pageSize items.
+    final visibleCount = (_page * _pageSize).clamp(0, allSessions.length);
+    final sessions = allSessions.take(visibleCount).toList();
+    // Update _hasMore without triggering an extra setState during build.
+    final hasMore = visibleCount < allSessions.length;
+    if (_hasMore != hasMore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _hasMore = hasMore);
+      });
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -90,7 +152,7 @@ class HistoryScreen extends ConsumerWidget {
                   icon: const Icon(Icons.delete_sweep_outlined,
                       color: Colors.white54),
                   tooltip: AppStrings.historyClearAll,
-                  onPressed: () => _confirmClearAll(context, ref),
+                  onPressed: () => _confirmClearAll(context),
                 ),
               ],
       ),
@@ -98,11 +160,11 @@ class HistoryScreen extends ConsumerWidget {
         color: const Color(0xFF10B981),
         backgroundColor: const Color(0xFF1E1E1E),
         onRefresh: () async {
+          _resetPagination();
           ref.invalidate(_serverSessionsProvider);
           await ref.read(_serverSessionsProvider.future).catchError((_) {});
         },
         child: sessions.isEmpty
-            // Wrap in a scrollable so pull-to-refresh works on empty state.
             ? const SingleChildScrollView(
                 physics: AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
@@ -111,11 +173,27 @@ class HistoryScreen extends ConsumerWidget {
                 ),
               )
             : ListView.builder(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: sessions.length,
+                itemCount: sessions.length + (_hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
+                  if (index == sessions.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                   final session = sessions[index];
                   return _DismissibleCard(
                     session: session,
@@ -141,7 +219,7 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmClearAll(BuildContext context, WidgetRef ref) {
+  void _confirmClearAll(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
