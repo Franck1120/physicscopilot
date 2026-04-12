@@ -76,9 +76,22 @@ func main() {
 		},
 	}))
 
-	// CORS — allow Flutter app (any origin, since tunnel URLs change) and landing page
+	// CORS — origins controlled by ALLOWED_ORIGINS env var.
+	// Development default: "*" (permissive).
+	// Production: set ALLOWED_ORIGINS to a comma-separated list of exact origins,
+	// e.g. "https://yourapp.com,https://www.yourapp.com".
+	// If ALLOWED_ORIGINS is unset in production the empty string is forwarded to
+	// the Fiber CORS middleware, which will block all cross-origin requests.
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		if os.Getenv("APP_ENV") == "production" {
+			slog.Warn("ALLOWED_ORIGINS is not set — cross-origin requests will be blocked")
+		} else {
+			allowedOrigins = "*"
+		}
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: allowedOrigins,
 		AllowMethods: "GET,POST,DELETE,OPTIONS",
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
