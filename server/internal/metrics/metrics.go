@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot contributors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package metrics defines and registers all Prometheus metrics for the
 // PhysicsCopilot server. Import this package for its side-effects to ensure
 // metrics are registered with the default registry before any handler runs.
