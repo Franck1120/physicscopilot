@@ -447,6 +447,125 @@ func TestConcurrentAccess(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// ActiveSessionCount and ListSessions
+// ---------------------------------------------------------------------------
+
+func TestActiveSessionCountEmptyUserID(t *testing.T) {
+	svc := NewSessionService()
+	if count := svc.ActiveSessionCount(""); count != 0 {
+		t.Errorf("empty userID: want 0, got %d", count)
+	}
+}
+
+func TestActiveSessionCountNoSessions(t *testing.T) {
+	svc := NewSessionService()
+	if count := svc.ActiveSessionCount("user-none"); count != 0 {
+		t.Errorf("no sessions for user: want 0, got %d", count)
+	}
+}
+
+func TestActiveSessionCountCorrect(t *testing.T) {
+	svc := NewSessionService()
+	svc.CreateSession("A", "1", "user-a", "it")
+	svc.CreateSession("B", "2", "user-a", "it")
+	svc.CreateSession("C", "3", "user-b", "it")
+
+	if count := svc.ActiveSessionCount("user-a"); count != 2 {
+		t.Errorf("user-a: want 2 sessions, got %d", count)
+	}
+	if count := svc.ActiveSessionCount("user-b"); count != 1 {
+		t.Errorf("user-b: want 1 session, got %d", count)
+	}
+}
+
+func TestListSessionsEmpty(t *testing.T) {
+	svc := NewSessionService()
+	if sessions := svc.ListSessions(); len(sessions) != 0 {
+		t.Errorf("empty store: want 0 sessions, got %d", len(sessions))
+	}
+}
+
+func TestListSessionsReturnsAll(t *testing.T) {
+	svc := NewSessionService()
+	svc.CreateSession("A", "1", "", "it")
+	svc.CreateSession("B", "2", "", "it")
+	svc.CreateSession("C", "3", "", "it")
+
+	if sessions := svc.ListSessions(); len(sessions) != 3 {
+		t.Errorf("want 3 sessions, got %d", len(sessions))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Session limit enforcement
+// ---------------------------------------------------------------------------
+
+func TestSessionLimitEnforcement(t *testing.T) {
+	svc := NewSessionService()
+	userID := "limited-user"
+
+	for i := 0; i < maxActiveSessionsPerUser; i++ {
+		_, err := svc.CreateSession("Brand", "Model", userID, "it")
+		if err != nil {
+			t.Fatalf("session %d: unexpected error: %v", i+1, err)
+		}
+	}
+
+	_, err := svc.CreateSession("Brand", "Model", userID, "it")
+	if err == nil {
+		t.Fatal("expected error when exceeding maxActiveSessionsPerUser")
+	}
+	if !strings.Contains(err.Error(), "maximum") {
+		t.Errorf("expected 'maximum' in error, got: %v", err)
+	}
+}
+
+func TestSessionLimitAnonymousUnbounded(t *testing.T) {
+	svc := NewSessionService()
+	// Empty userID bypasses the session limit.
+	for i := 0; i < maxActiveSessionsPerUser+1; i++ {
+		_, err := svc.CreateSession("Brand", "Model", "", "it")
+		if err != nil {
+			t.Fatalf("anonymous session %d: unexpected error: %v", i+1, err)
+		}
+	}
+}
+
+func TestCreateSessionDefaultsLanguageToIT(t *testing.T) {
+	svc := NewSessionService()
+	sess, err := svc.CreateSession("Brand", "Model", "", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sess.Language != "it" {
+		t.Errorf("empty language: want default 'it', got %q", sess.Language)
+	}
+}
+
+func TestCreateSessionConcurrent(t *testing.T) {
+	svc := NewSessionService()
+	const goroutines = 30
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_, err := svc.CreateSession("Brand", "Model", "", "it")
+			if err != nil {
+				t.Errorf("concurrent CreateSession error: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
+
+	sessions := svc.ListSessions()
+	if len(sessions) != goroutines {
+		t.Errorf("expected %d sessions after concurrent create, got %d", goroutines, len(sessions))
+	}
+}
+
+// ---------------------------------------------------------------------------
 // DB error path tests
 // ---------------------------------------------------------------------------
 

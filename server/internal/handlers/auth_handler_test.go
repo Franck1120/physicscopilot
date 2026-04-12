@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -138,6 +139,55 @@ func TestWSAuthMiddlewareExpiredTokenReturns401(t *testing.T) {
 	resp, _ := app.Test(req)
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("expired token: want 401, got %d", resp.StatusCode)
+	}
+}
+
+func TestWSAuthMiddlewareWrongSigningMethodReturns401(t *testing.T) {
+	const secret = "test-secret-signing-method"
+	t.Setenv("SUPABASE_JWT_SECRET", secret)
+	app := newAuthTestApp(t)
+
+	// Craft a raw JWT claiming RS256 (non-HMAC) with a dummy signature.
+	// The middleware keyFunc rejects non-HMAC methods before verifying the signature,
+	// so the exact signature value does not matter.
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"x","exp":9999999999}`))
+	fakeToken := header + "." + payload + ".fakesig"
+
+	req := httptest.NewRequest(http.MethodGet, "/protected?token="+fakeToken, nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("wrong signing method: want 401, got %d", resp.StatusCode)
+	}
+}
+
+func TestWSAuthMiddlewareTokenWithoutSubDoesNotSetUserID(t *testing.T) {
+	const secret = "test-secret-no-sub"
+	t.Setenv("SUPABASE_JWT_SECRET", secret)
+	app := newAuthTestApp(t)
+
+	// Sign a valid token without a "sub" claim — request should pass but
+	// user_id must not be set in c.Locals.
+	claims := jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour).Unix(),
+		"iat": time.Now().Unix(),
+		// no "sub" claim
+	}
+	tok, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("sign token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/protected?token="+tok, nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("no-sub token: want 200 (request allowed), got %d", resp.StatusCode)
 	}
 }
 

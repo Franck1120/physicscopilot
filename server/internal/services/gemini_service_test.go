@@ -613,6 +613,123 @@ func TestBuildProxyRequestBodySystemRoleIsSeparate(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Proxy (CLIProxyAPI) tests
+// ---------------------------------------------------------------------------
+
+func TestBuildProxyRequestBodyWithImage(t *testing.T) {
+	svc := &GeminiService{useProxy: true, proxyURL: "http://example.com"}
+	body, err := svc.buildProxyRequestBody("base64imagedata", "check this", "it")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(body.Messages) < 2 {
+		t.Fatalf("expected at least 2 messages, got %d", len(body.Messages))
+	}
+	// User message content should be a JSON array (multipart) when image is present.
+	userMsg := body.Messages[1]
+	if userMsg.Role != "user" {
+		t.Errorf("second message role: want 'user', got %q", userMsg.Role)
+	}
+	// Raw content should start with '[' (JSON array of parts).
+	if len(userMsg.Content) == 0 || userMsg.Content[0] != '[' {
+		t.Error("expected user content to be a JSON array when image is provided")
+	}
+}
+
+func TestParseProxyResponseSuccess(t *testing.T) {
+	// Build the envelope using json.Marshal to ensure proper escaping of the
+	// inner JSON string (which contains quotes and colons).
+	inner := `{"analysis":"all good","problem":null,"instruction":"continue","overlay":{"boxes":[],"arrows":[]}}`
+	innerEscaped, _ := json.Marshal(inner)
+	envelope := []byte(`{"choices":[{"message":{"content":` + string(innerEscaped) + `}}]}`)
+
+	resp, err := parseProxyResponse(envelope)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "all good" {
+		t.Errorf("analysis: want 'all good', got %q", resp.Analysis)
+	}
+	if resp.Instruction != "continue" {
+		t.Errorf("instruction: want 'continue', got %q", resp.Instruction)
+	}
+}
+
+func TestParseProxyResponseNoChoices(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[]}`))
+	if err == nil {
+		t.Fatal("expected error for empty choices")
+	}
+}
+
+func TestParseProxyResponseEmptyContent(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[{"message":{"content":""}}]}`))
+	if err == nil {
+		t.Fatal("expected error for empty content")
+	}
+}
+
+func TestParseProxyResponseInvalidEnvelope(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`not-json`))
+	if err == nil {
+		t.Fatal("expected error for invalid JSON envelope")
+	}
+}
+
+func TestParseProxyResponseInvalidInnerJSON(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[{"message":{"content":"not-valid-json"}}]}`))
+	if err == nil {
+		t.Fatal("expected error for invalid inner JSON")
+	}
+}
+
+func TestAnalyzeFrameViaProxy(t *testing.T) {
+	inner := `{"analysis":"proxy ok","problem":null,"instruction":"proxy instruction","overlay":{"boxes":[],"arrows":[]}}`
+	innerEscaped, _ := json.Marshal(inner)
+	proxyBody := []byte(`{"choices":[{"message":{"content":` + string(innerEscaped) + `}}]}`)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(proxyBody)
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		useProxy:   true,
+		proxyURL:   server.URL,
+		httpClient: server.Client(),
+	}
+
+	resp, err := svc.AnalyzeFrame(context.Background(), "", "some context", "it")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "proxy ok" {
+		t.Errorf("analysis: want 'proxy ok', got %q", resp.Analysis)
+	}
+}
+
+func TestAnalyzeFrameViaProxyHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte(`proxy error`))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		useProxy:   true,
+		proxyURL:   server.URL,
+		httpClient: server.Client(),
+	}
+
+	_, err := svc.AnalyzeFrame(context.Background(), "", "", "it")
+	if err == nil {
+		t.Fatal("expected error for proxy HTTP error")
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Circuit breaker tests
 // ---------------------------------------------------------------------------
 

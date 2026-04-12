@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // geminiStubServer returns a test HTTP server that responds with the given
@@ -391,6 +392,101 @@ func TestProcessFrameClearsHashOnGeminiError(t *testing.T) {
 	if callCount != 2 {
 		t.Errorf("expected 2 Gemini calls (fail + retry), got %d", callCount)
 	}
+}
+
+// ── isDuplicateFrame / storeFrameHash / CleanupSession ───────────────────────
+
+func TestIsDuplicateFrameReturnsTrueForSameHash(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	sessionID := "dup-session"
+
+	svc.storeFrameHash(sessionID, "abc123", 0, false)
+
+	if !svc.isDuplicateFrame(sessionID, "abc123", 0, false) {
+		t.Error("expected isDuplicateFrame to return true for same hash")
+	}
+}
+
+func TestIsDuplicateFrameReturnsFalseForDifferentHash(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	sessionID := "diff-session"
+
+	svc.storeFrameHash(sessionID, "hash-a", 0, false)
+
+	if svc.isDuplicateFrame(sessionID, "hash-b", 0, false) {
+		t.Error("expected isDuplicateFrame to return false for a different hash")
+	}
+}
+
+func TestIsDuplicateFrameReturnsFalseForUnknownSession(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+
+	if svc.isDuplicateFrame("unknown", "anyhash", 0, false) {
+		t.Error("expected isDuplicateFrame to return false for a session with no stored hash")
+	}
+}
+
+func TestIsDuplicateFrameReturnsFalseForExpiredEntry(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	sessionID := "ttl-session"
+
+	svc.mu.Lock()
+	svc.frameHashes[sessionID] = frameHashEntry{
+		sha256:     "xyz789",
+		recordedAt: time.Now().Add(-frameHashTTL - time.Second),
+	}
+	svc.mu.Unlock()
+
+	// Same hash but TTL expired — must NOT be treated as duplicate.
+	if svc.isDuplicateFrame(sessionID, "xyz789", 0, false) {
+		t.Error("expected isDuplicateFrame to return false for an expired entry")
+	}
+}
+
+func TestStoreFrameHashPersistsEntry(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	sessionID := "store-session"
+
+	svc.storeFrameHash(sessionID, "hash1", 42, true)
+
+	svc.mu.Lock()
+	entry, ok := svc.frameHashes[sessionID]
+	svc.mu.Unlock()
+
+	if !ok {
+		t.Fatal("expected frame hash entry to be stored")
+	}
+	if entry.sha256 != "hash1" {
+		t.Errorf("sha256: want 'hash1', got %q", entry.sha256)
+	}
+	if entry.pHash != 42 {
+		t.Errorf("pHash: want 42, got %d", entry.pHash)
+	}
+	if !entry.hasPHash {
+		t.Error("expected hasPHash to be true")
+	}
+}
+
+func TestCleanupSessionRemovesFrameHash(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	sessionID := "cleanup-session"
+
+	svc.storeFrameHash(sessionID, "hash1", 0, false)
+	svc.CleanupSession(sessionID)
+
+	svc.mu.Lock()
+	_, ok := svc.frameHashes[sessionID]
+	svc.mu.Unlock()
+
+	if ok {
+		t.Error("expected frame hash entry to be removed after CleanupSession")
+	}
+}
+
+func TestCleanupSessionNonexistentIsNoop(t *testing.T) {
+	svc := NewConversationService(NewSessionService(), nil, nil)
+	// Must not panic when there is no entry for the given session.
+	svc.CleanupSession("no-such-session")
 }
 
 func TestComputeFrameFingerprintNonJPEGFallsBackToSHA256(t *testing.T) {
