@@ -1,0 +1,6 @@
+-- Seed data for local development.
+-- This file is intentionally empty — all schema is managed via migrations.
+-- Add INSERT statements here to pre-populate tables during `supabase db reset`.
+--
+-- Example:
+-- INSERT INTO public.some_table (col1, col2) VALUES ('value1', 'value2');
