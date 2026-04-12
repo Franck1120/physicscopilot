@@ -632,7 +632,7 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: "L'AI sta analizzando",
+      label: AppStrings.sessionAiThinking,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -646,7 +646,7 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
             const SizedBox(height: 12),
             const ExcludeSemantics(
               child: Text(
-                "L'AI sta analizzando…",
+                AppStrings.sessionAiThinking,
                 style: TextStyle(color: kTextMuted, fontSize: 13),
               ),
             ),
