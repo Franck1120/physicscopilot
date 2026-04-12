@@ -74,13 +74,12 @@ func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGServ
 func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frameBase64, userText string) (*ProcessResult, error) {
 	// Compute perceptual fingerprint (pHash when JPEG, SHA-256 otherwise).
 	sha256Hash, ph, hasPHash := computeFrameFingerprint(frameBase64)
-	if c.isDuplicateFrame(sessionID, sha256Hash, ph, hasPHash) {
+
+	// Atomic check+store eliminates the TOCTOU window between isDuplicateFrame
+	// and storeFrameHash. If Gemini fails later, clearFrameHash undoes the store.
+	if c.checkAndStoreFrameHash(sessionID, sha256Hash, ph, hasPHash) {
 		return nil, nil
 	}
-
-	// Store hash optimistically to block concurrent duplicate frames (TOCTOU fix).
-	// If Gemini fails, the hash is cleared so the frame can be retried.
-	c.storeFrameHash(sessionID, sha256Hash, ph, hasPHash)
 
 	// Record user message if provided
 	if userText != "" {
@@ -289,6 +288,35 @@ func (c *ConversationService) storeFrameHash(sessionID, sha256Hash string, ph ui
 		hasPHash:   hasPHash,
 		recordedAt: time.Now(),
 	}
+}
+
+// checkAndStoreFrameHash checks if the frame is a duplicate of the last
+// processed frame for this session and, if not, stores it atomically.
+// Returns true when the frame is a duplicate (caller should skip processing).
+func (c *ConversationService) checkAndStoreFrameHash(sessionID, sha256Hash string, ph uint64, hasPHash bool) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	entry, ok := c.frameHashes[sessionID]
+	if ok {
+		if time.Since(entry.recordedAt) <= frameHashTTL {
+			var isDup bool
+			if hasPHash && entry.hasPHash {
+				isDup = hammingDistance(ph, entry.pHash) < PHashDuplicateThreshold
+			} else {
+				isDup = sha256Hash == entry.sha256
+			}
+			if isDup {
+				return true
+			}
+		}
+	}
+	c.frameHashes[sessionID] = frameHashEntry{
+		sha256:     sha256Hash,
+		pHash:      ph,
+		hasPHash:   hasPHash,
+		recordedAt: time.Now(),
+	}
+	return false
 }
 
 // clearFrameHash removes the stored frame hash for a session, allowing the
