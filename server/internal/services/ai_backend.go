@@ -1,3 +1,6 @@
+// Package services contains the business logic layer for the PhysicsCopilot
+// server. It includes session management, AI inference, conversation
+// orchestration, knowledge-base retrieval, and database persistence.
 package services
 
 import (
