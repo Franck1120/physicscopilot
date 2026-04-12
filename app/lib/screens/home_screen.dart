@@ -6,6 +6,7 @@ import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBor
 import '../models/session_record.dart';
 import '../providers/equipment_provider.dart';
 import '../providers/session_history_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart' show serverOnlineProvider;
 import '../services/websocket_service.dart';
@@ -147,9 +148,12 @@ class _HomeTab extends ConsumerWidget {
               equipmentName: equipment?.name,
               onChangeEquipment: onChangeEquipment,
             ),
+            const SizedBox(height: 12),
+            _DomainSection(
+              onChangeDomain: () => context.push('/domain-selection'),
+            ),
             const SizedBox(height: 16),
             const _ServerStatusBanner(),
-            const SizedBox(height: 8),
             const SizedBox(height: 16),
             const _RecentSessionsSection(),
           ],
@@ -334,6 +338,92 @@ class _EquipmentSection extends StatelessWidget {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onChangeEquipment,
+                child: Chip(
+                  label: const Text(
+                    'Cambia',
+                    style: TextStyle(
+                      color: kAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  backgroundColor: kBgPrimary,
+                  side: const BorderSide(color: kAccent, width: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Domain Section
+// ---------------------------------------------------------------------------
+
+/// Displays the currently active knowledge-base domain and provides a quick
+/// link to [DomainSelectionScreen] to change it.
+class _DomainSection extends ConsumerWidget {
+  const _DomainSection({required this.onChangeDomain});
+
+  final VoidCallback onChangeDomain;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final domain = ref.watch(settingsProvider.select((s) => s.selectedDomain));
+    final label = domain != null && domain.isNotEmpty ? domain : 'Globale';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'DOMINIO ATTIVO',
+          style: TextStyle(
+            color: kTextMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: kBgCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: kBgCardBorder, width: 1),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.category_outlined,
+                color: kAccent,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: domain != null && domain.isNotEmpty
+                        ? Colors.white
+                        : kTextMuted,
+                    fontSize: 15,
+                    fontWeight: domain != null && domain.isNotEmpty
+                        ? FontWeight.w500
+                        : FontWeight.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onChangeDomain,
                 child: Chip(
                   label: const Text(
                     'Cambia',

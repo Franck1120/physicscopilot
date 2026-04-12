@@ -18,6 +18,7 @@ import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/history_screen.dart';
+import 'screens/domain_selection_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'providers/settings_provider.dart';
@@ -204,6 +205,11 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
           path: '/settings',
           pageBuilder: (_, state) =>
               _slidePage(state, const SettingsScreen()),
+        ),
+        GoRoute(
+          path: '/domain-selection',
+          pageBuilder: (_, state) =>
+              _slidePage(state, const DomainSelectionScreen()),
         ),
       ],
     );
