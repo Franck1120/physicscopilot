@@ -15,11 +15,15 @@ import '../utils/constants.dart';
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
   final settings = ref.read(settingsProvider);
   final baseUrl = settings.serverUrlOverride ?? AppConstants.wsBaseUrl;
+  // Watch only language so the service reconnects when the user changes it.
+  // Other settings (voice, theme) must not trigger a reconnect.
+  final language =
+      ref.watch(settingsProvider.select((s) => s.language));
 
   final service = WebSocketService(
     baseUrl,
     token: AuthService.currentAccessToken,
-    language: settings.language,
+    language: language,
   );
   service.connect();
   ref.onDispose(() => service.disconnect());
