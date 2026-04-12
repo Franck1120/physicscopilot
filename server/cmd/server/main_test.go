@@ -24,7 +24,7 @@ func buildTestApp(t *testing.T) *fiber.App {
 	ws := handlers.NewWSHandler(convSvc, sessionSvc)
 	sh := handlers.NewSessionHandler(sessionSvc)
 	fh := handlers.NewFeedbackHandler(nil)
-	return newFiberApp("test", sh, fh, ws, nil, nil, handlers.NewStatsHandler(sessionSvc))
+	return newFiberApp("test", "unknown", "dev", sh, fh, ws, nil, nil)
 }
 
 func TestNewFiberAppHealthRouteRegistered(t *testing.T) {
@@ -121,7 +121,7 @@ func TestNewFiberAppProductionAllowedOriginsWarning(t *testing.T) {
 	ws := handlers.NewWSHandler(convSvc, sessionSvc)
 	sh := handlers.NewSessionHandler(sessionSvc)
 	fh := handlers.NewFeedbackHandler(nil)
-	app := newFiberApp("test", sh, fh, ws, nil, nil, handlers.NewStatsHandler(sessionSvc))
+	app := newFiberApp("test", "unknown", "dev", sh, fh, ws, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req)
@@ -187,7 +187,7 @@ func TestNewFiberAppHSTSHeaderInProduction(t *testing.T) {
 	ws := handlers.NewWSHandler(convSvc, sessionSvc)
 	sh := handlers.NewSessionHandler(sessionSvc)
 	fh := handlers.NewFeedbackHandler(nil)
-	app := newFiberApp("test", sh, fh, ws, nil, nil, handlers.NewStatsHandler(sessionSvc))
+	app := newFiberApp("test", "unknown", "dev", sh, fh, ws, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req)
@@ -293,7 +293,7 @@ func TestNewFiberAppCORSWithAllowedOrigins(t *testing.T) {
 	ws := handlers.NewWSHandler(convSvc, sessionSvc)
 	sh := handlers.NewSessionHandler(sessionSvc)
 	fh := handlers.NewFeedbackHandler(nil)
-	app := newFiberApp("test", sh, fh, ws, nil, nil, handlers.NewStatsHandler(sessionSvc))
+	app := newFiberApp("test", "unknown", "dev", sh, fh, ws, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	req.Header.Set("Origin", "https://app.example.com")

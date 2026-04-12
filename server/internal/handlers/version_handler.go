@@ -1,21 +1,28 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 package handlers
 
 import "github.com/gofiber/fiber/v2"
 
-// VersionHandler returns a fiber.Handler that serves build version information.
-// version, buildTime, and goVersion are baked in at startup; api_version is
-// always "v1" for the current generation of this service.
-//
-// The response is publicly cacheable for one hour — version metadata changes
-// only on deployment, so clients may cache it aggressively.
-func VersionHandler(version, buildTime, goVersion string) fiber.Handler {
+// VersionResponse is the JSON payload returned by GET /version.
+type VersionResponse struct {
+	Version    string `json:"version"`
+	BuildTime  string `json:"build_time"`
+	GoVersion  string `json:"go_version"`
+	CommitHash string `json:"commit_hash"`
+}
+
+// VersionHandler returns a Fiber handler for GET /version.
+// It reports the application version, build time, Go runtime version, and
+// the Git commit hash baked in at build time (or "dev" when not set).
+func VersionHandler(version, buildTime, goVersion, commitHash string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		c.Set("Cache-Control", "public, max-age=3600")
-		return c.JSON(fiber.Map{
-			"version":     version,
-			"build_time":  buildTime,
-			"go_version":  goVersion,
-			"api_version": "v1",
+		return c.JSON(VersionResponse{
+			Version:    version,
+			BuildTime:  buildTime,
+			GoVersion:  goVersion,
+			CommitHash: commitHash,
 		})
 	}
 }

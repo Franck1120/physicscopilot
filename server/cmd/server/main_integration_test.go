@@ -16,9 +16,8 @@ func TestNewFiberAppHealthEndpoint(t *testing.T) {
 	ws := handlers.NewWSHandler(convSvc, sessions)
 	sessionHandler := handlers.NewSessionHandler(sessions)
 	feedbackHandler := handlers.NewFeedbackHandler(nil)
-	statsHandler := handlers.NewStatsHandler(sessions)
 
-	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, nil, statsHandler)
+	app := newFiberApp("test", "unknown", "dev", sessionHandler, feedbackHandler, ws, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req)
@@ -30,27 +29,23 @@ func TestNewFiberAppHealthEndpoint(t *testing.T) {
 	}
 }
 
-func TestNewFiberAppStatsEndpoint(t *testing.T) {
+func TestNewFiberAppVersionRouteRegistered(t *testing.T) {
 	sessions := services.NewSessionService()
 	convSvc := services.NewConversationService(sessions, nil, nil)
 	ws := handlers.NewWSHandler(convSvc, sessions)
 	sessionHandler := handlers.NewSessionHandler(sessions)
 	feedbackHandler := handlers.NewFeedbackHandler(nil)
-	statsHandler := handlers.NewStatsHandler(sessions)
 
-	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, nil, statsHandler)
+	app := newFiberApp("test", "unknown", "dev", sessionHandler, feedbackHandler, ws, nil, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
-	req.Header.Set("Authorization", "Bearer test") // will fail auth but let's skip for now
+	req := httptest.NewRequest(http.MethodGet, "/version", nil)
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)
 	}
-	// Stats endpoint is protected by auth middleware; 401 is acceptable in test
-	if resp.StatusCode == 0 {
-		t.Error("expected a non-zero status code")
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/version: want 200, got %d", resp.StatusCode)
 	}
-	_ = resp
 }
 
 func TestServerStartTime(t *testing.T) {

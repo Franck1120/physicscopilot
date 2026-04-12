@@ -24,32 +24,30 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/Franck1120/physicscopilot/server/internal/handlers"
 	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/middleware"
-	appsentry "github.com/Franck1120/physicscopilot/server/internal/sentry"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
 const version = "0.1.0"
 
-// buildDate is injected at build time via -ldflags "-X main.buildDate=...".
-// Defaults to "unknown" when building locally without the flag.
-var buildDate = "unknown" //nolint:gochecknoglobals
-
-// buildTime is the ISO-8601 timestamp of the build. Defaults to a fixed value
-// for local builds; in CI it should be injected via -ldflags "-X main.buildTime=...".
-var buildTime = "2026-04-12T00:00:00Z" //nolint:gochecknoglobals
-
 var startTime = time.Now()
+
+// buildTime and commitHash are optionally injected via -ldflags at build time:
+//
+//	-ldflags "-X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) -X main.commitHash=$(git rev-parse --short HEAD)"
+//
+// At runtime, GIT_COMMIT_HASH overrides commitHash when the binary was built
+// without ldflags (e.g. local `go run`).
+var (
+	buildTime  = "unknown"
+	commitHash = "dev"
+)
 
 func main() {
 	applogger.Init()
-	appsentry.Init(version)
-	prometheus.MustRegister(metrics.NewRuntimeCollector())
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -65,6 +63,11 @@ func main() {
 func run(ctx context.Context) error {
 	if err := checkJWTSecret(); err != nil {
 		return err
+	}
+
+	// Allow GIT_COMMIT_HASH env override for deployments that do not inject ldflags.
+	if envHash := os.Getenv("GIT_COMMIT_HASH"); envHash != "" {
+		commitHash = envHash
 	}
 
 	// ── Services ────────────────────────────────────────────────────────────
@@ -101,7 +104,6 @@ func run(ctx context.Context) error {
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
-	statsHandler := handlers.NewStatsHandlerFull(sessionSvc, wsHandler, ragSvc, version, startTime)
 
 	// Background memory metrics collection every 30 seconds.
 	// Warns at slog.Warn level when heap usage exceeds 80 % of GOMEMLIMIT.
@@ -136,7 +138,7 @@ func run(ctx context.Context) error {
 	}()
 
 	// ── HTTP app ─────────────────────────────────────────────────────────────
-	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, ragSvc, dbSvc, statsHandler)
+	app := newFiberApp(version, buildTime, commitHash, sessionHandler, feedbackHandler, wsHandler, ragSvc, dbSvc)
 
 	port := resolvePort()
 
@@ -215,12 +217,13 @@ func collectMemoryMetrics() {
 // listener or requiring env vars beyond the test's control.
 func newFiberApp(
 	ver string,
+	buildT string,
+	commitH string,
 	sessionHandler *handlers.SessionHandler,
 	feedbackHandler *handlers.FeedbackHandler,
 	wsHandler *handlers.WSHandler,
 	ragSvc handlers.DomainsService,
 	db handlers.DBPinger, // nil when DATABASE_URL not set
-	statsHandler *handlers.StatsHandler,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "PhysicsCopilot Server v" + ver,
@@ -239,9 +242,6 @@ func newFiberApp(
 			return c.Status(code).JSON(fiber.Map{"error": err.Error()})
 		},
 	})
-
-	app.Use(middleware.RequestIDMiddleware())
-	app.Use(middleware.APIVersion(ver))
 
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
@@ -321,28 +321,15 @@ func newFiberApp(
 	app.Use("/health", apiLimiter.Middleware())
 
 	app.Get("/health", handlers.NewHealthHandler(ver, startTime, wsHandler, db))
-	app.Get("/version", handlers.VersionHandler(ver, buildTime, runtime.Version()))
-
-	// Swagger UI — served at /docs (without /api prefix) for browser access.
-	// Overrides the global CSP to allow loading Swagger UI assets from unpkg.com.
-	app.Get("/docs", func(c *fiber.Ctx) error {
-		c.Set("Content-Type", "text/html; charset=utf-8")
-		c.Set("Cache-Control", "public, max-age=3600")
-		c.Set("Content-Security-Policy",
-			"default-src 'none'; script-src 'unsafe-inline' https://unpkg.com; style-src 'unsafe-inline' https://unpkg.com; img-src data: https:; connect-src *")
-		return c.SendString(handlers.SwaggerUIHTML("/api/docs"))
-	})
+	app.Get("/version", handlers.VersionHandler(ver, buildT, runtime.Version(), commitH))
 
 	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
 	api.Get("/docs", handlers.OpenAPIHandler())
 	api.Post("/sessions", sessionHandler.CreateSession)
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)
-	api.Get("/sessions/:id/steps", sessionHandler.GetSessionSteps)
-	api.Get("/sessions/:id/messages", sessionHandler.GetSessionMessages)
 	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
 	api.Post("/feedback", feedbackHandler.Submit)
-	api.Get("/stats", statsHandler.GetStats)
 	api.Get("/domains", handlers.DomainsHandler(ragSvc))
 
 	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
