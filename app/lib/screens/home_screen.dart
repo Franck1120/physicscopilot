@@ -138,21 +138,30 @@ class _HomeTab extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          children: [
-            _NewSessionCard(onTap: onGoToCamera),
-            const SizedBox(height: 24),
-            _EquipmentSection(
-              equipmentName: equipment?.name,
-              onChangeEquipment: onChangeEquipment,
-            ),
-            const SizedBox(height: 16),
-            const _ServerStatusBanner(),
-            const SizedBox(height: 8),
-            const SizedBox(height: 16),
-            const _RecentSessionsSection(),
-          ],
+        child: RefreshIndicator(
+          color: kAccent,
+          backgroundColor: const Color(0xFF1E1E1E),
+          onRefresh: () async {
+            ref.invalidate(sessionHistoryProvider);
+            ref.invalidate(serverOnlineProvider);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            children: [
+              _NewSessionCard(onTap: onGoToCamera),
+              const SizedBox(height: 24),
+              _EquipmentSection(
+                equipmentName: equipment?.name,
+                onChangeEquipment: onChangeEquipment,
+              ),
+              const SizedBox(height: 16),
+              const _ServerStatusBanner(),
+              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              const _RecentSessionsSection(),
+            ],
+          ),
         ),
       ),
     );
