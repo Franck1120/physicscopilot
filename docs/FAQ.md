@@ -55,7 +55,49 @@ cd server && go build -o physicscopilot-server ./cmd/server
 ```
 
 **Q: How do I add a device to the knowledge base?**  
-A: See `docs/KB_FORMAT.md`.
+A: See `docs/KB_FORMAT.md`. Create a Markdown file in `kb/` with YAML frontmatter, add tags for retrieval, and restart the server. The RAG service rebuilds its index on startup.
+
+---
+
+## WebSocket & Connectivity
+
+**Q: Why does the WebSocket disconnect frequently?**  
+A: Common causes: (1) Render free tier spins down after 15 min of inactivity — upgrade to Starter to avoid cold starts. (2) Unstable Wi-Fi — the app reconnects automatically with exponential back-off (1s, 2s, 4s... up to 30s). (3) Rate limit exceeded — the server closes the connection after 30 msg/min per user. Check the connection status banner in the app for details.
+
+**Q: What happens if the Gemini API does not respond?**  
+A: The server has a 30-second timeout per Gemini request. If Gemini is unreachable or exceeds the timeout, the server returns an error message to the client. The app shows "No response from AI" and the user can retry. If `GEMINI_PROXY_URL` is configured, the server falls back to the proxy endpoint automatically.
+
+**Q: How do I export session history?**  
+A: Session data is stored in Supabase Postgres when `DATABASE_URL` is set. You can query it directly via the Supabase dashboard (Table Editor or SQL Editor). A future release will add PDF export of annotated sessions from the app. For now, use the REST API: `GET /api/sessions/:id` returns the full session JSON.
+
+---
+
+## Permissions & Security
+
+**Q: What permissions does the app require on Android?**  
+A: Camera (for live frame analysis), Microphone (for voice commands via STT), Internet (for server communication). These are declared in `AndroidManifest.xml`. The app requests camera and microphone permissions at runtime before using them.
+
+**Q: What permissions does the app require on iOS?**  
+A: Camera (`NSCameraUsageDescription`), Microphone (`NSMicrophoneUsageDescription`), Speech Recognition (`NSSpeechRecognitionUsageDescription`). All are declared in `Info.plist` with user-facing descriptions. iOS prompts the user before granting each permission.
+
+**Q: How do I configure Supabase Auth?**  
+A: (1) Create a project on [supabase.com](https://supabase.com). (2) Copy `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_JWT_SECRET` from Settings → API. (3) Set these as environment variables on your server. (4) In the Flutter app, configure `SupabaseService` with the URL and anon key. The app uses Supabase's email/password auth flow. See `app/lib/services/auth_service.dart` for the implementation.
+
+---
+
+## Advanced
+
+**Q: Can I use a different AI model instead of Gemini?**  
+A: Yes. Set `AI_BACKEND=openai` and provide `OPENAI_API_KEY` to use OpenAI models. The `openai_backend.go` implements the same `AIService` interface. Multimodal vision quality may differ since Gemini 2.5 Flash is optimized for frame analysis. Adding new backends requires implementing the `AIService` interface in `server/internal/services/`.
+
+**Q: How do I run load tests?**  
+A: Install [k6](https://k6.io) and run against your server. See `docs/PERFORMANCE.md` for a ready-to-use k6 script. The server comfortably handles ~50 concurrent WebSocket sessions on Render Standard tier (2GB RAM, 1 vCPU).
+
+**Q: How do I monitor the server in production?**  
+A: The server exposes Prometheus metrics at `GET /metrics` (protected with HTTP Basic Auth via `METRICS_USER`/`METRICS_PASSWORD`). See `docs/MONITORING.md` for Prometheus and Grafana setup, including alert rules for latency spikes and error rate.
+
+**Q: Can I run PhysicsCopilot behind a reverse proxy?**  
+A: Yes. The `infra/nginx.conf` file provides a production-ready nginx configuration with TLS termination, WebSocket proxy (`Upgrade` header forwarding), security headers (HSTS, CSP, X-Frame-Options), and gzip compression. Point nginx at `localhost:8080` where the Go server listens.
 
 ---
 

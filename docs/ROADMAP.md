@@ -74,6 +74,45 @@ Status: Done · In Progress · Planned · Dropped
 
 ---
 
+## Q2 2026 — Collaboration & Distribution
+
+| Feature | Status | Target |
+|---------|--------|--------|
+| Multi-user collaboration (shared sessions) | Planned | June 2026 |
+| Webhooks API (session completion events) | Planned | May 2026 |
+| iOS App Store submission | Planned | June 2026 |
+| Token refresh on 401 in Flutter app | Planned | May 2026 |
+| Trivy container scan in CI | Planned | May 2026 |
+| Session summary PDF export | Planned | June 2026 |
+
+---
+
+## Q3 2026 — Offline & Voice
+
+| Feature | Status | Target |
+|---------|--------|--------|
+| Full offline mode (local AI model fallback) | Planned | August 2026 |
+| Custom KB upload via app (user-provided manuals) | Planned | July 2026 |
+| Voice-only mode (no camera, STT-only guidance) | Planned | September 2026 |
+| Semantic search over uploaded manuals (pgvector) | Planned | August 2026 |
+| Multi-language auto-detect from STT | Planned | July 2026 |
+| Push notifications for session completion | Planned | July 2026 |
+
+---
+
+## Q4 2026 — Enterprise & Scale
+
+| Feature | Status | Target |
+|---------|--------|--------|
+| Edge deployment (on-premise inference) | Planned | November 2026 |
+| Plugin system for custom AI backends | Planned | October 2026 |
+| Enterprise features (SSO, audit logs, RBAC) | Planned | December 2026 |
+| Admin dashboard (usage metrics, user management) | Planned | November 2026 |
+| Helm chart for self-hosted Kubernetes deploy | Planned | October 2026 |
+| Flutter Web client (parallel to mobile) | Planned | December 2026 |
+
+---
+
 ## Not planned
 
 | Feature | Reason |
