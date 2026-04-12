@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/scheduler.dart';
@@ -8,6 +9,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'package:share_plus/share_plus.dart';
 
 import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
 import '../services/camera_service.dart' show FrameQuality;
@@ -42,6 +46,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
+  Uint8List? _lastFrame;
 
   final DateTime _sessionStart = DateTime.now();
   Duration _elapsed = Duration.zero;
@@ -138,7 +143,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     ref.read(sessionProvider.notifier).setProcessing();
     try {
       final frame = await cameraService.captureFrame();
-      if (frame != null) wsService.sendFrame(frame);
+      if (frame != null) {
+        setState(() => _lastFrame = frame);
+        wsService.sendFrame(frame);
+      }
     } catch (_) {
       ref
           .read(sessionProvider.notifier)
@@ -256,6 +264,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
           },
         ),
         actions: [
+          if (_lastFrame != null)
+            IconButton(
+              icon: const Icon(Icons.draw_outlined,
+                  color: Colors.white54, size: 20),
+              tooltip: 'Annota immagine',
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) =>
+                    _ImageAnnotationDialog(frame: _lastFrame!),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded,
                 color: Colors.white54, size: 20),
@@ -1426,6 +1445,214 @@ class _TextInputRow extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Tutorial overlay ──────────────────────────────────────────────────────────
+
+// ── Image annotation dialog ───────────────────────────────────────────────────
+
+class _ImageAnnotationDialog extends StatefulWidget {
+  const _ImageAnnotationDialog({required this.frame});
+  final Uint8List frame;
+
+  @override
+  State<_ImageAnnotationDialog> createState() => _ImageAnnotationDialogState();
+}
+
+class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
+  final _repaintKey = GlobalKey();
+  final List<Offset> _pins = [];
+  bool _sharing = false;
+
+  Future<void> _share() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final boundary = _repaintKey.currentContext!.findRenderObject()
+          as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final bytes =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) return;
+      final pngBytes = bytes.buffer.asUint8List();
+      await Share.shareXFiles(
+        [XFile.fromData(pngBytes,
+            name: 'annotazione.png', mimeType: 'image/png')],
+        subject: 'Annotazione PhysicsCopilot',
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: kBgCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: kBgCardBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.draw_outlined, color: kAccent, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'Annota immagine',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close,
+                      color: Colors.white54, size: 18),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Annotatable image area
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: GestureDetector(
+                onTapUp: (d) =>
+                    setState(() => _pins.add(d.localPosition)),
+                child: RepaintBoundary(
+                  key: _repaintKey,
+                  child: Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 4 / 3,
+                        child: Image.memory(
+                          widget.frame,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _PinPainter(pins: _pins),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tocca sull\'immagine per aggiungere un pin',
+              style: TextStyle(color: kTextMuted, fontSize: 11),
+            ),
+            const SizedBox(height: 12),
+            // Actions
+            Row(
+              children: [
+                if (_pins.isNotEmpty) ...[
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => _pins.clear()),
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Cancella'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _sharing ? null : _share,
+                    icon: _sharing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.ios_share_outlined, size: 16),
+                    label:
+                        Text(_sharing ? 'Preparazione…' : 'Condividi'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kAccent,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: kAccent.withAlpha(60),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PinPainter extends CustomPainter {
+  const _PinPainter({required this.pins});
+  final List<Offset> pins;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var i = 0; i < pins.length; i++) {
+      final p = pins[i];
+      // Drop shadow
+      canvas.drawCircle(
+        p + const Offset(1, 2),
+        14,
+        Paint()..color = Colors.black.withAlpha(80),
+      );
+      // Filled circle
+      canvas.drawCircle(
+        p,
+        13,
+        Paint()..color = kAccent,
+      );
+      // Border
+      canvas.drawCircle(
+        p,
+        13,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+      // Number
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '${i + 1}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        p - Offset(tp.width / 2, tp.height / 2),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PinPainter old) => old.pins != pins;
 }
 
 // ── Tutorial overlay ──────────────────────────────────────────────────────────

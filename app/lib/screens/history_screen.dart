@@ -379,13 +379,11 @@ class _SessionDetailSheet extends StatelessWidget {
   Future<void> _export(BuildContext context) async {
     final report = _buildReport();
     final box = context.findRenderObject() as RenderBox?;
-    await SharePlus.instance.share(
-      ShareParams(
-        text: report,
-        subject: 'Report Sessione — ${session.equipmentName}',
-        sharePositionOrigin:
-            box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-      ),
+    await Share.share(
+      report,
+      subject: 'Report Sessione — ${session.equipmentName}',
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
     );
   }
 
