@@ -1,6 +1,7 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-04-11",
+  "last_updated": "2026-04-12",
+  "domain": "printer",
   "total": 66,
   "problems": [
     {
@@ -2188,7 +2189,7 @@
       "id": "thermal_runaway",
       "name": "Thermal Runaway",
       "category": "thermal",
-      "severity": "critical",
+      "severity": "error",
       "description": "Nozzle or bed temperature drops unexpectedly and printer triggers safety shutdown",
       "visual_symptoms": [
         "Printer suddenly stops and displays 'Thermal Runaway' error message",
