@@ -1177,3 +1177,42 @@ func TestGeminiRPMZeroFallsBackToDefault(t *testing.T) {
 		t.Errorf("expected fallback to default %d for zero, got %d", defaultGeminiRPM, rpm)
 	}
 }
+
+// TestDoWithRetryRespectsContextCancellationDuringBackoff verifies that
+// doWithRetry returns promptly when the context is cancelled while the retry
+// backoff timer is sleeping. The test does NOT assert on timing (to avoid
+// flakiness) — it only checks that an error is returned and that the error
+// wraps the context cause.
+func TestDoWithRetryRespectsContextCancellationDuringBackoff(t *testing.T) {
+	// The server always returns 429 so doWithRetry enters the backoff loop.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		w.Write([]byte(`{"error":"rate limited"}`))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		apiKey:  "test-key",
+		baseURL: server.URL,
+		httpClient: &http.Client{
+			Timeout:   10 * time.Second,
+			Transport: server.Client().Transport,
+		},
+	}
+
+	// Cancel the context after the first failed attempt triggers the backoff wait.
+	// Using a very short timeout ensures cancellation happens during the wait.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	_, err := svc.doWithRetry(ctx, []byte(`{}`))
+	if err == nil {
+		t.Fatal("expected an error when context is cancelled during backoff")
+	}
+	// The error should reference context cancellation or deadline exceeded.
+	if !strings.Contains(err.Error(), "context") &&
+		!strings.Contains(err.Error(), "deadline") &&
+		!strings.Contains(err.Error(), "cancel") {
+		t.Errorf("expected context-related error, got: %v", err)
+	}
+}
