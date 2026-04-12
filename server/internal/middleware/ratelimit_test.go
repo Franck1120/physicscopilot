@@ -126,3 +126,47 @@ func TestRateLimiterSameIPSharesBucket(t *testing.T) {
 		t.Error("expected same limiter for repeated calls with same IP")
 	}
 }
+
+// TestNewIPRateLimiterUsesProductionDefaults verifies the exported constructor
+// wires the correct rate and burst values from package constants.
+func TestNewIPRateLimiterUsesProductionDefaults(t *testing.T) {
+	rl := NewIPRateLimiter()
+
+	// Fetch the limiter for a new IP; it should have burst=apiLimiterBurst tokens.
+	l := rl.getLimiter("172.16.0.1")
+	allowed := 0
+	for l.Allow() {
+		allowed++
+	}
+	if allowed != apiLimiterBurst {
+		t.Errorf("expected burst of %d tokens, consumed %d before block", apiLimiterBurst, allowed)
+	}
+}
+
+// TestRateLimiterMiddlewareBlocksAfterBurst exercises the Fiber middleware path
+// rather than the getLimiter method directly.
+func TestRateLimiterMiddlewareBlocksAfterBurst(t *testing.T) {
+	// burst=3: first 3 requests pass, 4th must be 429.
+	rl := newIPRateLimiterWith(60, 3)
+	app := testRateLimitApp(rl)
+
+	for i := 1; i <= 3; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("request %d: %v", i, err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("request %d: want 200, got %d", i, resp.StatusCode)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("4th request: %v", err)
+	}
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Errorf("4th request: want 429 after burst exhausted, got %d", resp.StatusCode)
+	}
+}
