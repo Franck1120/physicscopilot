@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Sentinel used by [SessionState.copyWith] to distinguish
+/// "clear errorText" from "leave it unchanged".
+const _sentinel = Object();
+
 /// Immutable snapshot of the current AI session output.
 class SessionState {
   final String? responseText;
@@ -17,21 +21,23 @@ class SessionState {
     this.errorText,
   });
 
+  /// Pass [errorText] as `null` to explicitly clear it.
+  /// Omit it (or don't pass anything) to keep the current value.
   SessionState copyWith({
     String? responseText,
     String? audioUrl,
     Map<String, dynamic>? overlay,
     bool? isProcessing,
-    String? errorText,
+    Object? errorText = _sentinel,
   }) {
     return SessionState(
       responseText: responseText ?? this.responseText,
       audioUrl: audioUrl ?? this.audioUrl,
       overlay: overlay ?? this.overlay,
       isProcessing: isProcessing ?? this.isProcessing,
-      // Pass null explicitly to clear errorText; copyWith cannot distinguish
-      // "not provided" from "clear it", so callers pass null to clear.
-      errorText: errorText,
+      errorText: identical(errorText, _sentinel)
+          ? this.errorText
+          : errorText as String?,
     );
   }
 }

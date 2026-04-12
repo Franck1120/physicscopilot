@@ -20,10 +20,10 @@ class OverlayBox {
   });
 
   factory OverlayBox.fromJson(Map<String, dynamic> json) => OverlayBox(
-        x: (json['x'] as num).toDouble(),
-        y: (json['y'] as num).toDouble(),
-        w: (json['w'] as num).toDouble(),
-        h: (json['h'] as num).toDouble(),
+        x: (json['x'] as num?)?.toDouble() ?? 0.0,
+        y: (json['y'] as num?)?.toDouble() ?? 0.0,
+        w: (json['w'] as num?)?.toDouble() ?? 0.0,
+        h: (json['h'] as num?)?.toDouble() ?? 0.0,
         label: (json['label'] as String?) ?? '',
         color: _parseColor((json['color'] as String?) ?? 'red'),
       );
@@ -43,10 +43,10 @@ class OverlayArrow {
   });
 
   factory OverlayArrow.fromJson(Map<String, dynamic> json) => OverlayArrow(
-        fromX: (json['from_x'] as num).toDouble(),
-        fromY: (json['from_y'] as num).toDouble(),
-        toX: (json['to_x'] as num).toDouble(),
-        toY: (json['to_y'] as num).toDouble(),
+        fromX: (json['from_x'] as num?)?.toDouble() ?? 0.0,
+        fromY: (json['from_y'] as num?)?.toDouble() ?? 0.0,
+        toX: (json['to_x'] as num?)?.toDouble() ?? 0.0,
+        toY: (json['to_y'] as num?)?.toDouble() ?? 0.0,
         label: (json['label'] as String?) ?? '',
       );
 }

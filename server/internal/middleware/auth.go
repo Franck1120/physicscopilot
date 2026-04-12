@@ -3,6 +3,7 @@ package middleware
 import (
 	"crypto/subtle"
 	"encoding/base64"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -22,6 +23,7 @@ const defaultMetricsPassword = "metrics-secret"
 func MetricsBasicAuth() fiber.Handler {
 	password := os.Getenv("METRICS_PASSWORD")
 	if password == "" {
+		slog.Warn("METRICS_PASSWORD not set — using insecure default; set this env var in production")
 		password = defaultMetricsPassword
 	}
 

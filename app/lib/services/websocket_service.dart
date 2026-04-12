@@ -18,6 +18,9 @@ enum ConnectionStatus { disconnected, connecting, connected }
 class WebSocketService {
   final String _baseUrl;
 
+  /// Stop retrying after this many consecutive failures.
+  static const int _maxReconnectAttempts = 20;
+
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   bool _disposed = false;
@@ -75,6 +78,10 @@ class WebSocketService {
   void _scheduleReconnect() {
     if (_disposed) return;
     _emit(ConnectionStatus.disconnected);
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      // Give up after too many failures to avoid resource leaks.
+      return;
+    }
     // Exponential back-off: 1 s, 2 s, 4 s, 8 s … capped at 30 s.
     final delaySecs = min(1 << _reconnectAttempts, 30);
     _reconnectAttempts++;

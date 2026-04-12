@@ -35,12 +35,12 @@ func WSAuthMiddleware() fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "missing authentication token")
 		}
 
-		parsed, err := jwt.Parse(token, func(t *jwt.Token) (any, error) {
+		parsed, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(t *jwt.Token) (any, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid signing method")
 			}
 			return keyBytes, nil
-		})
+		}, jwt.WithExpirationRequired())
 		if err != nil || !parsed.Valid {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
 		}

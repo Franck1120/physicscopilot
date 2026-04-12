@@ -362,7 +362,8 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 		return
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
@@ -382,7 +383,8 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 
 // handleText processes a text-only conversation turn.
 func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessage) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())

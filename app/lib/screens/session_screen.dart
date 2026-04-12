@@ -108,20 +108,23 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 6,
-            child: _CameraSection(onCapture: _captureAndSend),
-          ),
-          Expanded(
-            flex: 4,
-            child: _GuidancePanel(
-              textController: _textController,
-              onSendText: _sendText,
+      body: SafeArea(
+        top: false, // AppBar already handles top
+        child: Column(
+          children: [
+            Expanded(
+              flex: 6,
+              child: _CameraSection(onCapture: _captureAndSend),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 4,
+              child: _GuidancePanel(
+                textController: _textController,
+                onSendText: _sendText,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

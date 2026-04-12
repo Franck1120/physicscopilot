@@ -256,9 +256,9 @@ class _CameraBody extends StatelessWidget {
         // ── AR overlay (fills entire feed) ───────────────────────────────
         ArOverlay(data: overlayData),
 
-        // ── Offline banner (top, full-width) ─────────────────────────────
+        // ── Offline banner (top, full-width, below notch) ─────────────────
         Positioned(
-          top: 0,
+          top: padding.top,
           left: 0,
           right: 0,
           child: _OfflineBanner(isVisible: isOffline),
@@ -322,12 +322,15 @@ class _CameraBody extends StatelessWidget {
           position: chatSlide,
           child: Align(
             alignment: Alignment.centerRight,
-            child: SizedBox(
-              width: screenSize.width * 0.45,
-              child: _ChatPanel(
-                session: session,
-                textInput: textInput,
-                onSend: onSendText,
+            child: SafeArea(
+              left: false,
+              child: SizedBox(
+                width: screenSize.width * (screenSize.width < 400 ? 0.75 : 0.45),
+                child: _ChatPanel(
+                  session: session,
+                  textInput: textInput,
+                  onSend: onSendText,
+                ),
               ),
             ),
           ),
@@ -381,7 +384,7 @@ class _ChatPanel extends StatelessWidget {
           ),
           // Text input
           Container(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+            padding: EdgeInsets.fromLTRB(8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: Colors.white12)),
             ),
