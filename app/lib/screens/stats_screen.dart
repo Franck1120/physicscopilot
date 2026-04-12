@@ -10,7 +10,7 @@ import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
 import '../widgets/progress_ring_widget.dart';
 import '../../main.dart'
-    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
+    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kTextMuted;
 
 // ── StatsScreen ───────────────────────────────────────────────────────────────
 
