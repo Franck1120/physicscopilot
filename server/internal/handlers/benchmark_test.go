@@ -174,6 +174,25 @@ func BenchmarkGetStats(b *testing.B) {
 	}
 }
 
+// BenchmarkGetDomains measures the throughput of GET /api/domains.
+// A nil RAG service is used for simplicity — the handler returns an empty list.
+func BenchmarkGetDomains(b *testing.B) {
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/domains", DomainsHandler(nil))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/domains", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
