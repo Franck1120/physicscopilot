@@ -339,6 +339,7 @@ func newFiberApp(
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)
 	api.Get("/sessions/:id/steps", sessionHandler.GetSessionSteps)
+	api.Get("/sessions/:id/messages", sessionHandler.GetSessionMessages)
 	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
 	api.Post("/feedback", feedbackHandler.Submit)
 	api.Get("/stats", statsHandler.GetStats)

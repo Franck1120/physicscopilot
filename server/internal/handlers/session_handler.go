@@ -345,6 +345,36 @@ func (h *SessionHandler) GetSessionSteps(c *fiber.Ctx) error {
 	})
 }
 
+// sessionMessagesResponse is the payload for GET /api/sessions/:id/messages.
+type sessionMessagesResponse struct {
+	SessionID string                        `json:"session_id"`
+	Count     int                           `json:"count"`
+	Messages  []services.ConversationMessage `json:"messages"`
+}
+
+// GetSessionMessages handles GET /api/sessions/:id/messages.
+//
+// Returns the conversation history for a session (last 20 messages, rolling window).
+// Response 200: {"session_id":"…","count":N,"messages":[…]}
+// Response 404: session not found.
+func (h *SessionHandler) GetSessionMessages(c *fiber.Ctx) error {
+	id := c.Params("id")
+	session, err := h.sessions.GetSessionSnapshot(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "session not found")
+	}
+	messages := session.ConversationHistory
+	if messages == nil {
+		messages = []services.ConversationMessage{}
+	}
+	c.Set("Cache-Control", "private, no-cache")
+	return c.JSON(sessionMessagesResponse{
+		SessionID: id,
+		Count:     len(messages),
+		Messages:  messages,
+	})
+}
+
 // DeleteSession handles DELETE /api/sessions/:id.
 //
 // Response 204: session deleted.
