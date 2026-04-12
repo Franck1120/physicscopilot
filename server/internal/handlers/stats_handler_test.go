@@ -127,6 +127,71 @@ func TestGetStatsResponseIsJSON(t *testing.T) {
 	}
 }
 
+// TestGetStatsFullHandlerNonNilDependencies verifies that NewStatsHandlerFull
+// wires ws and rag correctly when both are non-nil.
+func TestGetStatsFullHandlerNonNilDependencies(t *testing.T) {
+	sessions := services.NewSessionService()
+	ws := &stubWSCounter{n: 3}
+	rag := &stubRAGLoader{loaded: true, count: 42}
+	h := NewStatsHandlerFull(sessions, ws, rag, "1.2.3", time.Now())
+
+	if h.ws == nil {
+		t.Error("expected non-nil ws counter after NewStatsHandlerFull")
+	}
+	if h.rag == nil {
+		t.Error("expected non-nil rag loader after NewStatsHandlerFull")
+	}
+	if h.version != "1.2.3" {
+		t.Errorf("version: want %q, got %q", "1.2.3", h.version)
+	}
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/stats", h.GetStats)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+
+	var body statsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.ActiveWSConnections != 3 {
+		t.Errorf("active_ws_connections: want 3, got %d", body.ActiveWSConnections)
+	}
+	if body.KBEntryCount != 42 {
+		t.Errorf("kb_entry_count: want 42, got %d", body.KBEntryCount)
+	}
+}
+
+// TestGetStatsUptimeIsPositive verifies that uptime_seconds is greater than 0
+// when the handler is constructed with a start time in the past.
+func TestGetStatsUptimeIsPositive(t *testing.T) {
+	sessions := services.NewSessionService()
+	// Start time 2 seconds in the past ensures uptime_seconds >= 1.
+	past := time.Now().Add(-2 * time.Second)
+	h := NewStatsHandlerFull(sessions, nil, nil, "0.1.0", past)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/stats", h.GetStats)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+
+	var body statsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.UptimeSeconds <= 0 {
+		t.Errorf("uptime_seconds: want > 0, got %d", body.UptimeSeconds)
+	}
+}
+
 func TestGetStatsWSConnections(t *testing.T) {
 	sessions := services.NewSessionService()
 	ws := &stubWSCounter{n: 5}
