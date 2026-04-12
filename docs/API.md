@@ -38,7 +38,11 @@ Returns server liveness and resource snapshot. Rate-limited to **60 requests/min
 
 Exposes **Prometheus metrics** in the standard text format. Suitable for scraping by Prometheus or Grafana Agent.
 
-**No authentication required** — restrict at the network/reverse-proxy level in production.
+**Authentication:** HTTP Basic Auth is required.
+- Username: `admin`
+- Password: value of the `METRICS_PASSWORD` environment variable (default: `metrics-secret`)
+
+Restrict access at the network/reverse-proxy level in addition to Basic Auth in production.
 
 **Example output (excerpt)**
 
@@ -269,6 +273,7 @@ Client                                Server
 
 | HTTP / WS Code | Meaning |
 |----------------|---------|
+| `HTTP 401` | Unauthorized — missing or invalid Basic Auth credentials on `/metrics` |
 | `HTTP 429` | REST rate limit exceeded (60 req/min per IP) |
 | `HTTP 426` | Upgrade Required (non-WS request to `/ws`) |
 | `HTTP 500` | Internal server error (JSON body with `"error"` field) |
