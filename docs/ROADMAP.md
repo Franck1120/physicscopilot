@@ -74,12 +74,42 @@ Status: Done · In Progress · Planned · Dropped
 
 ---
 
+## 2026 Milestones
+
+### Q2 2026
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Multi-language support (EN/FR/DE) | Planned | UI strings + AI prompt locale |
+| iOS release | Planned | App Store submission |
+| SQLite local KB storage | Planned | Offline-first KB without network |
+| Real-time collaboration mode | Planned | Shared live session between technicians |
+
+### Q3 2026
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Web app (PWA) | Planned | Full Flutter Web build |
+| Offline mode | Planned | Service worker + cached responses |
+| Custom KB upload via UI | Planned | Drag-and-drop JSON/JSONL ingestion |
+| Analytics dashboard | Planned | Usage metrics, session trends, error rates |
+
+### Q4 2026
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Enterprise tier | Planned | SLA, priority support, audit logs |
+| SSO/SAML integration | Planned | Okta, Azure AD, Google Workspace |
+| White-label SDK | Planned | Rebrandable Flutter + Go package |
+| API marketplace listing | Planned | RapidAPI / Postman listing |
+
+---
+
 ## Not planned
 
 | Feature | Reason |
 |---------|--------|
 | Windows/macOS desktop app | Low demand, web app covers the use case |
-| Real-time collaboration | Adds complexity, low priority |
 | Video recording | Privacy concerns, storage costs |
 
 ---
