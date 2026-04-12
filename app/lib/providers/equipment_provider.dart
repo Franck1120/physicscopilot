@@ -5,6 +5,10 @@
 // domain-specific providers alongside this one.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Describes the hardware profile of the device the user is working on.
+///
+/// Currently covers 3D printers; future verticals (automotive, HVAC, …)
+/// will extend this model or introduce parallel domain-specific types.
 class EquipmentProfile {
   final String id;
   final String name;
@@ -20,6 +24,7 @@ class EquipmentProfile {
     required this.enclosed,
   });
 
+  /// Parses a profile from a JSON map (e.g. from `assets/data/printer_profiles.json`).
   factory EquipmentProfile.fromJson(Map<String, dynamic> json) {
     return EquipmentProfile(
       id: json['id'] as String,
@@ -30,6 +35,7 @@ class EquipmentProfile {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
   EquipmentProfile copyWith({
     String? id,
     String? name,
@@ -47,11 +53,16 @@ class EquipmentProfile {
   }
 }
 
+/// Manages the currently selected [EquipmentProfile].
+///
+/// State is `null` when no device has been selected yet.
 class EquipmentNotifier extends StateNotifier<EquipmentProfile?> {
   EquipmentNotifier() : super(null);
 
+  /// Sets [profile] as the active equipment profile.
   void select(EquipmentProfile profile) => state = profile;
 
+  /// Creates and selects a custom profile with the given [name].
   void selectCustom(String name) => state = EquipmentProfile(
         id: 'custom',
         name: name,
@@ -60,9 +71,13 @@ class EquipmentNotifier extends StateNotifier<EquipmentProfile?> {
         enclosed: false,
       );
 
+  /// Clears the active profile, returning state to `null`.
   void clear() => state = null;
 }
 
+/// Provides the [EquipmentNotifier] and current [EquipmentProfile] selection.
+///
+/// State is `null` until the user selects a device.
 final equipmentProvider =
     StateNotifierProvider<EquipmentNotifier, EquipmentProfile?>(
   (ref) => EquipmentNotifier(),
