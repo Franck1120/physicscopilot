@@ -1,0 +1,798 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "drone",
+  "total": 15,
+  "problems": [
+    {
+      "id": "motor_failure",
+      "name": "Motor Failure",
+      "category": "motors",
+      "severity": "error",
+      "description": "One or more motors stop spinning during flight or fail to spin on startup, causing unstable flight or crash.",
+      "visual_symptoms": [
+        "Drone tilts aggressively to one side during flight",
+        "One motor visibly not spinning at startup",
+        "Burnt smell from motor housing",
+        "Rapid altitude loss or uncontrolled rotation"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Motor windings burnt due to overcurrent or crash damage",
+          "probability": 0.55,
+          "test": "Spin each motor by hand — excessive resistance or grinding indicates burnt windings"
+        },
+        {
+          "cause": "Motor bearings seized from dirt, water ingress or wear",
+          "probability": 0.30,
+          "test": "Spin motor shaft by hand to check for roughness or wobble"
+        },
+        {
+          "cause": "ESC signal wire disconnected or damaged",
+          "probability": 0.15,
+          "test": "Inspect ESC-to-motor connector for loose pins or broken solder joints"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Power off the drone and remove all propellers before inspection",
+              "verification": "All props removed and power physically disconnected",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Spin each motor shaft by hand to identify the faulty motor — look for resistance, grinding or wobble",
+              "verification": "Faulty motor identified by feel or visual check",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Unsolder the three motor wires from the ESC and replace the faulty motor with an identical replacement",
+              "verification": "New motor spins freely by hand with no wobble",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Solder new motor wires to ESC, power on and run motor test in flight controller software",
+              "verification": "Motor spins at correct RPM in correct direction without vibration",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "esc_burning",
+      "name": "ESC Burning / Failure",
+      "category": "motors",
+      "severity": "error",
+      "description": "Electronic Speed Controller overheats, emits smoke, or fails to drive a motor, causing loss of control.",
+      "visual_symptoms": [
+        "Smoke or burning smell from ESC housing",
+        "One motor not responding to throttle inputs",
+        "Discoloured or melted ESC casing",
+        "Drone spins uncontrollably on takeoff"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Overcurrent event from motor blockage or crash impact",
+          "probability": 0.50,
+          "test": "Check ESC current rating vs motor peak draw; inspect for physical damage on ESC board"
+        },
+        {
+          "cause": "Inadequate cooling causing thermal runaway during sustained high-throttle flight",
+          "probability": 0.35,
+          "test": "Check if ESC has adequate airflow; measure post-flight ESC temperature with IR thermometer"
+        },
+        {
+          "cause": "Voltage spike from battery during rapid throttle changes",
+          "probability": 0.15,
+          "test": "Check capacitor condition on ESC and battery C-rating versus peak draw"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Remove battery and inspect ESC visually for burnt components, discolouration or melted plastic",
+              "verification": "Damage localised to specific ESC confirmed",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Desolder and remove the burnt ESC; replace with ESC of identical or higher current rating",
+              "verification": "New ESC installed with clean solder joints on all pads",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Flash ESC firmware using BLHeli Suite or ESC Configurator to match flight controller settings",
+              "verification": "Firmware version confirmed in configurator; motor direction correct",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Perform throttle calibration in flight controller and run motor test at low throttle",
+              "verification": "Motor spins smoothly; no heat buildup at idle throttle after 60 seconds",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "battery_swelling",
+      "name": "LiPo Battery Swelling",
+      "category": "battery",
+      "severity": "error",
+      "description": "The LiPo battery pack shows visible inflation or puffing, indicating internal cell damage and risk of fire.",
+      "visual_symptoms": [
+        "Battery case visibly bulged or puffed outward",
+        "Battery no longer fits snugly in battery bay",
+        "Reduced flight time compared to normal",
+        "Battery feels warm even when not in use"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Overcharging beyond 4.2V per cell causing gas buildup",
+          "probability": 0.45,
+          "test": "Measure cell voltages with multimeter — any cell above 4.25V indicates overcharge damage"
+        },
+        {
+          "cause": "Over-discharging below 3.0V per cell damaging cell chemistry",
+          "probability": 0.40,
+          "test": "Check if battery was ever discharged to low-battery cutoff repeatedly; measure resting cell voltages"
+        },
+        {
+          "cause": "Physical impact damage to cells from crash",
+          "probability": 0.15,
+          "test": "Inspect battery exterior for dents or deformation caused by impact"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Immediately stop using the swollen battery and remove it from the drone",
+              "verification": "Battery physically separated from drone and stored in a fireproof LiPo bag",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Place battery in a LiPo-safe bag outdoors and allow it to discharge fully using a LiPo discharger set to storage discharge",
+              "verification": "All cells read 3.0V or below before disposal",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Dispose of the discharged battery at a certified e-waste or battery recycling facility",
+              "verification": "Battery deposited at recycling point; receipt or confirmation obtained",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gps_signal_loss",
+      "name": "GPS Signal Loss",
+      "category": "gps",
+      "severity": "warning",
+      "description": "The drone cannot acquire or maintain sufficient GPS satellite lock, disabling position hold, return-to-home and autonomous flight modes.",
+      "visual_symptoms": [
+        "Flight controller app shows fewer than 6 satellites",
+        "GPS status LED flashing rather than solid",
+        "Drone drifts laterally in altitude-hold mode",
+        "RTH and waypoint modes unavailable in app"
+      ],
+      "probable_causes": [
+        {
+          "cause": "GPS module obstructed by carbon fibre frame or metal components",
+          "probability": 0.40,
+          "test": "Move GPS module to highest point on drone with clear sky view and retest satellite count"
+        },
+        {
+          "cause": "GPS antenna cable damaged or disconnected",
+          "probability": 0.35,
+          "test": "Inspect U.FL or SMA connector on GPS module; check cable continuity with multimeter"
+        },
+        {
+          "cause": "Electromagnetic interference from power wires or video transmitter",
+          "probability": 0.25,
+          "test": "Increase distance between GPS module and power cables; check satellite count with VTX off"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Move the GPS module on a mast to at least 5 cm above the top plate, away from carbon fibre",
+              "verification": "GPS module has unobstructed 360-degree sky view; mast secure and vibration-free",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Inspect and reseat GPS antenna cable connector; replace cable if damaged",
+              "verification": "Cable connector clicks securely; no kinks or exposed wiring",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Power on drone in open sky and wait for satellite acquisition; confirm 8+ satellites in flight controller",
+              "verification": "Satellite count stable at 8 or above within 90 seconds",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "camera_gimbal_malfunction",
+      "name": "Camera Gimbal Malfunction",
+      "category": "gimbal",
+      "severity": "warning",
+      "description": "The camera gimbal vibrates, drifts to one side, or fails to stabilise video footage during flight.",
+      "visual_symptoms": [
+        "Camera tilted and not self-levelling at startup",
+        "Jello or rolling-shutter artefacts in recorded video",
+        "Gimbal making clicking or grinding noises",
+        "Gimbal motor running hot after short use"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Gimbal IMU needs recalibration after firmware update or impact",
+          "probability": 0.50,
+          "test": "Run gimbal calibration routine in drone app; check if horizon drifts after calibration"
+        },
+        {
+          "cause": "Gimbal motor bearing damaged from crash or hard landing",
+          "probability": 0.30,
+          "test": "Manually move camera axis through full range and feel for binding or roughness"
+        },
+        {
+          "cause": "Gimbal ribbon cable damaged causing signal interruption",
+          "probability": 0.20,
+          "test": "Inspect ribbon cable for kinks, cuts or loose ZIF connector seating"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Open drone app, navigate to gimbal settings and run auto-calibration on a flat level surface",
+              "verification": "Calibration completes without error; horizon level confirmed in live view",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If calibration fails, inspect ribbon cable and reseat ZIF connector on both ends",
+              "verification": "Ribbon cable seated flat with no visible kinks; lock lever fully engaged",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Test gimbal stability by hovering at eye level and panning the drone 90 degrees",
+              "verification": "Camera horizon remains stable within 1 degree during pan",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "propeller_vibration",
+      "name": "Propeller Vibration",
+      "category": "propellers",
+      "severity": "warning",
+      "description": "Excessive vibration from unbalanced or damaged propellers causes jello in video and stress on frame components.",
+      "visual_symptoms": [
+        "Jello distortion visible in recorded footage",
+        "Drone shakes visibly at hover",
+        "Unusual buzzing sound at specific throttle levels",
+        "Frame screws loosening frequently"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Propeller blade chipped, cracked or bent from debris strike",
+          "probability": 0.55,
+          "test": "Inspect each prop under bright light for chips, cracks or asymmetric blade shape"
+        },
+        {
+          "cause": "Propeller mass imbalance from manufacturing variation",
+          "probability": 0.30,
+          "test": "Use a propeller balancer to measure static imbalance on each prop"
+        },
+        {
+          "cause": "Motor shaft bent causing eccentric rotation",
+          "probability": 0.15,
+          "test": "Mount prop-less motor and run at low speed; observe shaft tip for wobble"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Remove all propellers and inspect each blade for chips, cracks or asymmetry; replace any damaged props",
+              "verification": "All four props visually intact with uniform blade shape",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Balance replacement props using a magnetic propeller balancer; add tape to lighter blade until balanced",
+              "verification": "Propeller rests horizontal on balancer without rotating in any position",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Reinstall balanced props and conduct a hover test; review footage for jello reduction",
+              "verification": "No visible jello in 1080p test footage at hover",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compass_calibration_failure",
+      "name": "Compass Calibration Failure",
+      "category": "gps",
+      "severity": "warning",
+      "description": "The drone fails compass calibration or shows persistent heading errors, causing drift and incorrect RTH direction.",
+      "visual_symptoms": [
+        "Flight controller shows compass error warning on startup",
+        "Drone heading indicator in app does not match real-world direction",
+        "Drone drifts sideways in GPS mode despite no wind",
+        "Toilet-bowling circular drift pattern during hover"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Magnetic interference from nearby metal objects or power cables during calibration",
+          "probability": 0.50,
+          "test": "Repeat calibration outdoors away from metal structures, cars and power lines"
+        },
+        {
+          "cause": "Compass module hardware failure or physical damage",
+          "probability": 0.30,
+          "test": "Check compass raw values in flight controller software — should show smooth sine wave as drone is rotated"
+        },
+        {
+          "cause": "Compass module mounted too close to ESCs or battery causing permanent interference",
+          "probability": 0.20,
+          "test": "Compare compass heading with GPS heading at identical orientation — consistent offset indicates mounting issue"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Move to an open area at least 20 m from metal structures, vehicles and power lines",
+              "verification": "No large metal objects within 20 m confirmed visually",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Follow flight controller app compass calibration routine: rotate drone on all three axes as instructed",
+              "verification": "Calibration completes with success notification and no error codes",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verify calibration by slowly rotating the powered drone and confirming heading in app tracks real-world direction within 5 degrees",
+              "verification": "Heading error below 5 degrees across full 360-degree rotation",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rc_link_dropout",
+      "name": "RC Link Dropout",
+      "category": "connectivity",
+      "severity": "error",
+      "description": "The radio control link between transmitter and drone cuts out intermittently or completely, triggering failsafe.",
+      "visual_symptoms": [
+        "RC signal indicator drops to zero in flight controller telemetry",
+        "Drone activates failsafe RTH without pilot input",
+        "Stick inputs lag or have no effect momentarily",
+        "Transmitter shows signal loss alert"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Receiver antenna positioned incorrectly or damaged",
+          "probability": 0.45,
+          "test": "Inspect receiver antennas for damage; ensure two antennas are oriented 90 degrees apart"
+        },
+        {
+          "cause": "2.4 GHz or 5.8 GHz RF interference from nearby WiFi or other drones",
+          "probability": 0.35,
+          "test": "Use spectrum analyser app to identify congested channels; switch to less-used frequency channel"
+        },
+        {
+          "cause": "Receiver or transmitter firmware mismatch causing protocol errors",
+          "probability": 0.20,
+          "test": "Check receiver and transmitter firmware versions match; rebind using current firmware"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Inspect receiver antennas and reposition so two antennas form a 90-degree V-shape; replace if damaged",
+              "verification": "Antennas physically intact and correctly angled; signal bars consistent",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Update transmitter and receiver firmware to matching latest versions and rebind",
+              "verification": "Bind confirmed in flight controller; link quality shows above 95% at 50 m",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Perform a range test at 50 m and 100 m, verifying no dropouts",
+              "verification": "Zero signal loss events recorded in telemetry log during range test",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fpv_video_glitch",
+      "name": "FPV Video Glitch",
+      "category": "camera",
+      "severity": "warning",
+      "description": "The FPV live video feed shows static, rolling lines, loss of image or colour distortion.",
+      "visual_symptoms": [
+        "Static lines or white noise appearing in FPV feed",
+        "Video feed cuts out at certain flight orientations",
+        "Colour bands or hue shifts in image",
+        "Video freezes while drone is still flying"
+      ],
+      "probable_causes": [
+        {
+          "cause": "VTX power supply noise from ESC switching interference",
+          "probability": 0.45,
+          "test": "Add LC filter on VTX power input; observe if glitch correlates with throttle changes"
+        },
+        {
+          "cause": "Camera or VTX antenna cable intermittent connection",
+          "probability": 0.35,
+          "test": "Wiggle camera connector and SMA antenna connector while powered; observe if glitch appears"
+        },
+        {
+          "cause": "VTX overheating causing output power reduction",
+          "probability": 0.20,
+          "test": "Measure VTX temperature after 5-minute flight with IR thermometer; above 70°C indicates overheating"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Install an LC filter (1000uF capacitor + ferrite bead) on the VTX power supply wire",
+              "verification": "Clean DC supply measured on VTX power rail; glitch frequency reduced on bench test",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Inspect and reseat all camera and VTX antenna connectors; replace any with bent pins",
+              "verification": "All connectors fully seated; wiggle test produces no video interruption",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Ensure VTX has adequate airflow or reduce output power to stay below 200 mW in close-range flying",
+              "verification": "VTX temperature below 65°C after 10-minute flight; clear video throughout",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "return_to_home_failure",
+      "name": "Return-to-Home Failure",
+      "category": "gps",
+      "severity": "error",
+      "description": "The automatic return-to-home function fails to activate, navigates to the wrong location, or overshoots the home point.",
+      "visual_symptoms": [
+        "Drone does not respond to RTH command from transmitter",
+        "RTH activates but drone flies in wrong direction",
+        "Home point indicator in app shows incorrect location",
+        "Drone overshoots home point and hovers offset"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Home point not recorded at takeoff due to insufficient GPS lock",
+          "probability": 0.50,
+          "test": "Check flight log for GPS satellite count at moment of takeoff — less than 8 satellites is insufficient"
+        },
+        {
+          "cause": "Compass error causing incorrect heading reference for RTH navigation",
+          "probability": 0.35,
+          "test": "Verify compass calibration status; check for persistent compass error flags in flight controller"
+        },
+        {
+          "cause": "RTH altitude set below obstacle height causing collision avoidance intervention",
+          "probability": 0.15,
+          "test": "Confirm RTH altitude setting in app is at least 10 m above tallest nearby obstacle"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Before every flight, wait for satellite count to reach 8 or more before arming motors",
+              "verification": "Flight controller app shows 8+ satellites and home point set notification",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Set RTH altitude in drone app to at least 15 m above the highest nearby obstacle",
+              "verification": "RTH altitude value saved in app and confirmed in safety settings",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Perform a test RTH at low altitude (5 m) in open area to verify home point accuracy",
+              "verification": "Drone returns within 2 m of takeoff point",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "crash_detection_false_trigger",
+      "name": "Crash Detection False Trigger",
+      "category": "firmware",
+      "severity": "warning",
+      "description": "The drone incorrectly detects a crash during normal flight, cutting motor power and causing an actual crash.",
+      "visual_symptoms": [
+        "Motors suddenly cut out without pilot input during flight",
+        "Flight controller log shows crash-detected event at normal flight parameters",
+        "Drone drops unexpectedly during aggressive manoeuvres",
+        "Error code for crash detection in post-flight log"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Crash detection threshold set too sensitive for acro or windy flight",
+          "probability": 0.55,
+          "test": "Review flight controller crash detection sensitivity setting; lower threshold and retest"
+        },
+        {
+          "cause": "IMU vibration causing false G-force spike triggering crash detection",
+          "probability": 0.30,
+          "test": "Review IMU vibration logs; spikes above 3G during normal flight indicate soft-mount or prop balance issue"
+        },
+        {
+          "cause": "Firmware bug in crash detection algorithm",
+          "probability": 0.15,
+          "test": "Check flight controller community forums for known crash detection bugs in current firmware version"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Open flight controller configurator and increase crash detection threshold or disable it for freestyle/acro flight",
+              "verification": "Setting saved; test hover without false trigger",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Soft-mount the flight controller using rubber dampers to reduce vibration transmission from motors",
+              "verification": "IMU vibration log shows peaks below 2G during normal hover",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Update flight controller firmware to latest stable release to benefit from crash detection algorithm fixes",
+              "verification": "Firmware update successful; no crash detection events during 5-minute test flight",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "charging_port_damage",
+      "name": "Charging Port Damage",
+      "category": "battery",
+      "severity": "warning",
+      "description": "The battery or drone charging port is physically damaged, preventing proper connection to charger.",
+      "visual_symptoms": [
+        "Charger plug does not seat firmly in port",
+        "Charging indicator does not activate when charger is connected",
+        "Bent or missing pins visible in port connector",
+        "Intermittent charging — starts and stops repeatedly"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Physical damage from inserting charger at wrong angle or with excessive force",
+          "probability": 0.60,
+          "test": "Inspect port under magnification for bent pins, cracks or foreign debris"
+        },
+        {
+          "cause": "Corrosion on port contacts from moisture or sweat exposure",
+          "probability": 0.25,
+          "test": "Use cotton swab with isopropyl alcohol to clean port; check if charging resumes"
+        },
+        {
+          "cause": "Port solder joints cracked on PCB from mechanical stress",
+          "probability": 0.15,
+          "test": "Apply slight sideways pressure to port while charging — if connection intermittently restores, solder joints are cracked"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Use a wooden toothpick to carefully straighten any bent pins in the port, and clean with isopropyl alcohol on a cotton swab",
+              "verification": "Pins straight and clean; charger seats with normal resistance",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "If pins are broken or port is cracked, desolder and replace the charging port connector with matching replacement",
+              "verification": "New port firmly attached; charger connects securely and charging indicator activates",
+              "time_seconds": 2400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overheating_in_flight",
+      "name": "Overheating During Flight",
+      "category": "motors",
+      "severity": "error",
+      "description": "Motors, ESCs or the flight controller reach dangerously high temperatures during flight, risking component failure.",
+      "visual_symptoms": [
+        "Components too hot to touch immediately after landing",
+        "Thermal protection warning in flight controller app",
+        "Reduced performance and lower top speed during flight",
+        "Burning smell after landing"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Prolonged high-throttle flight exceeding motor or ESC thermal rating",
+          "probability": 0.50,
+          "test": "Measure component temperatures with IR thermometer after flight; above 80°C for motors or ESCs is critical"
+        },
+        {
+          "cause": "Partially blocked cooling airflow due to cable routing obstruction",
+          "probability": 0.30,
+          "test": "Inspect frame for cables obstructing airflow over ESCs and motors"
+        },
+        {
+          "cause": "Motor KV rating mismatched to propeller size causing excessive current draw",
+          "probability": 0.20,
+          "test": "Measure no-load current draw per motor at full throttle; exceeding motor spec by more than 20% indicates mismatch"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Route all cables away from motor and ESC surfaces to restore cooling airflow; use cable ties to secure",
+              "verification": "Unobstructed airflow path visible over all ESCs and motor bodies",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Reduce flight duration and add a mandatory 5-minute cool-down between flights when temperatures exceed 70°C",
+              "verification": "Motor temperature below 60°C at start of each subsequent flight",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verify motor KV and propeller pitch pairing using prop calculator; switch to lower-pitch props if current is excessive",
+              "verification": "Full-throttle current per motor within manufacturer specification",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "firmware_brick",
+      "name": "Firmware Brick",
+      "category": "firmware",
+      "severity": "error",
+      "description": "The drone or flight controller becomes unresponsive after a failed or incompatible firmware update.",
+      "visual_symptoms": [
+        "Flight controller does not appear as USB device when connected to PC",
+        "All LEDs off or stuck in single colour pattern at boot",
+        "Configurator software cannot connect to flight controller",
+        "Drone unresponsive to transmitter bind attempts"
+      ],
+      "probable_causes": [
+        {
+          "cause": "USB disconnected or power lost during firmware write operation",
+          "probability": 0.45,
+          "test": "Check flight controller bootloader mode by holding boot button during USB connect; if bootloader appears, flash recovery is possible"
+        },
+        {
+          "cause": "Incompatible firmware version or wrong target flashed",
+          "probability": 0.40,
+          "test": "Identify exact flight controller hardware revision; verify firmware target file matches hardware markings"
+        },
+        {
+          "cause": "Corrupted download of firmware file",
+          "probability": 0.15,
+          "test": "Verify MD5/SHA256 checksum of firmware file against official repository"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Hold the boot/DFU button on the flight controller while connecting USB to enter bootloader mode",
+              "verification": "Device appears in PC device manager as DFU or STM32 bootloader device",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Download the correct firmware binary for the exact flight controller target and verify its checksum",
+              "verification": "Checksum matches official release; correct hardware target confirmed",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Flash firmware using Betaflight Configurator full-erase flash or STM32CubeProgrammer in DFU mode",
+              "verification": "Flash completes at 100% without error; device reboots and appears as flight controller in configurator",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Reconfigure all settings from scratch or restore from saved configuration backup",
+              "verification": "Motors arm and spin correctly; all sensor readings nominal in configurator",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "water_damage_drone",
+      "name": "Water Damage",
+      "category": "motors",
+      "severity": "error",
+      "description": "The drone has been exposed to rain, water landing or submersion, causing corrosion or short-circuit damage to electronics.",
+      "visual_symptoms": [
+        "Corrosion or white mineral deposits visible on PCB or connectors",
+        "Random ESC or motor errors after flying in rain",
+        "Short circuit symptoms: battery drains immediately when connected",
+        "Stiff or corroded motor bearings"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Liquid ingress shorting PCB traces on flight controller or ESC",
+          "probability": 0.50,
+          "test": "Inspect PCB under magnification for corrosion, bridging or burnt spots"
+        },
+        {
+          "cause": "Water in motor bearings causing rust and increased resistance",
+          "probability": 0.35,
+          "test": "Spin each motor by hand to check for roughness; compare resistance with multimeter across windings"
+        },
+        {
+          "cause": "Oxidation of connector contacts causing intermittent connections",
+          "probability": 0.15,
+          "test": "Inspect all XT60 and JST connectors for green or white corrosion on contacts"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Immediately remove battery and do not reconnect power; disassemble drone to access all PCBs",
+              "verification": "Battery disconnected; all accessible boards removed from frame",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Clean all PCBs thoroughly with 99% isopropyl alcohol and a soft brush to remove water and mineral deposits",
+              "verification": "No visible corrosion or mineral deposits remaining; boards visually clean",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Place components in sealed bag with silica gel desiccant for 24 hours, then reassemble and power test",
+              "verification": "No short circuit detected; all components initialise correctly on power-on",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
