@@ -137,8 +137,13 @@ func validateSessionRequest(req createSessionRequest) error {
 }
 
 // parsePagination parses the page and page_size query parameters from the
-// request context and applies defaults and clamps. page defaults to 1 (min 1),
-// page_size defaults to 20 (min 1, max 100).
+// request context, applies defaults and clamps, and returns both values.
+//
+// Defaults and limits:
+//   - page:      default 1, minimum 1 (any value < 1 is clamped to 1)
+//   - page_size: default 20, minimum 1, maximum 100
+//
+// Both parameters are optional; callers always receive usable values.
 func parsePagination(c *fiber.Ctx) (page, pageSize int) {
 	page = c.QueryInt("page", defaultPage)
 	if page < 1 {
@@ -154,8 +159,12 @@ func parsePagination(c *fiber.Ctx) (page, pageSize int) {
 	return page, pageSize
 }
 
-// paginateSessions returns the sub-slice for the requested page together with
-// the total count of entries before slicing.
+// paginateSessions slices dtos to the window requested by page and pageSize and
+// also returns the total number of entries before slicing.
+//
+// When the requested start index is beyond the slice length an empty slice is
+// returned instead of panicking. The total value always reflects the unsliced
+// length so callers can compute totalPages accurately.
 func paginateSessions(dtos []sessionResponse, page, pageSize int) (paged []sessionResponse, total int) {
 	total = len(dtos)
 	start := (page - 1) * pageSize
@@ -169,8 +178,12 @@ func paginateSessions(dtos []sessionResponse, page, pageSize int) (paged []sessi
 	return dtos[start:end], total
 }
 
-// totalPages computes the number of pages required to hold total entries at
-// pageSize items per page. Returns at least 1 when total is 0.
+// totalPages computes the number of pages needed to display total entries at
+// pageSize items per page.
+//
+// Returns 1 when total is 0 so clients always have at least one page to display,
+// even on an empty store. Integer division is adjusted with a remainder check
+// to avoid losing a partial final page.
 func totalPages(total, pageSize int) int {
 	if total == 0 {
 		return 1
@@ -182,8 +195,15 @@ func totalPages(total, pageSize int) int {
 	return pages
 }
 
-// filterSessions returns a new slice containing only the entries that match
-// all non-empty filter parameters. Comparisons are case-insensitive.
+// filterSessions returns a new slice containing only the entries that satisfy
+// all provided, non-empty filter criteria. Comparisons are case-insensitive.
+//
+//   - status:      exact match against session.Status
+//   - deviceBrand: exact match against session.Device.Brand
+//   - problem:     substring match within session.ProblemDetected
+//
+// When all three parameters are empty the original slice is returned as-is
+// without allocating a new backing array.
 func filterSessions(dtos []sessionResponse, status, deviceBrand, problem string) []sessionResponse {
 	if status == "" && deviceBrand == "" && problem == "" {
 		return dtos
@@ -208,9 +228,15 @@ func filterSessions(dtos []sessionResponse, status, deviceBrand, problem string)
 	return out
 }
 
-// sortSessions sorts the provided slice in-place according to sortBy and
-// sortOrder. Supported sortBy values: "created_at", "last_activity", "status".
-// sortOrder must be "asc" or "desc" (default "desc").
+// sortSessions sorts dtos in-place according to sortBy and sortOrder.
+//
+// Supported sortBy values:
+//   - "created_at"    — sort by session creation timestamp
+//   - "status"        — lexicographic sort on status string
+//   - "last_activity" — sort by last activity timestamp (default)
+//
+// sortOrder must be "asc" or "desc"; any other value defaults to "desc".
+// An empty sortBy defaults to "last_activity".
 func sortSessions(dtos []sessionResponse, sortBy, sortOrder string) {
 	if sortBy == "" {
 		sortBy = "last_activity"
