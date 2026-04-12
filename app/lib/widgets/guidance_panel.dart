@@ -12,6 +12,11 @@ import 'feedback_bar.dart';
 import 'multi_step_view.dart';
 import 'streaming_text.dart';
 
+/// Bottom panel that displays AI responses and the text-input row.
+///
+/// Watches [sessionProvider] to switch between idle, processing, streaming,
+/// error, and typewriter-response views. When [isOffline] is true and
+/// [cachedResponse] is available, shows the last known answer instead.
 class GuidancePanel extends ConsumerWidget {
   const GuidancePanel({
     super.key,
@@ -22,6 +27,7 @@ class GuidancePanel extends ConsumerWidget {
   });
   final TextEditingController textController;
   final VoidCallback onSendText;
+
   /// Last known AI response, shown as an offline fallback when [isOffline].
   final String? cachedResponse;
   final bool isOffline;
@@ -169,6 +175,7 @@ class _ResponseArea extends StatelessWidget {
 
 // ── Thinking indicator — three pulsing dots ──────────────────────────────────
 
+/// Animated three-dot indicator shown while the AI is processing a frame.
 class ThinkingIndicator extends StatefulWidget {
   const ThinkingIndicator({super.key});
   @override
