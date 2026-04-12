@@ -1,7 +1,9 @@
 package services
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -42,9 +44,13 @@ type SessionState struct {
 }
 
 // SessionService manages in-memory repair sessions with thread-safe access.
+// When a DBBackend is attached via SetDB the service performs best-effort
+// write-through to Postgres; the in-memory store remains authoritative so
+// the server keeps working even when the DB is temporarily unreachable.
 type SessionService struct {
 	mu       sync.RWMutex
 	sessions map[string]*SessionState
+	db       DBBackend // nil when DATABASE_URL is not configured
 }
 
 // NewSessionService creates a SessionService with an initialized in-memory store.
@@ -52,6 +58,37 @@ func NewSessionService() *SessionService {
 	return &SessionService{
 		sessions: make(map[string]*SessionState),
 	}
+}
+
+// SetDB attaches an optional Postgres backend for write-through persistence.
+// Call this once during startup if DATABASE_URL is configured.
+func (s *SessionService) SetDB(db DBBackend) {
+	s.db = db
+}
+
+// HydrateFromDB loads all active sessions from the DB backend into the
+// in-memory store. Call once at startup (after SetDB) to recover sessions
+// that were active before the last server restart.
+// Is a no-op when no DB backend is attached.
+func (s *SessionService) HydrateFromDB(ctx context.Context) error {
+	if s.db == nil {
+		return nil
+	}
+	sessions, err := s.db.ListSessions(ctx)
+	if err != nil {
+		return fmt.Errorf("hydrate sessions from DB: %w", err)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range sessions {
+		sess := sessions[i]
+		if sess.ConversationHistory == nil {
+			sess.ConversationHistory = make([]ConversationMessage, 0)
+		}
+		s.sessions[sess.SessionID] = &sess
+	}
+	slog.Info("hydrated sessions from DB", "count", len(sessions))
+	return nil
 }
 
 // ListSessions returns a snapshot of every in-memory session, ordered
@@ -68,6 +105,8 @@ func (s *SessionService) ListSessions() []SessionState {
 }
 
 // CreateSession initializes a new repair session for the given device.
+// If a DB backend is attached, the session is also persisted to Postgres
+// (best-effort: a DB error is logged but does not fail the in-memory create).
 func (s *SessionService) CreateSession(deviceBrand, deviceModel string) (*SessionState, error) {
 	now := time.Now()
 	session := &SessionState{
@@ -84,6 +123,12 @@ func (s *SessionService) CreateSession(deviceBrand, deviceModel string) (*Sessio
 	s.mu.Lock()
 	s.sessions[session.SessionID] = session
 	s.mu.Unlock()
+
+	if s.db != nil {
+		if err := s.db.SaveSession(context.Background(), session); err != nil {
+			slog.Warn("failed to persist session to DB", "session_id", session.SessionID, "err", err)
+		}
+	}
 
 	return session, nil
 }
@@ -215,16 +260,23 @@ func (s *SessionService) BuildContextForGemini(sessionID string) (string, error)
 	return strings.Join(lines, "\n"), nil
 }
 
-// DeleteSession removes a session from the store. Returns an error if not found.
+// DeleteSession removes a session from the in-memory store. If a DB backend is
+// attached it also soft-deletes the row in Postgres (best-effort).
+// Returns an error only when the session does not exist in memory.
 func (s *SessionService) DeleteSession(sessionID string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if _, exists := s.sessions[sessionID]; !exists {
+		s.mu.Unlock()
 		return fmt.Errorf("session %q not found", sessionID)
 	}
-
 	delete(s.sessions, sessionID)
+	s.mu.Unlock()
+
+	if s.db != nil {
+		if err := s.db.DeleteSession(context.Background(), sessionID); err != nil {
+			slog.Warn("failed to delete session from DB", "session_id", sessionID, "err", err)
+		}
+	}
 	return nil
 }
 
