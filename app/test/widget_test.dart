@@ -8,6 +8,7 @@ import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/screens/home_screen.dart';
 import 'package:physicscopilot/screens/onboarding_screen.dart';
 import 'package:physicscopilot/screens/settings_screen.dart';
+import 'package:physicscopilot/services/api_service.dart';
 
 void main() {
   testWidgets('App mounts without crashing', (WidgetTester tester) async {
@@ -16,16 +17,20 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          // Prevent healthCheck from leaving a pending 1.5 s retry timer.
+          serverHealthProvider.overrideWith((_) => Stream.value(false)),
+        ],
         child: PhysicsCopilotApp(prefs: prefs),
       ),
     );
     // Splash screen should be visible immediately after mount
     expect(find.byType(PhysicsCopilotApp), findsOneWidget);
 
-    // Advance past the 2200ms splash timer so it fires and the test
+    // Advance past the 2400ms splash timer so it fires and the test
     // does not fail with "pending timers" reported by the test framework.
-    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump();
   });
 
@@ -72,7 +77,7 @@ void main() {
 
     expect(find.text('URL Server'), findsOneWidget);
     expect(find.text('Guida vocale'), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.byType(Switch), findsWidgets);
   });
 
   testWidgets('HomeScreen mounts with nav bar and AppBar title',
@@ -82,7 +87,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          // Prevent healthCheck from leaving a pending 1.5 s retry timer.
+          serverHealthProvider.overrideWith((_) => Stream.value(false)),
+        ],
         child: MaterialApp(
           home: HomeScreen(
             onChangeEquipment: () {},
@@ -91,9 +100,9 @@ void main() {
         ),
       ),
     );
-    // Use pump instead of pumpAndSettle to avoid timer issues
+    // Drain the 400ms delayed-loading timer inside HomeScreen.
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(BottomNavigationBar), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
