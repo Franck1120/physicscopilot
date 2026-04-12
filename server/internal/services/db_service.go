@@ -47,11 +47,27 @@ type DBService struct {
 	pool *pgxpool.Pool
 }
 
+// Pool tuning constants.
+const (
+	poolMaxConns        = 10
+	poolMinConns        = 2
+	poolMaxConnLifetime = 1 * time.Hour
+)
+
 // NewDBService opens a pgx pool for connString and pings the server.
 // Returns an error if the connection string is malformed or the initial
 // ping fails (e.g. host unreachable, bad credentials).
+// Pool is configured with MaxConns=10, MinConns=2, MaxConnLifetime=1h.
 func NewDBService(ctx context.Context, connString string) (*DBService, error) {
-	pool, err := pgxpool.New(ctx, connString)
+	cfg, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("parse db pool config: %w", err)
+	}
+	cfg.MaxConns = poolMaxConns
+	cfg.MinConns = poolMinConns
+	cfg.MaxConnLifetime = poolMaxConnLifetime
+
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("open db pool: %w", err)
 	}
@@ -60,6 +76,25 @@ func NewDBService(ctx context.Context, connString string) (*DBService, error) {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
 	return &DBService{pool: pool}, nil
+}
+
+// DBPoolStats holds a snapshot of connection pool metrics.
+type DBPoolStats struct {
+	TotalConns    int32 `json:"total_conns"`
+	IdleConns     int32 `json:"idle_conns"`
+	AcquiredConns int32 `json:"acquired_conns"`
+	MaxConns      int32 `json:"max_conns"`
+}
+
+// PoolStats returns a snapshot of the current connection pool state.
+func (d *DBService) PoolStats() DBPoolStats {
+	s := d.pool.Stat()
+	return DBPoolStats{
+		TotalConns:    s.TotalConns(),
+		IdleConns:     s.IdleConns(),
+		AcquiredConns: s.AcquiredConns(),
+		MaxConns:      s.MaxConns(),
+	}
 }
 
 // Ping checks the database connection is alive.
