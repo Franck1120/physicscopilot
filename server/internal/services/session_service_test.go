@@ -403,6 +403,165 @@ func TestGetSessionSnapshotNotFound(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// ActiveSessionCount
+// ---------------------------------------------------------------------------
+
+func TestActiveSessionCountEmpty(t *testing.T) {
+	svc := NewSessionService()
+	if n := svc.ActiveSessionCount(""); n != 0 {
+		t.Errorf("expected 0 for empty userID, got %d", n)
+	}
+}
+
+func TestActiveSessionCountMatchesCreatedSessions(t *testing.T) {
+	svc := NewSessionService()
+
+	svc.CreateSession("Prusa", "MK4", "user-A", "") //nolint:errcheck
+	svc.CreateSession("Bambu", "X1C", "user-A", "") //nolint:errcheck
+	svc.CreateSession("Creality", "K1", "user-B", "") //nolint:errcheck
+
+	if n := svc.ActiveSessionCount("user-A"); n != 2 {
+		t.Errorf("expected 2 sessions for user-A, got %d", n)
+	}
+	if n := svc.ActiveSessionCount("user-B"); n != 1 {
+		t.Errorf("expected 1 session for user-B, got %d", n)
+	}
+	if n := svc.ActiveSessionCount("user-C"); n != 0 {
+		t.Errorf("expected 0 sessions for user-C, got %d", n)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ListSessions
+// ---------------------------------------------------------------------------
+
+func TestListSessionsEmpty(t *testing.T) {
+	svc := NewSessionService()
+	list := svc.ListSessions()
+	if len(list) != 0 {
+		t.Errorf("expected 0 sessions, got %d", len(list))
+	}
+}
+
+func TestListSessionsReturnsAll(t *testing.T) {
+	svc := NewSessionService()
+	svc.CreateSession("Prusa", "MK4", "", "") //nolint:errcheck
+	svc.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+	svc.CreateSession("Creality", "K1", "", "") //nolint:errcheck
+
+	list := svc.ListSessions()
+	if len(list) != 3 {
+		t.Errorf("expected 3 sessions, got %d", len(list))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CreateSession session limit
+// ---------------------------------------------------------------------------
+
+func TestCreateSessionRejectsOverLimit(t *testing.T) {
+	svc := NewSessionService()
+
+	// Create maxActiveSessionsPerUser sessions for user-A
+	for i := 0; i < maxActiveSessionsPerUser; i++ {
+		_, err := svc.CreateSession("Prusa", "MK4", "user-limit", "")
+		if err != nil {
+			t.Fatalf("session %d: unexpected error: %v", i, err)
+		}
+	}
+
+	// The next one must fail
+	_, err := svc.CreateSession("Prusa", "MK4", "user-limit", "")
+	if err == nil {
+		t.Fatal("expected error when exceeding session limit")
+	}
+	if !strings.Contains(err.Error(), "maximum") {
+		t.Errorf("expected 'maximum' in error, got: %v", err)
+	}
+}
+
+func TestCreateSessionLimitDoesNotAffectOtherUsers(t *testing.T) {
+	svc := NewSessionService()
+
+	// Fill up user-A
+	for i := 0; i < maxActiveSessionsPerUser; i++ {
+		svc.CreateSession("Prusa", "MK4", "user-A", "") //nolint:errcheck
+	}
+
+	// user-B should still be able to create sessions
+	_, err := svc.CreateSession("Prusa", "MK4", "user-B", "")
+	if err != nil {
+		t.Fatalf("user-B should not be affected by user-A limit: %v", err)
+	}
+}
+
+func TestCreateSessionLimitIgnoredForAnonymous(t *testing.T) {
+	svc := NewSessionService()
+
+	// Anonymous sessions (empty userID) should never be limited
+	for i := 0; i < maxActiveSessionsPerUser+5; i++ {
+		_, err := svc.CreateSession("Prusa", "MK4", "", "")
+		if err != nil {
+			t.Fatalf("anonymous session %d: unexpected error: %v", i, err)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CreateSession concurrent stress test
+// ---------------------------------------------------------------------------
+
+func TestCreateSessionConcurrent(t *testing.T) {
+	svc := NewSessionService()
+
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	errCh := make(chan error, goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			_, err := svc.CreateSession("Brand", fmt.Sprintf("Model-%d", i), "", "")
+			if err != nil {
+				errCh <- err
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		t.Errorf("concurrent create error: %v", err)
+	}
+
+	list := svc.ListSessions()
+	if len(list) != goroutines {
+		t.Errorf("expected %d sessions, got %d", goroutines, len(list))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CreateSession language default
+// ---------------------------------------------------------------------------
+
+func TestCreateSessionDefaultsLanguageToIT(t *testing.T) {
+	svc := NewSessionService()
+	sess, _ := svc.CreateSession("Prusa", "MK4", "", "")
+	if sess.Language != "it" {
+		t.Errorf("expected default language 'it', got %q", sess.Language)
+	}
+}
+
+func TestCreateSessionPreservesExplicitLanguage(t *testing.T) {
+	svc := NewSessionService()
+	sess, _ := svc.CreateSession("Prusa", "MK4", "", "en")
+	if sess.Language != "en" {
+		t.Errorf("expected language 'en', got %q", sess.Language)
+	}
+}
+
 func TestConcurrentAccess(t *testing.T) {
 	svc := NewSessionService()
 	session, _ := svc.CreateSession("Prusa", "MK4", "", "")

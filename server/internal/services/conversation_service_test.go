@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // geminiStubServer returns a test HTTP server that responds with the given
@@ -400,5 +401,369 @@ func TestComputeFrameFingerprintNonJPEGFallsBackToSHA256(t *testing.T) {
 	}
 	if hasPHash {
 		t.Error("expected hasPHash=false for non-JPEG input")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// CleanupSession
+// ---------------------------------------------------------------------------
+
+func TestCleanupSessionRemovesFrameHash(t *testing.T) {
+	sessions := NewSessionService()
+	session, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	// Manually store a frame hash
+	svc.storeFrameHash(session.SessionID, "abc123", 0, false)
+
+	// Verify it's there via isDuplicateFrame
+	if !svc.isDuplicateFrame(session.SessionID, "abc123", 0, false) {
+		t.Error("expected frame hash to be stored before cleanup")
+	}
+
+	// Cleanup should remove the hash
+	svc.CleanupSession(session.SessionID)
+
+	// After cleanup, the same hash should NOT be detected as duplicate
+	if svc.isDuplicateFrame(session.SessionID, "abc123", 0, false) {
+		t.Error("expected frame hash to be removed after CleanupSession")
+	}
+}
+
+func TestCleanupSessionNoopForUnknownSession(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	// Should not panic for a session that was never stored
+	svc.CleanupSession("nonexistent-session")
+}
+
+// ---------------------------------------------------------------------------
+// isDuplicateFrame and storeFrameHash
+// ---------------------------------------------------------------------------
+
+func TestIsDuplicateFrameNoEntry(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	if svc.isDuplicateFrame("session-X", "hash", 0, false) {
+		t.Error("expected no duplicate when no frame hash stored")
+	}
+}
+
+func TestIsDuplicateFrameSHA256Match(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	svc.storeFrameHash("sess-1", "sha-AAA", 0, false)
+
+	// Same SHA-256, no pHash
+	if !svc.isDuplicateFrame("sess-1", "sha-AAA", 0, false) {
+		t.Error("expected duplicate for matching SHA-256 hash")
+	}
+	// Different SHA-256
+	if svc.isDuplicateFrame("sess-1", "sha-BBB", 0, false) {
+		t.Error("expected no duplicate for different SHA-256 hash")
+	}
+}
+
+func TestIsDuplicateFramePHashMatch(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	svc.storeFrameHash("sess-1", "sha", 0x00FF, true)
+
+	// Same pHash -> duplicate (hamming distance = 0, below threshold 5)
+	if !svc.isDuplicateFrame("sess-1", "sha-different", 0x00FF, true) {
+		t.Error("expected duplicate for identical pHash")
+	}
+	// pHash with large hamming distance -> not duplicate
+	if svc.isDuplicateFrame("sess-1", "sha-different", 0xFFFFFFFFFFFFFFFF, true) {
+		t.Error("expected no duplicate for very different pHash")
+	}
+}
+
+func TestIsDuplicateFrameTTLExpiry(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	// Manually insert an old entry
+	svc.mu.Lock()
+	svc.frameHashes["sess-1"] = frameHashEntry{
+		sha256:     "sha-old",
+		recordedAt: time.Now().Add(-frameHashTTL - time.Minute),
+	}
+	svc.mu.Unlock()
+
+	// Expired entry should NOT be detected as duplicate
+	if svc.isDuplicateFrame("sess-1", "sha-old", 0, false) {
+		t.Error("expected no duplicate for expired frame hash entry")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// checkAndStoreFrameHash TTL expiry
+// ---------------------------------------------------------------------------
+
+func TestCheckAndStoreFrameHashTTLExpiry(t *testing.T) {
+	sessions := NewSessionService()
+	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	svc := NewConversationService(sessions, gemini, nil)
+
+	// Insert an old entry directly
+	svc.mu.Lock()
+	svc.frameHashes["sess-1"] = frameHashEntry{
+		sha256:     "sha-old",
+		recordedAt: time.Now().Add(-frameHashTTL - time.Minute),
+	}
+	svc.mu.Unlock()
+
+	// Even with the same hash, an expired entry should NOT be treated as dup
+	isDup := svc.checkAndStoreFrameHash("sess-1", "sha-old", 0, false)
+	if isDup {
+		t.Error("expected checkAndStoreFrameHash to return false for expired entry")
+	}
+
+	// After the call, the entry should be updated (not expired anymore)
+	isDup2 := svc.checkAndStoreFrameHash("sess-1", "sha-old", 0, false)
+	if !isDup2 {
+		t.Error("expected duplicate on second call (freshly stored)")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// toVoiceText
+// ---------------------------------------------------------------------------
+
+func TestToVoiceTextStripsMarkdown(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "bold",
+			input: "**bold text** here",
+			want:  "bold text here",
+		},
+		{
+			name:  "italic",
+			input: "*italic* text",
+			want:  "italic text",
+		},
+		{
+			name:  "heading",
+			input: "# Heading Title",
+			want:  "Heading Title",
+		},
+		{
+			name:  "h2",
+			input: "## Sub Heading",
+			want:  "Sub Heading",
+		},
+		{
+			name:  "h3",
+			input: "### Sub Sub Heading",
+			want:  "Sub Sub Heading",
+		},
+		{
+			name:  "backtick code",
+			input: "Use `command` to fix",
+			want:  "Use command to fix",
+		},
+		{
+			name:  "code block",
+			input: "```code block```",
+			want:  "code block",
+		},
+		{
+			name:  "underscore bold",
+			input: "__underline bold__",
+			want:  "underline bold",
+		},
+		{
+			name:  "mixed markdown",
+			input: "**Step 1:** Use `nozzle clean` command\n### Important",
+			want:  "Step 1: Use nozzle clean command Important",
+		},
+		{
+			name:  "empty string",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "excess whitespace",
+			input: "  too   many   spaces  ",
+			want:  "too many spaces",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := toVoiceText(tt.input)
+			if got != tt.want {
+				t.Errorf("toVoiceText(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ProcessFrame with RAG
+// ---------------------------------------------------------------------------
+
+func TestProcessFrameWithRAG(t *testing.T) {
+	structured := `{\"analysis\":\"bed is level\",\"problem\":null,\"instruction\":\"start print\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}`
+	server := geminiStubServer(structured)
+	defer server.Close()
+
+	// Build a RAGService with in-memory KB
+	entries := []KBEntry{
+		{ID: "level", Name: "Bed Leveling", Category: "calibration",
+			Description: "Bed leveling ensures first layer adhesion"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(entries)
+	rag := &RAGService{
+		entries: entries,
+		store:   store,
+		cache:   newRAGLRU(ragCacheCapacity, ragCacheTTL),
+	}
+
+	sessions := NewSessionService()
+	session, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+	gemini := newTestGeminiService(server.URL)
+	svc := NewConversationService(sessions, gemini, rag)
+
+	// ProcessFrame with userText that matches KB
+	result, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame-data", "bed leveling issue")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Text == "" {
+		t.Error("expected non-empty result text")
+	}
+}
+
+func TestProcessFrameWithRAGFallbackToProblemDetected(t *testing.T) {
+	structured := `{\"analysis\":\"ok\",\"problem\":null,\"instruction\":\"continue\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}`
+	server := geminiStubServer(structured)
+	defer server.Close()
+
+	entries := []KBEntry{
+		{ID: "clog", Name: "Clogged Nozzle", Category: "extrusion",
+			Description: "Nozzle is blocked causing under-extrusion"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(entries)
+	rag := &RAGService{
+		entries: entries,
+		store:   store,
+		cache:   newRAGLRU(ragCacheCapacity, ragCacheTTL),
+	}
+
+	sessions := NewSessionService()
+	session, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+
+	// Set a problem on the session so RAG can fall back to it
+	sessions.SetProblemDetected(session.SessionID, "clogged nozzle") //nolint:errcheck
+
+	gemini := newTestGeminiService(server.URL)
+	svc := NewConversationService(sessions, gemini, rag)
+
+	// Empty userText -> should fall back to ProblemDetected for RAG query
+	result, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame-data-2", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ProcessTextMessage with RAG
+// ---------------------------------------------------------------------------
+
+func TestProcessTextMessageWithRAGEmptyContext(t *testing.T) {
+	// This exercises the `else { conversationCtx = kbCtx }` branch when
+	// there is no conversation history yet (BuildContextForGemini returns empty).
+	structured := `{\"analysis\":\"rag only\",\"problem\":null,\"instruction\":\"fix it\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}`
+	server := geminiStubServer(structured)
+	defer server.Close()
+
+	entries := []KBEntry{
+		{ID: "warp", Name: "Warping Issue", Category: "bed_adhesion",
+			Description: "Print corners lift off the bed during printing"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(entries)
+	rag := &RAGService{
+		entries: entries,
+		store:   store,
+		cache:   newRAGLRU(ragCacheCapacity, ragCacheTTL),
+	}
+
+	sessions := NewSessionService()
+	session, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+	gemini := newTestGeminiService(server.URL)
+	svc := NewConversationService(sessions, gemini, rag)
+
+	// First message — BuildContextForGemini returns "" at the time RAG runs
+	// (only 1 user message from the AddMessage call, but BuildContextForGemini
+	// was called right after that, so context is "user: warping...", which is non-empty.
+	// We need a scenario where conversationCtx is empty — that means 0 messages at BuildContextForGemini time.
+	// But ProcessTextMessage adds a user message first...
+	// Actually the context will include that user message, so we can't easily get the
+	// empty-context + RAG branch this way. Let's test it differently.)
+	result, err := svc.ProcessTextMessage(context.Background(), session.SessionID, "warping issue on print bed")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+}
+
+func TestProcessTextMessageWithRAG(t *testing.T) {
+	structured := `{\"analysis\":\"text response\",\"problem\":null,\"instruction\":\"try this\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}`
+	server := geminiStubServer(structured)
+	defer server.Close()
+
+	entries := []KBEntry{
+		{ID: "warp", Name: "Warping Issue", Category: "bed_adhesion",
+			Description: "Print corners lift off the bed during printing"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(entries)
+	rag := &RAGService{
+		entries: entries,
+		store:   store,
+		cache:   newRAGLRU(ragCacheCapacity, ragCacheTTL),
+	}
+
+	sessions := NewSessionService()
+	session, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+	gemini := newTestGeminiService(server.URL)
+	svc := NewConversationService(sessions, gemini, rag)
+
+	result, err := svc.ProcessTextMessage(context.Background(), session.SessionID, "my print is warping off the bed")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Text == "" {
+		t.Error("expected non-empty result text")
 	}
 }

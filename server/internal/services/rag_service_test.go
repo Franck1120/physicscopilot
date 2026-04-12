@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // writeTestKB writes a temporary KB JSON file with the given entries and
@@ -163,6 +164,118 @@ func TestQueryKBCacheHitReturnsSameResults(t *testing.T) {
 	r2 := svc.QueryKB("clogged nozzle", 3)
 	if len(r1) != len(r2) {
 		t.Errorf("cache hit returned different result length: %d vs %d", len(r1), len(r2))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ragLRU cache — TTL expiry
+// ---------------------------------------------------------------------------
+
+func TestRAGLRUGetExpiredEntryReturnsMiss(t *testing.T) {
+	cache := newRAGLRU(10, 50*time.Millisecond)
+	cache.set("test query", 3, []KBEntry{{ID: "a"}})
+
+	// Immediately should be a hit
+	if results, ok := cache.get("test query", 3); !ok || len(results) != 1 {
+		t.Error("expected cache hit immediately after set")
+	}
+
+	// Wait for TTL to expire
+	time.Sleep(80 * time.Millisecond)
+
+	results, ok := cache.get("test query", 3)
+	if ok {
+		t.Error("expected cache miss after TTL expiry")
+	}
+	if results != nil {
+		t.Errorf("expected nil results after TTL expiry, got %v", results)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ragLRU cache — eviction at capacity
+// ---------------------------------------------------------------------------
+
+func TestRAGLRUEvictsOldestAtCapacity(t *testing.T) {
+	cache := newRAGLRU(2, 5*time.Minute)
+
+	cache.set("query-A", 3, []KBEntry{{ID: "a"}})
+	cache.set("query-B", 3, []KBEntry{{ID: "b"}})
+
+	// Both should be hits
+	if _, ok := cache.get("query-A", 3); !ok {
+		t.Error("expected cache hit for query-A before eviction")
+	}
+	if _, ok := cache.get("query-B", 3); !ok {
+		t.Error("expected cache hit for query-B before eviction")
+	}
+
+	// Adding a third entry should evict the LRU (query-A was accessed after query-B
+	// in the get calls above, so query-B accessed last, query-A second-to-last...
+	// actually both were accessed, so the LRU is whichever was accessed least recently)
+	// Let's make it deterministic: access query-B to make it MRU, then add query-C
+	cache.get("query-B", 3)
+	cache.set("query-C", 3, []KBEntry{{ID: "c"}})
+
+	// query-A should be evicted (LRU)
+	if _, ok := cache.get("query-A", 3); ok {
+		t.Error("expected query-A to be evicted (LRU)")
+	}
+	// query-B and query-C should still be present
+	if _, ok := cache.get("query-B", 3); !ok {
+		t.Error("expected cache hit for query-B after eviction of A")
+	}
+	if _, ok := cache.get("query-C", 3); !ok {
+		t.Error("expected cache hit for query-C")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ragLRU cache — update existing entry
+// ---------------------------------------------------------------------------
+
+func TestRAGLRUUpdateExistingEntry(t *testing.T) {
+	cache := newRAGLRU(10, 5*time.Minute)
+
+	cache.set("query-X", 3, []KBEntry{{ID: "old"}})
+	cache.set("query-X", 3, []KBEntry{{ID: "new"}})
+
+	results, ok := cache.get("query-X", 3)
+	if !ok {
+		t.Fatal("expected cache hit after update")
+	}
+	if len(results) != 1 || results[0].ID != "new" {
+		t.Errorf("expected updated entry with ID 'new', got %v", results)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// FormatForPrompt — detailed format checks
+// ---------------------------------------------------------------------------
+
+func TestFormatForPromptMultipleEntries(t *testing.T) {
+	svc := &RAGService{}
+	entries := []KBEntry{
+		{Name: "Clogged Nozzle", Description: "Nozzle blocked", VisualSymptoms: []string{"under extrusion", "gaps"}},
+		{Name: "Warping", Description: "Corners lift up"},
+	}
+	out := svc.FormatForPrompt(entries)
+
+	if !strings.HasPrefix(out, "RELEVANT KNOWN ISSUES:\n") {
+		t.Errorf("expected header prefix, got: %q", out)
+	}
+	if !strings.Contains(out, "- Clogged Nozzle: Nozzle blocked Symptoms: under extrusion; gaps") {
+		t.Errorf("expected first entry with symptoms, got: %q", out)
+	}
+	if !strings.Contains(out, "- Warping: Corners lift up\n") {
+		t.Errorf("expected second entry without symptoms, got: %q", out)
+	}
+}
+
+func TestFormatForPromptEmptySliceReturnsEmpty(t *testing.T) {
+	svc := &RAGService{}
+	if out := svc.FormatForPrompt([]KBEntry{}); out != "" {
+		t.Errorf("expected empty string for empty slice, got %q", out)
 	}
 }
 
