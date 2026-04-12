@@ -583,6 +583,21 @@ class _SplashScreenState extends State<_SplashScreen>
             ),
           ),
 
+          // Version label
+          Positioned(
+            bottom: 24,
+            child: FadeTransition(
+              opacity: _subtitleFade,
+              child: const Text(
+                AppStrings.appVersion,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: kTextMuted,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
