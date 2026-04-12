@@ -1,5 +1,5 @@
 .PHONY: dev dev-server dev-app test test-coverage build-server build-apk \
-        lint docker-up docker-down clean help
+        lint docker-up docker-down docker-push pre-commit clean help
 
 # ── Development ───────────────────────────────────────────────────────────────
 
@@ -52,6 +52,15 @@ docker-up: ## Start Supabase local stack (docker compose)
 
 docker-down: ## Stop Supabase local stack
 	docker compose down
+
+docker-push: ## Build multi-platform image and push to GHCR
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t ghcr.io/franck1120/physicscopilot:latest --push .
+
+# ── Pre-commit ───────────────────────────────────────────────────────────────
+
+pre-commit: ## Run all pre-commit hooks on every file
+	pre-commit run --all-files
 
 # ── Coverage ─────────────────────────────────────────────────────────────────
 
