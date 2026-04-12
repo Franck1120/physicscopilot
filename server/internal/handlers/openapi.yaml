@@ -526,6 +526,77 @@ paths:
         '429':
           $ref: '#/components/responses/TooManyRequests'
 
+  /api/stats:
+    get:
+      summary: Server statistics
+      description: |
+        Returns real-time server statistics: active sessions, open WebSocket connections,
+        knowledge-base status, server uptime, and build version.
+      tags: [Monitoring]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current server statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - active_sessions
+                  - active_ws_connections
+                  - total_sessions_started
+                  - kb_loaded
+                  - kb_entry_count
+                  - uptime_seconds
+                  - version
+                  - total_messages
+                properties:
+                  active_sessions:
+                    type: integer
+                    minimum: 0
+                    description: Number of in-memory sessions currently alive.
+                    example: 3
+                  active_ws_connections:
+                    type: integer
+                    minimum: 0
+                    description: Number of open WebSocket connections.
+                    example: 2
+                  total_sessions_started:
+                    type: integer
+                    minimum: 0
+                    description: Cumulative sessions started since server boot (from metrics).
+                    example: 42
+                  kb_loaded:
+                    type: boolean
+                    description: Whether the knowledge base is loaded and ready.
+                    example: true
+                  kb_entry_count:
+                    type: integer
+                    minimum: 0
+                    description: Number of knowledge-base entries currently loaded.
+                    example: 128
+                  uptime_seconds:
+                    type: integer
+                    minimum: 0
+                    description: Seconds elapsed since server start.
+                    example: 3600
+                  version:
+                    type: string
+                    description: Build version string.
+                    example: "0.1.0"
+                  total_messages:
+                    type: integer
+                    minimum: 0
+                    description: Total messages across all active sessions.
+                    example: 17
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/domains:
     get:
       summary: List available knowledge-base domains
