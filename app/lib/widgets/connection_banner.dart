@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../services/websocket_service.dart' show ConnectionStatus;
 
+/// Thin banner shown at the top of the screen when the WebSocket is not connected.
+///
+/// Displays an orange indicator while [ConnectionStatus.connecting] and a red
+/// indicator when [ConnectionStatus.disconnected]. The widget is a no-op at
+/// [ConnectionStatus.connected] — callers should hide it entirely in that case.
 class ConnectionBanner extends StatelessWidget {
   const ConnectionBanner({super.key, required this.status});
   final ConnectionStatus status;
