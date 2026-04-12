@@ -16,16 +16,20 @@ Technical terms and acronyms used throughout the codebase and documentation.
 | **ConsumerStatefulWidget** | Flutter widget that has both mutable local state (`State`) and access to Riverpod providers (`WidgetRef`) |
 | **CQRS** | Command Query Responsibility Segregation — the project separates read (GET) and write (POST/DELETE) operations in handlers |
 | **Dart define** | Build-time constant passed to Flutter via `--dart-define=KEY=VALUE`. Used for `SERVER_URL` and `LANGUAGE` |
+| **Domain** | A category of repairable devices (e.g. `hvac`, `drone`, `iot`) used to scope KB queries to a per-domain `VectorStore` |
 | **Equipment** | A device selected by the user from the catalog before starting a session. Provides context to the AI |
 | **Frame deduplication** | Perceptual hashing of frames to skip sending near-identical images to Gemini. Implemented in `services/phash.go` |
 | **Gemini** | Google's multimodal AI model used for visual analysis. PhysicsCopilot uses Gemini 1.5 Flash |
 | **GoDoc** | Go's documentation convention: comments immediately preceding a function/type, starting with the identifier name |
+| **LRU Cache** | Least Recently Used eviction cache used for RAG query results (128 entries, 5 min TTL). Prevents redundant TF-IDF scoring on repeated queries |
 | **HPA** | Horizontal Pod Autoscaler — Kubernetes resource that scales the number of server pods based on CPU/memory |
 | **JWT** | JSON Web Token — signed token used for authentication. Issued by Supabase Auth, validated by the Go server |
 | **KB** | Knowledge Base — Markdown documents in `kb/` that the RAG service embeds and retrieves for device-specific context |
 | **perceptual hash (phash)** | A hash of image content (not bytes) that produces similar hashes for visually similar images. Used to detect duplicate frames |
+| **pHash** | 64-bit DCT-based perceptual fingerprint of a camera frame. Frames whose pHash differs by ≤ 8 bits (Hamming distance) are considered duplicates and skip the AI call |
 | **Provider** | Riverpod's unit of shared state. Types used: `StateNotifierProvider`, `StreamProvider`, `FutureProvider`, `StateProvider`, `Provider` |
-| **RAG** | Retrieval-Augmented Generation — technique of retrieving relevant KB chunks and including them in the Gemini prompt |
+| **RAG** | Retrieval-Augmented Generation — technique of injecting relevant KB context into AI prompts to ground responses in device-specific knowledge |
+| **TF-IDF** | Term Frequency-Inverse Document Frequency — the scoring algorithm used by `VectorStore` to rank KB entries by relevance to a query |
 | **Render.com** | Cloud PaaS used to host the Go server. Configured via `render.yaml` |
 | **Riverpod** | Flutter state management library. Providers are defined at module level and watched/read via `WidgetRef` |
 | **RLS** | Row-Level Security — Supabase/Postgres feature that ensures users can only access their own rows |
@@ -35,6 +39,7 @@ Technical terms and acronyms used throughout the codebase and documentation.
 | **TTS** | Text-to-Speech — reads AI guidance aloud. Uses `flutter_tts` package |
 | **Typewriter effect** | Progressive character-by-character text reveal animation in `GuidancePanel`. Uses `StreamingText` widget |
 | **UserRateLimiter** | Per-JWT rate limiter (30 msg/min, burst 5) implemented in `middleware/userlimit.go` |
+| **VectorStore** | In-memory TF-IDF index over `KBEntry` documents. One store per domain plus one global fallback; loaded at server startup from `KB_DATA_DIR` |
 | **VoiceState** | Riverpod state class tracking microphone (`isListening`) and TTS (`isSpeaking`) status |
 | **WebSocket** | Full-duplex TCP connection used for real-time frame streaming and AI response delivery. Endpoint: `wss://server/ws?token=<jwt>&lang=it` |
 | **WS frame** | Binary/text message sent over a WebSocket connection. Not to be confused with a camera frame |
