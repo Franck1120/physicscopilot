@@ -18,7 +18,7 @@ func TestNewFiberAppHealthEndpoint(t *testing.T) {
 	feedbackHandler := handlers.NewFeedbackHandler(nil)
 	statsHandler := handlers.NewStatsHandler(sessions)
 
-	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, statsHandler)
+	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, nil, statsHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	resp, err := app.Test(req)
@@ -38,7 +38,7 @@ func TestNewFiberAppStatsEndpoint(t *testing.T) {
 	feedbackHandler := handlers.NewFeedbackHandler(nil)
 	statsHandler := handlers.NewStatsHandler(sessions)
 
-	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, statsHandler)
+	app := newFiberApp("test", sessionHandler, feedbackHandler, ws, nil, nil, statsHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
 	req.Header.Set("Authorization", "Bearer test") // will fail auth but let's skip for now
