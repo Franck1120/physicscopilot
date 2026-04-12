@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Wraps Supabase auth operations used throughout the app.
