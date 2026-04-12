@@ -51,6 +51,21 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 
 ---
 
+## Architecture Decision Records
+
+Key architectural choices are documented in [`docs/adr/`](docs/adr/README.md):
+
+| ADR | Decision |
+|-----|---------|
+| [001](docs/adr/001-go-fiber-backend.md) | Go + Fiber as the backend runtime |
+| [002](docs/adr/002-flutter-mobile.md) | Flutter for the mobile client |
+| [003](docs/adr/003-gemini-vision-api.md) | Gemini 2.5 Flash as the primary AI backend |
+| [004](docs/adr/004-websocket-over-grpc.md) | WebSocket instead of gRPC or WebRTC |
+| [005](docs/adr/005-tfidf-over-embeddings.md) | TF-IDF keyword search instead of vector embeddings |
+| [006](docs/adr/006-supabase-postgres.md) | Supabase/Postgres with in-memory fallback |
+
+---
+
 ## Architecture
 
 ```
