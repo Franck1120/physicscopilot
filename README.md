@@ -45,6 +45,28 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 - **💾 Optional Postgres persistence** — session history stored in Postgres/Supabase when `DATABASE_URL` is set
 - **📖 OpenAPI spec** — full API documentation served at `GET /api/docs` (OpenAPI 3.0.3, YAML)
 - **📡 WebSocket protocol** — complete frame-level protocol documented in [`docs/WEBSOCKET_PROTOCOL.md`](docs/WEBSOCKET_PROTOCOL.md)
+- **🌐 Domains API** — `GET /api/domains` returns all available knowledge base domains with metadata
+
+---
+
+## Knowledge Base Domains
+
+12 domains are available out of the box. The knowledge base (`kb/data/problems.json`) is bundled in the Docker image — no extra configuration needed.
+
+| Domain | Description |
+|--------|-------------|
+| 🖨 **Printer** | Paper jams, connectivity issues, print quality problems |
+| 💻 **Laptop** | Hardware faults, overheating, display and keyboard repairs |
+| 🍳 **Kitchen appliances** | Ovens, dishwashers, refrigerators, small appliance diagnostics |
+| 🌡 **HVAC** | Heating, ventilation and air conditioning maintenance |
+| 🚗 **Automotive** | Engine faults, electrical systems, brake and tyre guidance |
+| ⚙️ **Industrial equipment** | CNC machines, conveyors, pneumatic and hydraulic systems |
+| 🔌 **Electronics** | PCB-level diagnosis, soldering, component replacement |
+| 🏠 **Home appliances** | Washing machines, dryers, water heaters |
+| 📱 **Smartphone** | Screen replacement, battery swap, charging port repair |
+| 🛋 **Furniture** | Assembly, structural repairs, hinge and drawer fixes |
+| 🌿 **Garden** | Lawnmowers, trimmers, irrigation systems, power tools |
+| 📷 **Photography** | Camera body, lens servicing, sensor cleaning, flash repair |
 
 **Planned (not yet live):**
 - Semantic search over uploaded manuals (pgvector)
