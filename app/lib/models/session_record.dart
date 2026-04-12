@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'dart:convert';
 
 /// Outcome of a completed session stored in local history.
