@@ -1,0 +1,693 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "bicycle",
+  "total": 15,
+  "problems": [
+    {
+      "id": "catena_saltata",
+      "name": "Catena saltata",
+      "category": "trasmissione",
+      "severity": "error",
+      "description": "La catena è uscita dai pignoni o dalla corona, impedendo di pedalare.",
+      "visual_symptoms": [
+        "Catena visibilmente fuori dai denti del pignone o della corona",
+        "Pedalata a vuoto senza trazione",
+        "Catena penzolante sul lato del telaio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cambio mal regolato che spinge la catena oltre il pignone limite",
+          "probability": 0.50,
+          "test": "Verificare se la catena è uscita dal pignone più grande o più piccolo"
+        },
+        {
+          "cause": "Catena allentata o troppo lunga",
+          "probability": 0.30,
+          "test": "Verificare la tensione della catena: su bici senza cambio deve avere circa 1 cm di gioco"
+        },
+        {
+          "cause": "Denti di corona o pignone usurati",
+          "probability": 0.20,
+          "test": "Ispezionare i denti: se a forma di uncino o molto consumati, la catena salta"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Per reinserire la catena: sollevare la bici o capovolgerla. Posizionare la catena sui denti della corona anteriore con una mano, poi ruotare i pedali lentamente per far avanzare la catena",
+              "verification": "Catena correttamente inserita su corona e pignone",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Regolare il finecorsa del deragliatore (vite H per pignone piccolo, vite L per pignone grande) per impedire alla catena di uscire",
+              "verification": "La catena non esce nei rapporti estremi",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "freno_lento",
+      "name": "Freno poco efficace",
+      "category": "freni",
+      "severity": "error",
+      "description": "Il freno non rallenta la bici in modo sufficiente o richiede pressione eccessiva sulla leva.",
+      "visual_symptoms": [
+        "Leva del freno che arriva al manubrio prima che la bici si fermi",
+        "Distanza di frenata molto lunga",
+        "Scarsa risposta alla pressione della leva"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pattini del freno usurati o a distanza eccessiva dal cerchio",
+          "probability": 0.45,
+          "test": "Verificare lo spessore dei pattini: se sotto 1 mm di gommino, vanno sostituiti. Controllare la distanza dal cerchio (2-3 mm)"
+        },
+        {
+          "cause": "Cavo del freno allentato o con guaine deteriorate",
+          "probability": 0.35,
+          "test": "Stringere il bullone di fissaggio del cavo e tirare il cavo con la mano: se è allentato o fibra rotta, va sostituito"
+        },
+        {
+          "cause": "Cerchio o disco sporchi di olio o grasso",
+          "probability": 0.20,
+          "test": "Pulire il cerchio con un panno e alcool isopropilico: se il freno migliora subito, era sporco"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Regolare il tiraggio del cavo: allentare il bullone del cavo al freno, spostare il cavo per aumentare la tensione, poi stringere il bullone",
+              "verification": "I pattini a riposo distano 2-3 mm dal cerchio e la frenata è efficace",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Pulire il cerchio con alcool isopropilico e un panno pulito per rimuovere olio e sporco",
+              "verification": "Frenata efficace e uniforme",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "foratura",
+      "name": "Foratura (pneumatico bucato)",
+      "category": "pneumatici",
+      "severity": "error",
+      "description": "Uno o entrambi i pneumatici hanno perso pressione a causa di una foratura.",
+      "visual_symptoms": [
+        "Bici che si abbassa su un lato",
+        "Guida instabile e pesante",
+        "Camera d'aria visibilmente sgonfia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Oggetto aguzzo nel battistrada (vetro, chiodo, spina)",
+          "probability": 0.55,
+          "test": "Ispezionare il battistrada passandoci il dito delicatamente per trovare l'oggetto conficcato"
+        },
+        {
+          "cause": "Foratura a pizzico (serpente) per impatto su bordino o buca con pressione bassa",
+          "probability": 0.30,
+          "test": "Sulla camera estratta, cercare due fori ravvicinati (a forma di serpente) sul lato della camera"
+        },
+        {
+          "cause": "Valvola difettosa o capello della valvola mancante",
+          "probability": 0.15,
+          "test": "Immergere la valvola in acqua: se fa bolle, la valvola perde"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere la ruota dalla bici. Usare le leve taglia-copertoni per sfilare il copertone. Estrarre la camera d'aria. Gonfiarla e immergere in acqua per trovare il foro",
+              "verification": "Foro localizzato nella camera",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Applicare il kit riparazione: sgrassare la zona, applicare la colla, attendere che diventi opaca (2 min), applicare il cerotto e premere con forza per 1 minuto",
+              "verification": "Cerotto ben aderente",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Rimuovere l'oggetto che ha causato la foratura dal copertone. Rimontare la camera e il copertone. Gonfiare alla pressione corretta indicata sul fianco del copertone",
+              "verification": "Camera gonfia e stabile, nessuna perdita",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cambio_non_preciso",
+      "name": "Cambio non preciso",
+      "category": "trasmissione",
+      "severity": "warning",
+      "description": "Il deragliatore non ingrana correttamente le marce, saltando, non passando al rapporto selezionato o facendo rumore.",
+      "visual_symptoms": [
+        "Catena che salta tra i pignoni durante la pedalata",
+        "Marcia che non si inserisce al primo clic della leva",
+        "Rumore di strisciamento della catena sul deragliatore"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cavo del cambio allentato o allungato",
+          "probability": 0.45,
+          "test": "Verificare la tensione del cavo: il cambio deve rispondere precisamente ai clic della leva"
+        },
+        {
+          "cause": "Finecorsa del deragliatore mal regolati",
+          "probability": 0.30,
+          "test": "Verificare che il deragliatore raggiunga il pignone più grande e più piccolo senza andare oltre"
+        },
+        {
+          "cause": "Guaine del cavo sporche o deteriorate",
+          "probability": 0.25,
+          "test": "Verificare le guaine: se fessurate, arrugginite o piegate in modo acuto, frenano il cavo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aumentare la tensione del cavo usando l'archetto di registrazione (barilotto) sul deragliatore o sulla leva: girare in senso antiorario di mezzo giro alla volta finché il cambio risponde correttamente",
+              "verification": "Cambio preciso su tutti i rapporti",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Lubrificare le guaine del cavo con un lubrificante specifico per cavi. Se deteriorate, sostituire cavi e guaine",
+              "verification": "Cambio fluido e preciso",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pedale_scricchiola",
+      "name": "Pedale o movimento centrale che scricchiola",
+      "category": "trasmissione",
+      "severity": "info",
+      "description": "Si sente uno scricchiolio o cigolìo sincronizzato con la pedalata, proveniente dall'area dei pedali o del movimento centrale.",
+      "visual_symptoms": [
+        "Scricchiolio a ogni pedalata",
+        "Rumore che segue il ritmo della pedalata",
+        "Scricchiolio che cambia con la forza applicata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pedali allentati o con cuscinetti asciutti",
+          "probability": 0.40,
+          "test": "Stringere i pedali (attenzione: il pedale sinistro ha filettatura inversa). Verificare il gioco laterale"
+        },
+        {
+          "cause": "Movimento centrale (BB) allentato o usurato",
+          "probability": 0.35,
+          "test": "Afferrare la pedivella e muoverla lateralmente: se c'è gioco, il BB è allentato o usurato"
+        },
+        {
+          "cause": "Pedivella allentata sul movimento centrale",
+          "probability": 0.25,
+          "test": "Verificare il dado/vite di fissaggio della pedivella: deve essere ben stretto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Stringere i pedali con una chiave da 15mm (il pedale sinistro si stringe in senso orario, inverso del normale). Applicare del grasso sulle filettature",
+              "verification": "Scricchiolio ridotto o assente dopo aver stretto i pedali",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Verificare e stringere le viti di fissaggio delle pedivelle con la chiave appropriata",
+              "verification": "Pedivelle senza gioco e senza scricchiolio",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "catena_cigola",
+      "name": "Catena che cigola",
+      "category": "trasmissione",
+      "severity": "info",
+      "description": "La catena produce un cigolìo fastidioso durante la pedalata, segnale di mancanza di lubrificazione.",
+      "visual_symptoms": [
+        "Cigolìo metallico durante la pedalata",
+        "Catena visibilmente secca o arrugginita",
+        "Rumore che aumenta con la velocità di pedalata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Catena secca per mancanza di lubrificazione",
+          "probability": 0.70,
+          "test": "Toccare la catena: se è secca e non lascia tracce di olio, ha bisogno di lubrificante"
+        },
+        {
+          "cause": "Catena bagnata con lubrificante lavato via dalla pioggia",
+          "probability": 0.30,
+          "test": "Se si è pedalato sotto la pioggia, il lubrificante è stato diluito"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Applicare lubrificante specifico per catene (non grasso, non WD-40): posizionare il flacone su un link della catena e pedalare all'indietro per distribuire il lubrificante su tutta la catena",
+              "verification": "Catena lubrificata uniformemente",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Attendere 5-10 minuti, poi pulire il lubrificante in eccesso con un panno pulito per evitare accumuli di sporco",
+              "verification": "Catena silenziosa e senza cigolìo",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "freno_disco_sfregamento",
+      "name": "Freno a disco che strofina",
+      "category": "freni",
+      "severity": "warning",
+      "description": "Il freno a disco produce un rumore di sfregamento continuo durante la pedalata anche senza premere la leva.",
+      "visual_symptoms": [
+        "Rumore metallico continuo durante la pedalata",
+        "Ruota che gira con resistenza",
+        "Calore anomalo al disco durante la pedalata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Disco non centrato nell'archetto del freno",
+          "probability": 0.50,
+          "test": "Osservare il disco girare tra le pastiglie: se devia da un lato, sfiora la pastiglia"
+        },
+        {
+          "cause": "Pastiglie consumate che sporgono verso il disco",
+          "probability": 0.30,
+          "test": "Ispezionare lo spessore delle pastiglie: se sotto 0.5mm, vanno sostituite"
+        },
+        {
+          "cause": "Disco storto (runout eccessivo)",
+          "probability": 0.20,
+          "test": "Con ruota in rotazione, verificare se il disco ondeggia su e giù: se sì, è storto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Allentare le viti di fissaggio dell'archetto freno, premere la leva del freno per centrare automaticamente l'archetto, poi stringere le viti mantenendo la leva premuta",
+              "verification": "Disco che gira senza sfregare sulle pastiglie",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se il problema persiste, regolare manualmente l'archetto muovendolo lateralmente finché il disco è centrato",
+              "verification": "Ruota che gira liberamente senza resistenza",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reggisella_bloccato",
+      "name": "Reggisella bloccato e non scorre",
+      "category": "telaio",
+      "severity": "warning",
+      "description": "Il reggisella è bloccato nel tubo piantone del telaio e non si riesce a regolare l'altezza della sella.",
+      "visual_symptoms": [
+        "Reggisella che non si abbassa o alza nonostante la vite di bloccaggio allentata",
+        "Reggisella che rimane fisso nella posizione attuale",
+        "Resistenza e impossibilità di estrarre il reggisella"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Corrosione galvanica tra reggisella in alluminio e telaio in acciaio",
+          "probability": 0.55,
+          "test": "Allentare completamente la vite e tentare di girare il reggisella: se non gira, c'è corrosione"
+        },
+        {
+          "cause": "Calcare o sporco solidificato tra reggisella e piantone",
+          "probability": 0.30,
+          "test": "Se la bici è stata esposta a pioggia o fango e non manutenuta, sporco e calcare possono bloccare"
+        },
+        {
+          "cause": "Reggisella inserito troppo in profondità senza grasso",
+          "probability": 0.15,
+          "test": "Verificare se il reggisella è inserito oltre il segno minimo senza lubricante"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Versare spray sbloccante (WD-40) nell'intercapedine tra reggisella e tubo piantone. Attendere 30 minuti e riprovare a girare e tirare",
+              "verification": "Reggisella che inizia a muoversi",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Per sbloccare con più forza: mettere la bici su un piano stabile, mettere un panno sul reggisella per non graffiarlo, e usare un colpo deciso con la mano aperta lateralmente sul reggisella per svincolare la corrosione",
+              "verification": "Reggisella estratto dal piantone",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gomma_tubeless_perde_aria",
+      "name": "Gomma tubeless perde aria",
+      "category": "pneumatici",
+      "severity": "warning",
+      "description": "Il sistema tubeless perde pressione lentamente o improvvisamente, non sigillando autonomamente le piccole forature.",
+      "visual_symptoms": [
+        "Pneumatico che si sgonfia lentamente nel tempo",
+        "Liquido sigillante (lattice bianco) visibile sul battistrada",
+        "Pneumatico sgonfio il mattino dopo averlo gonfiato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sigillante esaurito o insufficiente",
+          "probability": 0.45,
+          "test": "Scuotere la ruota: se non si sente il sigillante muoversi, è esaurito o coagulato"
+        },
+        {
+          "cause": "Foratura troppo grande per il sigillante",
+          "probability": 0.30,
+          "test": "Individuare dove esce il sigillante: fori grandi (oltre 4-5mm) non vengono sigillati automaticamente"
+        },
+        {
+          "cause": "Sede del cerchio non perfettamente sigillata (nastro o valvola)",
+          "probability": 0.25,
+          "test": "Immergere la ruota in acqua: se le bolle provengono dalla valvola o dal cerchio, la tenuta è compromessa"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Scuotere la ruota per distribuire il sigillante residuo sulla zona della perdita. Se funziona, gonfiare alla pressione corretta",
+              "verification": "Perdita sigillata autonomamente dal lattice",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se il sigillante è esaurito o insufficiente, aggiungere 60-100ml di sigillante tubeless attraverso la valvola (usando una siringa apposita) dopo aver rimosso il nucleo della valvola",
+              "verification": "Sistema sigillato e pressione stabile nel tempo",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sterzo_rigido",
+      "name": "Sterzo rigido o duro",
+      "category": "sterzo",
+      "severity": "warning",
+      "description": "Il manubrio gira con difficoltà o con resistenza, rendendo la guida faticosa e imprecisa.",
+      "visual_symptoms": [
+        "Manubrio che si gira con sforzo",
+        "Notch o scatto nello sterzo in posizione dritta",
+        "Rumore di strisciamento durante la sterzata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cuscinetti dello sterzo (canotto) asciutti o usurati",
+          "probability": 0.55,
+          "test": "Sollevare la ruota anteriore e girare il manubrio: se c'è resistenza o notch, i cuscinetti sono il problema"
+        },
+        {
+          "cause": "Cannotto dello sterzo stretto eccessivamente",
+          "probability": 0.30,
+          "test": "Verificare che il dado di bloccaggio del cannotto non sia stretto oltre il necessario"
+        },
+        {
+          "cause": "Forcella o cannotto piegato (caduta)",
+          "probability": 0.15,
+          "test": "Verificare se lo sterzo è sempre rigido in una certa direzione o uniformemente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Allentare il dado di regolazione del cannotto (serie del canotto) di 1/4 di giro e verificare se la rigidità diminuisce. Lo sterzo deve girare liberamente senza gioco",
+              "verification": "Sterzo che gira liberamente senza notch né gioco",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se il problema persiste, smontare la serie dello sterzo, pulire e rilubrificare i cuscinetti con grasso specifico o sostituirli se usurati",
+              "verification": "Sterzo fluido e preciso",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pedivella_allentata",
+      "name": "Pedivella allentata",
+      "category": "trasmissione",
+      "severity": "warning",
+      "description": "Una o entrambe le pedivelle si muovono lateralmente o sono allentate rispetto al movimento centrale.",
+      "visual_symptoms": [
+        "Gioco laterale nella pedivella",
+        "Scricchiolio o clic durante la pedalata",
+        "Pedivella che si muove indipendentemente dal movimento centrale"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Bullone di fissaggio pedivella allentato",
+          "probability": 0.55,
+          "test": "Afferrare la pedivella e spingere/tirare lateralmente: se c'è gioco, il bullone è allentato"
+        },
+        {
+          "cause": "Scanalatura della pedivella usurata per uso prolungato da allentata",
+          "probability": 0.30,
+          "test": "Se la pedivella è stata allentata a lungo, le scanalature interne potrebbero essere consumate"
+        },
+        {
+          "cause": "Movimento centrale con gioco eccessivo",
+          "probability": 0.15,
+          "test": "Afferrare entrambe le pedivelle e muoverle lateralmente: se c'è gioco con entrambe, è il BB"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Stringere il bullone di fissaggio della pedivella con la chiave appropriata (8 o 10mm esagono o chiave specifica per pedivelle). Serrare con forza notevole (35-50 Nm)",
+              "verification": "Nessun gioco laterale nella pedivella",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Dopo aver pedalato per qualche km, ricontrollare e ristrignere se necessario: le pedivelle nuove o rimontate tendono ad allentarsi leggermente",
+              "verification": "Pedivella senza gioco e senza scricchiolio",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ruota_storta",
+      "name": "Ruota storta (8 di ruota)",
+      "category": "ruote",
+      "severity": "warning",
+      "description": "La ruota non gira in linea retta ma oscilla lateralmente, causando sfregamenti con i freni o il telaio.",
+      "visual_symptoms": [
+        "Ruota che oscilla da un lato all'altro durante la rotazione",
+        "Sfregamento intermittente con i pattini del freno",
+        "Oscillazione visibile della ruota quando gira"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Uno o più raggi allentati o rotti",
+          "probability": 0.60,
+          "test": "Pizzicare ogni raggio: se uno è molto più morbido degli altri o mancante, è il responsabile"
+        },
+        {
+          "cause": "Impatto laterale forte che ha deformato il cerchio",
+          "probability": 0.30,
+          "test": "Verificare se c'è stata una caduta laterale o impatto con un cordolo"
+        },
+        {
+          "cause": "Dado del mozzo allentato che fa muovere la ruota",
+          "probability": 0.10,
+          "test": "Verificare che i dadi del mozzo o i through axle siano ben stretti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Identificare il punto di stortura girando la ruota lentamente vicino a un riferimento fisso (pattini del freno). Localizzare il punto dove la ruota si allontana dal centro",
+              "verification": "Punto di stortura identificato",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Stringere i raggi sul lato opposto alla stortura e allentare quelli sul lato della stortura usando una chiave per raggi. Fare piccoli aggiustamenti (1/4 di giro) e ripetere finché la ruota è dritta",
+              "verification": "Ruota centrata con oscillazione inferiore a 1 mm",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frizione_cambio_slittamento",
+      "name": "Cambio che slitta sotto sforzo",
+      "category": "trasmissione",
+      "severity": "warning",
+      "description": "La catena salta sui pignoni quando si pedala con forza, specialmente in salita.",
+      "visual_symptoms": [
+        "Catena che salta di un dente sotto sforzo",
+        "Sensazione di perdita di trazione in salita",
+        "Rumore di clic durante la spinta forte"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Catena allungata che non si adatta ai pignoni usurati",
+          "probability": 0.50,
+          "test": "Usare un misuratore di usura catena: se è allungata di oltre 0.75%, va sostituita"
+        },
+        {
+          "cause": "Pignoni usurati con denti consumati",
+          "probability": 0.35,
+          "test": "Ispezionare i pignoni più usati (quelli del rapporto preferito): se i denti sono asimmetrici o appuntiti, sono usurati"
+        },
+        {
+          "cause": "Cambio mal regolato o con cavo allentato",
+          "probability": 0.15,
+          "test": "Verificare che il cambio sia perfettamente centrato sul pignone selezionato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Misurare l'usura della catena con un indicatore specifico. Se è allungata, sostituire la catena. Dopo aver sostituito una catena molto allungata, verificare se i pignoni saltano ancora: se sì, sostituire anche il pacco pignoni",
+              "verification": "Catena nuova che non salta neanche sotto sforzo massimo",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "luci_non_funzionano",
+      "name": "Luci bici non funzionano",
+      "category": "elettrico",
+      "severity": "info",
+      "description": "Le luci anteriori o posteriori della bicicletta non si accendono o si spengono durante la pedalata.",
+      "visual_symptoms": [
+        "Luce spenta nonostante la batteria carica",
+        "Luce che lampeggia in modo intermittente",
+        "Luce di dinamo che si spegne ad alta velocità"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria scarica o contatti ossidati (luci a batteria)",
+          "probability": 0.50,
+          "test": "Verificare la carica della batteria e pulire i contatti con carta abrasiva fine"
+        },
+        {
+          "cause": "Dinamo non a contatto corretto con il copertone (luci a dinamo)",
+          "probability": 0.30,
+          "test": "Verificare che il rullo della dinamo tocchi il copertone con la pressione corretta"
+        },
+        {
+          "cause": "Cavo di collegamento interrotto o connettore allentato",
+          "probability": 0.20,
+          "test": "Verificare i cavi seguendo il percorso dalla dinamo alla luce: cercare punti piegati o danneggiati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Per luci a batteria: ricaricare o sostituire le batterie. Pulire i contatti della batteria con carta abrasiva fine per rimuovere ossidazione",
+              "verification": "Luce accesa e stabile",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Per luci a dinamo: regolare la posizione del rullo della dinamo in modo che tocchi il copertone con una pressione sufficiente ma non eccessiva",
+              "verification": "Luce accesa durante la pedalata",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portaborraccia_allentato",
+      "name": "Portaborraccia allentato",
+      "category": "accessori",
+      "severity": "info",
+      "description": "Il portaborraccia è allentato e oscilla durante la pedalata, rischiando di far cadere la borraccia.",
+      "visual_symptoms": [
+        "Portaborraccia che oscilla lateralmente",
+        "Vite di fissaggio visibilmente allentata",
+        "Borraccia che cade durante le vibrazioni"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Viti di fissaggio al telaio allentate per vibrazioni",
+          "probability": 0.65,
+          "test": "Verificare manualmente se le viti del portaborraccia sono allentate"
+        },
+        {
+          "cause": "Viti o inserti nel telaio danneggiati",
+          "probability": 0.35,
+          "test": "Se le viti girano senza stringere, i filetti sono danneggiati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Stringere le viti del portaborraccia con un cacciavite o chiave esagonale appropriata. Applicare un po' di Loctite a media forza (blu) per evitare che si allentino nuovamente",
+              "verification": "Portaborraccia saldo senza oscillazioni",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se i filetti sono danneggiati, usare inserti per filettature danneggiate (Helicoil) o spostare il portaborraccia su un'altra posizione del telaio",
+              "verification": "Portaborraccia correttamente fissato",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

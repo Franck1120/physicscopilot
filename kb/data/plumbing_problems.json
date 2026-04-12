@@ -1,0 +1,958 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "plumbing",
+  "total": 20,
+  "problems": [
+    {
+      "id": "rubinetto_goccia",
+      "name": "Rubinetto che gocciola",
+      "category": "rubinetti",
+      "severity": "info",
+      "description": "Il rubinetto continua a perdere acqua goccia a goccia anche quando è completamente chiuso.",
+      "visual_symptoms": [
+        "Gocce d'acqua continue dal beccuccio anche con rubinetto chiuso",
+        "Macchie di calcare nel lavandino sotto il rubinetto",
+        "Suono continuo di gocce che cadono"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Guarnizione o cartuccia interna usurata",
+          "probability": 0.60,
+          "test": "Chiudere il rubinetto completamente: se gocciola ancora, la guarnizione o la cartuccia è consumata"
+        },
+        {
+          "cause": "Sede del rubinetto rovinata dalla calce",
+          "probability": 0.30,
+          "test": "Dopo aver sostituito la guarnizione, se il rubinetto continua a perdere, la sede è rovinata"
+        },
+        {
+          "cause": "Valvola di intercettazione non chiude completamente",
+          "probability": 0.10,
+          "test": "Chiudere la valvola di arresto sotto il lavandino: se il gocciolamento si ferma, il problema è nel rubinetto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Chiudere l'acqua dalla valvola di arresto sotto il lavandino. Aprire il rubinetto per scaricare la pressione residua",
+              "verification": "Nessuna acqua fuoriesce aprendo il rubinetto",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Smontare il rubinetto rimuovendo il coperchio del pomello (solitamente con una vite nascosta sotto un tappo). Svitare il pomello e il coperchio per accedere alla cartuccia o alla guarnizione",
+              "verification": "Cartuccia o guarnizione accessibile",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Sostituire la guarnizione (O-ring + disco piatto) o la cartuccia con una della stessa misura. Rimontare il rubinetto e aprire l'acqua",
+              "verification": "Nessuna perdita con rubinetto chiuso",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scarico_lento",
+      "name": "Scarico lento",
+      "category": "scarichi",
+      "severity": "warning",
+      "description": "L'acqua scorre molto lentamente nello scarico di lavandino, doccia o vasca, accumulandosi prima di defluire.",
+      "visual_symptoms": [
+        "Acqua che si accumula nel lavandino o nella doccia",
+        "Deflusso molto lento dopo aver chiuso l'acqua",
+        "Livello dell'acqua che sale durante la doccia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Accumulo di capelli e sapone nel sifone o nella griglia",
+          "probability": 0.55,
+          "test": "Rimuovere la griglia dello scarico e ispezionare: i capelli attorcigliati sono la causa più comune"
+        },
+        {
+          "cause": "Accumulo di grasso e residui nelle tubature",
+          "probability": 0.30,
+          "test": "Nei lavandini della cucina, il grasso solidificato è la causa principale"
+        },
+        {
+          "cause": "Tubatura parzialmente ostruita più in profondità",
+          "probability": 0.15,
+          "test": "Se dopo la pulizia del sifone il deflusso rimane lento, l'ostruzione è più profonda"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Versare nello scarico una soluzione di bicarbonato di sodio (metà tazza) seguita da aceto (metà tazza). Attendere 15 minuti e poi versare acqua bollente",
+              "verification": "Deflusso migliorato",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Usare uno sturalavandini meccanico (ventosa) o uno scovolino flessibile per rimuovere capelli e detriti dal sifone",
+              "verification": "Deflusso normale e rapido",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wc_intasato",
+      "name": "WC intasato",
+      "category": "wc",
+      "severity": "error",
+      "description": "Il WC non scarica correttamente e l'acqua risale invece di scendere, indicando un'ostruzione nella tubatura.",
+      "visual_symptoms": [
+        "Acqua che sale invece di scendere alla tirata",
+        "Scarico parziale con residui che non scompaiono",
+        "Gorgoglii nelle tubature vicine"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Ostruzione nella curva del WC da carta igienica o oggetti solidi",
+          "probability": 0.60,
+          "test": "Se l'ostruzione è recente e localizzata, è quasi certamente nella curva del WC"
+        },
+        {
+          "cause": "Ostruzione nella tubatura di scarico più distante",
+          "probability": 0.30,
+          "test": "Se anche altri scarichi sono lenti o hanno gorgoglii, l'ostruzione è nella tubatura principale"
+        },
+        {
+          "cause": "Problemi alla linea fognaria esterna",
+          "probability": 0.10,
+          "test": "Se tutti gli scarichi di casa sono bloccati, il problema è nella fognatura esterna"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare uno sturalavandini a campana grande (tipo specifico per WC): posizionarlo saldamente sul foro e pompar su e giù con forza per 10-15 volte",
+              "verification": "Acqua che scende liberamente dopo le spinte",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la ventosa non funziona, usare un'asta flessibile (trombone WC) inserendola nel buco dello scarico e ruotando per smuovere o estrarre l'ostruzione",
+              "verification": "Ostruzione rimossa e scarico funzionante",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wc_scorre_continuo",
+      "name": "WC che scorre continuamente",
+      "category": "wc",
+      "severity": "warning",
+      "description": "Il serbatoio del WC non si riempie correttamente o perde acqua continuamente nel vaso, con un costo idrico significativo.",
+      "visual_symptoms": [
+        "Rumore continuo di acqua che scorre nel WC",
+        "Acqua visibile che scende sulle pareti del vaso",
+        "Serbatoio che si riempie e svuota ciclicamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Galleggiante del serbatoio non aggiustato correttamente",
+          "probability": 0.40,
+          "test": "Aprire il coperchio del serbatoio: se l'acqua arriva sopra il livello del troppopieno, il galleggiante è troppo alto"
+        },
+        {
+          "cause": "Valvola di scarico (siluro) non chiude",
+          "probability": 0.40,
+          "test": "Premere delicatamente il siluro di gomma: se il flusso si ferma, la valvola non chiude a causa di calcare o usura"
+        },
+        {
+          "cause": "Valvola di ingresso acqua (galleggiante) difettosa",
+          "probability": 0.20,
+          "test": "Se il livello dell'acqua è corretto ma scorre ancora, la valvola di ingresso non chiude"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il coperchio del serbatoio e verificare il livello dell'acqua: deve essere circa 2-3 cm sotto il bordo del troppopieno. Se è più alto, abbassare il galleggiante piegando il bracciolo o girando la vite di regolazione",
+              "verification": "Livello acqua corretto e nessun flusso nel vaso",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se il problema è la valvola di scarico: rimuovere il siluro di gomma e controllare se è sporco o deteriorato. Pulirlo o sostituirlo con uno della stessa misura",
+              "verification": "Nessuna perdita dalla valvola di scarico",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tubo_che_perde",
+      "name": "Tubo che perde",
+      "category": "tubature",
+      "severity": "error",
+      "description": "Una tubatura dell'impianto idraulico presenta una perdita d'acqua, visibile come gocciolamento o bagnatura.",
+      "visual_symptoms": [
+        "Gocce o rivoli d'acqua da una giunzione o dal tubo",
+        "Macchie di umidità su soffitti o pareti",
+        "Muffa nelle vicinanze del tubo perdente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Giunzione allentata o guarnizione deteriorata",
+          "probability": 0.50,
+          "test": "Asciugare la zona e osservare da dove proviene esattamente la perdita: spesso dai raccordi"
+        },
+        {
+          "cause": "Tubo corretto da calcare o gelo",
+          "probability": 0.30,
+          "test": "In inverno, i tubi esposti al gelo possono spaccarsi. Verificare se ci sono fessure nel tubo"
+        },
+        {
+          "cause": "Pressione dell'impianto eccessiva",
+          "probability": 0.20,
+          "test": "Verificare la pressione con un manometro: oltre 3-4 bar può danneggiare i raccordi"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere immediatamente l'acqua dal contatore principale o dalla valvola di zona. Aprire il rubinetto più vicino per scaricare la pressione residua",
+              "verification": "Flusso d'acqua dalla perdita fermato",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Asciugare e ispezionare la perdita. Per perdite da raccordi allentati, stringere con una chiave inglese. Usare nastro PTFE (teflon) sui filetti se necessario",
+              "verification": "Nessuna perdita dopo la riparazione temporanea",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Per perdite da tubi rotti, contattare un idraulico per la riparazione definitiva con taglio e sostituzione del tratto danneggiato",
+              "verification": "Riparazione professionale completata e impermeabilità verificata",
+              "time_seconds": 7200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pressione_acqua_bassa",
+      "name": "Pressione acqua bassa",
+      "category": "impianto",
+      "severity": "warning",
+      "description": "La pressione dell'acqua dai rubinetti è insufficiente, rendendo difficile doccia, pulizie o funzionamento di elettrodomestici.",
+      "visual_symptoms": [
+        "Getto d'acqua debole dai rubinetti",
+        "Doccia con poca pressione",
+        "Elettrodomestici come lavatrice o lavastoviglie che si riempiono lentamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Aeratori o frangigetto dei rubinetti ostruiti dal calcare",
+          "probability": 0.40,
+          "test": "Rimuovere l'aeratore dal beccuccio del rubinetto: se ostruito di calcare, è il problema"
+        },
+        {
+          "cause": "Valvola di riduzione pressione impostata troppo basso o guasta",
+          "probability": 0.30,
+          "test": "Verificare la pressione al contatore: deve essere tra 2 e 5 bar"
+        },
+        {
+          "cause": "Tubature interne ostruite dal calcare (impianti vecchi)",
+          "probability": 0.20,
+          "test": "Se solo certi rubinetti hanno bassa pressione, le tubature a loro collegate potrebbero essere incrostate"
+        },
+        {
+          "cause": "Bassa pressione dalla rete idrica esterna",
+          "probability": 0.10,
+          "test": "Chiedere ai vicini se hanno lo stesso problema: potrebbe essere un problema dell'acquedotto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svitare l'aeratore dal beccuccio del rubinetto (solitamente si svita a mano in senso antiorario). Immergere in aceto bianco per 30 minuti per sciogliere il calcare. Sciacquare e rimontare",
+              "verification": "Pressione del getto aumentata dopo la pulizia dell'aeratore",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scaldabagno_non_scalda",
+      "name": "Scaldabagno non scalda",
+      "category": "scaldabagno",
+      "severity": "error",
+      "description": "Lo scaldabagno elettrico o a gas non produce acqua calda o la temperatura è insufficiente.",
+      "visual_symptoms": [
+        "Acqua fredda dal rubinetto dell'acqua calda",
+        "Luce spia di funzionamento assente",
+        "Interruttore termico scattato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Resistenza elettrica dello scaldabagno guasta (scaldabagno elettrico)",
+          "probability": 0.40,
+          "test": "Se lo scaldabagno elettrico è acceso ma l'acqua rimane fredda, la resistenza è probabilmente guasta"
+        },
+        {
+          "cause": "Termostato dello scaldabagno guasto o impostato troppo basso",
+          "probability": 0.30,
+          "test": "Verificare il termostato: deve essere impostato tra 55 e 60°C"
+        },
+        {
+          "cause": "Interruttore di sicurezza termica scattato",
+          "probability": 0.30,
+          "test": "Verificare il pulsante di reset del termostato di sicurezza (solitamente su un pannello laterale dello scaldabagno)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che lo scaldabagno sia alimentato elettricamente. Localizzare il pulsante di reset del termostato di sicurezza (spesso richiede un ago o stuzzicadenti per premere) e premere per resettare",
+              "verification": "Il termostato di sicurezza si reimposta e la spia si accende",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Aumentare la temperatura del termostato a 55-60°C. Attendere 1-2 ore per il riscaldamento completo",
+              "verification": "Acqua calda disponibile dal rubinetto",
+              "time_seconds": 7200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "odore_fogna_casa",
+      "name": "Odore di fogna in casa",
+      "category": "scarichi",
+      "severity": "warning",
+      "description": "Odore sgradevole simile a fogna o gas proveniente dagli scarichi di lavandini, doccia o WC.",
+      "visual_symptoms": [
+        "Odore di uova marce o fogna in bagno o cucina",
+        "Odore proveniente dallo scarico",
+        "Gorgoglii negli scarichi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sifone asciutto per scarico non utilizzato a lungo",
+          "probability": 0.50,
+          "test": "Se uno scarico non viene usato per settimane, il sifone si asciuga lasciando passare i gas"
+        },
+        {
+          "cause": "Sifone difettoso o rotto",
+          "probability": 0.30,
+          "test": "Verificare visivamente il sifone sotto il lavandino per incrinature o perdite"
+        },
+        {
+          "cause": "Ventilazione dell'impianto fognario insufficiente",
+          "probability": 0.20,
+          "test": "Se l'odore è diffuso in tutta la casa e non localizzato, il problema è nella ventilazione fognaria"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Versare acqua in tutti gli scarichi inutilizzati (vasca, bidet, lavandini secondari) per riempire i sifoni asciutti. Aggiungere un cucchiaio di olio da cucina per ridurre l'evaporazione",
+              "verification": "Odore assente dopo aver riempito i sifoni",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Pulire i sifoni da incrostazioni e residui organici che possono produrre odori anche quando il sifone è pieno d'acqua",
+              "verification": "Sifoni puliti e odori assenti",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contatore_acqua_gira_senza_uso",
+      "name": "Contatore acqua gira senza uso",
+      "category": "impianto",
+      "severity": "error",
+      "description": "Il contatore dell'acqua registra consumo anche quando tutti i rubinetti sono chiusi, indicando una perdita occulta.",
+      "visual_symptoms": [
+        "Lancetta del contatore che si muove con tutti i rubinetti chiusi",
+        "Bollette dell'acqua molto più alte del solito",
+        "Zona umida nel giardino o in cantina"
+      ],
+      "probable_causes": [
+        {
+          "cause": "WC con scarico continuo (perdita silenziosa)",
+          "probability": 0.45,
+          "test": "Aggiungere colorante alimentare nel serbatoio del WC: se il colore appare nel vaso senza tirare lo scarico, il WC perde"
+        },
+        {
+          "cause": "Perdita occulta in tubatura interrata o a muro",
+          "probability": 0.35,
+          "test": "Verificare zone umide nel giardino, seminterrato o pavimenti per macchie umide"
+        },
+        {
+          "cause": "Rubinetto che perde in modo non visibile",
+          "probability": 0.20,
+          "test": "Chiudere tutti i rubinetti e verificare ancora il contatore: se gira, la perdita è nascosta"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere tutti i rubinetti e annotare il valore del contatore. Attendere 1 ora senza usare acqua e ricontrollare. Se è aumentato, c'è una perdita",
+              "verification": "Conferma della presenza di perdita occulta",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Verificare il WC con il test del colorante alimentare. Ispezionare visivamente cantina, garage e giardino per zone umide",
+              "verification": "Fonte della perdita identificata",
+              "time_seconds": 600
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Per perdite in tubature interrate, contattare un idraulico con strumentazione di ricerca perdite (microfono acustico, gas tracciante) per localizzare e riparare la perdita",
+              "verification": "Perdita riparata e contatore fermo con tutti i rubinetti chiusi",
+              "time_seconds": 14400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavandino_intasato",
+      "name": "Lavandino intasato",
+      "category": "scarichi",
+      "severity": "warning",
+      "description": "Il lavandino è completamente bloccato e l'acqua non defluisce affatto.",
+      "visual_symptoms": [
+        "Acqua che non defluisce nel lavandino",
+        "Livello dell'acqua che sale fino all'orlo",
+        "Odore sgradevole dallo scarico"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Accumulo di capelli, sapone e detriti nel sifone",
+          "probability": 0.55,
+          "test": "Aprire il sifone (coppa sotto il lavandino) per verificare la presenza di detriti"
+        },
+        {
+          "cause": "Ostruzione nel tubo di scarico a valle del sifone",
+          "probability": 0.35,
+          "test": "Se il sifone è pulito ma l'acqua non scende, l'ostruzione è più in profondità"
+        },
+        {
+          "cause": "Sifone mal posizionato o mal connesso",
+          "probability": 0.10,
+          "test": "Verificare che il sifone sia correttamente collegato e con la corretta inclinazione verso lo scarico a muro"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Posizionare un secchio sotto il sifone (la coppa a U sotto il lavandino). Svitare i dadi del sifone (di solito si svitano a mano) e rimuovere il sifone",
+              "verification": "Sifone rimosso e detriti identificati",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Pulire accuratamente il sifone rimuovendo tutti i detriti. Rimontare il sifone assicurandosi che le guarnizioni siano ben posizionate. Aprire l'acqua e verificare",
+              "verification": "Acqua che defluisce liberamente e nessuna perdita dal sifone rimontato",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doccia_poca_pressione",
+      "name": "Doccia con poca pressione",
+      "category": "doccia",
+      "severity": "info",
+      "description": "Il soffione della doccia eroga acqua con pressione insufficiente, rendendo la doccia scomoda.",
+      "visual_symptoms": [
+        "Getto d'acqua debole dal soffione",
+        "Acqua che cola invece di essere erogata con pressione",
+        "Solo alcuni fori del soffione funzionano"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Soffione intasato dal calcare",
+          "probability": 0.65,
+          "test": "Ispezionare i fori del soffione: se ostruiti da depositi bianchi, è il calcare"
+        },
+        {
+          "cause": "Tubo flessibile della doccia intasato o piegato",
+          "probability": 0.25,
+          "test": "Staccare il soffione e verificare se il flusso d'acqua dal tubo è normale"
+        },
+        {
+          "cause": "Riduttore di flusso installato per risparmio idrico",
+          "probability": 0.10,
+          "test": "Verificare se nel soffione è installato un riduttore di flusso (spesso installato dal produttore)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Smontare il soffione avvitandolo dalla staffa. Immergere il soffione in aceto bianco per 4-8 ore (o tutta la notte) per sciogliere il calcare",
+              "verification": "I fori del soffione sono tutti aperti dopo l'ammollo",
+              "time_seconds": 28800
+            },
+            {
+              "instruction": "Usare uno spazzolino vecchio per pulire i singoli fori del soffione. Sciacquare abbondantemente e rimontare",
+              "verification": "Getto d'acqua uniforme e con buona pressione da tutti i fori",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "miscelatore_caldo_freddo_rotto",
+      "name": "Miscelatore caldo/freddo rotto",
+      "category": "rubinetti",
+      "severity": "warning",
+      "description": "Il miscelatore monocomando non regola correttamente la temperatura, erogando sempre acqua troppo fredda o troppo calda.",
+      "visual_symptoms": [
+        "Temperatura non variabile nonostante la regolazione della leva",
+        "Acqua sempre calda o sempre fredda indipendentemente dalla posizione",
+        "Leva del miscelatore che si muove ma senza effetto sulla temperatura"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cartuccia termostatica del miscelatore usurata",
+          "probability": 0.60,
+          "test": "Se la leva si muove ma la temperatura non cambia, la cartuccia ceramica interna è guasta"
+        },
+        {
+          "cause": "Stop di temperatura impostato che limita l'acqua calda",
+          "probability": 0.25,
+          "test": "Verificare se c'è un limitatore di temperatura (spesso un anello rosso sulla leva) che impedisce di andare oltre una certa temperatura"
+        },
+        {
+          "cause": "Valvola di bilanciamento della pressione bloccata",
+          "probability": 0.15,
+          "test": "Se la pressione del caldo e freddo è molto diversa, la cartuccia non riesce a miscelare correttamente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Chiudere l'acqua dalle valvole sotto il lavandino. Rimuovere la leva del miscelatore (spesso con vite nascosta sotto un tappo decorativo)",
+              "verification": "Leva rimossa e accesso alla cartuccia",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Estrarre la cartuccia annotando l'orientamento. Portarla dal rivenditore per trovare il ricambio identico. Installare la nuova cartuccia nello stesso orientamento",
+              "verification": "Nuova cartuccia installata, temperatura regolabile correttamente",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sifone_puzza",
+      "name": "Sifone che puzza",
+      "category": "scarichi",
+      "severity": "info",
+      "description": "Il sifone del lavandino, doccia o WC emette cattivi odori anche quando è pulito.",
+      "visual_symptoms": [
+        "Odore sgradevole che sale dallo scarico",
+        "Odore che persiste anche dopo la pulizia del sifone",
+        "Odore intermittente che peggiora in certi momenti"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Biofilm batterico sulle pareti interne del sifone",
+          "probability": 0.50,
+          "test": "Anche se visivamente pulito, il biofilm può persistere e produrre odori"
+        },
+        {
+          "cause": "Acqua ferma nel sifone con residui organici",
+          "probability": 0.35,
+          "test": "Un sifone usato poco sviluppa acqua stagnante maleodorante"
+        },
+        {
+          "cause": "Sifone mal sigillato che lascia passare odori dalla fognatura",
+          "probability": 0.15,
+          "test": "Verificare le guarnizioni del sifone: se deteriorate, gli odori entrano"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Versare nello scarico una soluzione di bicarbonato (4 cucchiai) e aceto (200 ml). Aspettare 30 minuti, poi versare acqua bollente",
+              "verification": "Odore ridotto o eliminato",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Per una pulizia profonda, smontare il sifone e pulirlo con spazzola e detergente. Sostituire le guarnizioni se deteriorate",
+              "verification": "Sifone privo di odori dopo la pulizia",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acqua_color_ruggine",
+      "name": "Acqua color ruggine",
+      "category": "qualita_acqua",
+      "severity": "warning",
+      "description": "L'acqua dal rubinetto è di colore marrone, arancione o rossastro, indicando presenza di ruggine o sedimenti.",
+      "visual_symptoms": [
+        "Acqua con colore giallo-marrone al rubinetto",
+        "Sedimenti o particelle nell'acqua",
+        "Macchie arancioni nel lavandino o nella vasca"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Ruggine dalle tubature interne (ferro) dopo ripresa flusso",
+          "probability": 0.50,
+          "test": "Se l'acqua diventa chiara dopo qualche minuto di scorrimento, le tubature interne erano ferme con acqua arruginita"
+        },
+        {
+          "cause": "Tubature idriche interne in ferro molto vecchie e corrose",
+          "probability": 0.35,
+          "test": "Se l'acqua rimane colorata anche dopo diversi minuti, le tubature sono fortemente corrose"
+        },
+        {
+          "cause": "Problema con l'acquedotto pubblico (riparazione o lavori)",
+          "probability": 0.15,
+          "test": "Chiedere ai vicini se hanno lo stesso problema: se sì, il problema è nell'acquedotto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il rubinetto e lasciare scorrere l'acqua per 5-10 minuti. Se l'acqua diventa chiara, è solo ruggine temporanea da tubature ferme",
+              "verification": "Acqua completamente limpida dopo lo scorrimento",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Se l'acqua rimane colorata, contattare il gestore dell'acquedotto per segnalare il problema. Nel frattempo usare acqua in bottiglia per bere e cucinare",
+              "verification": "Segnalazione effettuata e problema risolto dall'acquedotto",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tubature_vibrano",
+      "name": "Tubature che vibrano (colpi d'ariete)",
+      "category": "tubature",
+      "severity": "info",
+      "description": "Le tubature producono colpi o vibrazioni violente quando si chiude rapidamente un rubinetto o quando si avvia una valvola automatica.",
+      "visual_symptoms": [
+        "Colpo forte nelle tubature alla chiusura del rubinetto",
+        "Vibrazione trasmessa alle pareti al funzionamento di lavatrice o lavastoviglie",
+        "Rumore simile a un martello nelle tubature"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Colpo d'ariete da chiusura rapida (valvole solenoidali)",
+          "probability": 0.50,
+          "test": "Il colpo si verifica sempre alla fine del ciclo di riempimento di lavatrice o lavastoviglie"
+        },
+        {
+          "cause": "Tubi non fissati adeguatamente alle strutture murarie",
+          "probability": 0.35,
+          "test": "Localizzare il tubo che vibra: se non è fissato con staffe, vibra liberamente"
+        },
+        {
+          "cause": "Pressione dell'impianto eccessiva",
+          "probability": 0.15,
+          "test": "Verificare la pressione dell'impianto: oltre 5 bar causa facilmente colpi d'ariete"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Ridurre la pressione dell'impianto idrico (se possibile) agendo sul riduttore di pressione. Il valore ottimale è 2.5-3.5 bar",
+              "verification": "Colpi ridotti o assenti",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Installare un paraurti idraulico (anticolpo d'ariete) sulla tubatura vicino alla valvola solenoidale della lavatrice o lavastoviglie",
+              "verification": "Colpi d'ariete eliminati",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wc_non_scarica_completamente",
+      "name": "WC non scarica completamente",
+      "category": "wc",
+      "severity": "info",
+      "description": "Il WC scarica ma lascia residui nel vaso o la scarica è insufficiente a pulire completamente.",
+      "visual_symptoms": [
+        "Residui nel vaso dopo la scarica",
+        "Scarica debole con poca acqua",
+        "Necessità di due scariche per pulire il vaso"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Livello acqua nel serbatoio troppo basso",
+          "probability": 0.45,
+          "test": "Aprire il coperchio del serbatoio: l'acqua deve arrivare a circa 2 cm sotto il troppopieno"
+        },
+        {
+          "cause": "Scarico nel serbatoio (campana o pistone) difettoso",
+          "probability": 0.35,
+          "test": "Se il livello è corretto ma la scarica è debole, la campana o il meccanismo di scarico è usurato"
+        },
+        {
+          "cause": "Fori di scarico sotto il bordo del vaso ostruiti dal calcare",
+          "probability": 0.20,
+          "test": "Ispezionare con uno specchio i fori sotto il bordo del vaso: se ostruiti di calcare, la distribuzione dell'acqua è compromessa"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il coperchio del serbatoio e regolare il galleggiante per aumentare il livello dell'acqua fino a circa 2 cm dal bordo del troppopieno",
+              "verification": "Scarica più potente con maggiore quantità d'acqua",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Pulire i fori sotto il bordo del vaso con un oggetto appuntito (cacciavite) e aceto per rimuovere il calcare",
+              "verification": "Distribuzione uniforme dell'acqua da tutti i fori durante la scarica",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perdita_sotto_lavello",
+      "name": "Perdita sotto il lavello",
+      "category": "scarichi",
+      "severity": "warning",
+      "description": "Si forma una perdita d'acqua nella zona sotto il lavello, bagnando la base del mobile.",
+      "visual_symptoms": [
+        "Acqua nel mobile sotto il lavello",
+        "Odore di umidità nel mobile",
+        "Macchie sul fondo del mobile o pavimento bagnato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sifone o raccordi di scarico allentati",
+          "probability": 0.50,
+          "test": "Asciugare tutto e osservare durante il deflusso dell'acqua da dove proviene la perdita"
+        },
+        {
+          "cause": "Perdita dal tubo flessibile dell'acqua calda o fredda",
+          "probability": 0.35,
+          "test": "Ispezionare i tubi flessibili di alimentazione: cercare gocce o umidità sui raccordi"
+        },
+        {
+          "cause": "Guarnizione tra lavello e piano cucina deteriorata",
+          "probability": 0.15,
+          "test": "Versare acqua nel lavello e verificare se l'acqua passa attraverso il perimetro verso il mobile"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svuotare il mobile. Aprire l'acqua e osservare con una torcia da dove proviene la perdita durante l'uso",
+              "verification": "Fonte della perdita identificata",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Per raccordi di scarico allentati: stringerli a mano (evitare utensili per non rompere il PVC). Per tubi flessibili: sostituirli se mostrano usura o ruggine ai raccordi",
+              "verification": "Nessuna perdita dopo la riparazione",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doccia_che_cola",
+      "name": "Soffione doccia che cola",
+      "category": "doccia",
+      "severity": "info",
+      "description": "La doccia continua a perdere acqua anche con il rubinetto chiuso, con gocce o un filo d'acqua continuo.",
+      "visual_symptoms": [
+        "Gocce d'acqua continue dal soffione con rubinetto chiuso",
+        "Macchie di calcare accumulate dalla perdita continua",
+        "Suono di acqua che gocciola"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cartuccia del miscelatore doccia usurata",
+          "probability": 0.55,
+          "test": "Chiudere completamente la leva: se gocciola ancora, la cartuccia non chiude ermeticamente"
+        },
+        {
+          "cause": "Valvola termostatica difettosa (docce con miscelatore termostatico)",
+          "probability": 0.30,
+          "test": "Se la doccia ha un miscelatore termostatico, la valvola interna potrebbe non chiudere"
+        },
+        {
+          "cause": "Depositi di calcare che impediscono la chiusura della valvola",
+          "probability": 0.15,
+          "test": "Il calcare può impedire la chiusura completa della valvola"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Chiudere l'acqua. Smontare il miscelatore doccia rimuovendo la leva (vite nascosta) e il corpo del miscelatore per accedere alla cartuccia",
+              "verification": "Cartuccia accessibile",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Sostituire la cartuccia con una identica (stesso modello, disponibile nei negozi di idraulica). Rimontare il miscelatore e testare",
+              "verification": "Nessuna perdita con rubinetto chiuso",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pompa_autoclave_rumorosa",
+      "name": "Pompa autoclave rumorosa",
+      "category": "pompe",
+      "severity": "warning",
+      "description": "La pompa autoclave del sistema idrico privato produce rumori anomali di vibrazione, cigolìo o colpi.",
+      "visual_symptoms": [
+        "Rumore di vibrazione o ronzio dalla pompa",
+        "Avvio e spegnimento frequenti della pompa (ciclo corto)",
+        "Pressione dell'impianto che oscilla"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Serbatoio pressione scarico (membrana rotta o pre-pressione errata)",
+          "probability": 0.45,
+          "test": "Premere la valvola Schrader del serbatoio di pressione: se esce acqua, la membrana è rotta"
+        },
+        {
+          "cause": "Girante della pompa usurata o con cavitazione",
+          "probability": 0.35,
+          "test": "Rumore di risucchio o sibilo durante il funzionamento indica cavitazione"
+        },
+        {
+          "cause": "Pompa non correttamente fissata (vibrazioni trasmesse alle strutture)",
+          "probability": 0.20,
+          "test": "Verificare che la pompa sia fissata su base antivibrante e con bulloni stretti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Verificare la pre-pressione del serbatoio di espansione: con la pompa spenta e pressione di sistema zero, la pressione del serbatoio deve essere circa 0.5 bar sotto la pressione minima di impianto. Gonfiare se necessario con pompa ad aria",
+              "verification": "Pre-pressione corretta e cicli pompa meno frequenti",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Se la membrana del serbatoio è rotta, far sostituire il serbatoio di espansione da un idraulico",
+              "verification": "Cicli pompa normali (ogni 5-10 minuti in uso normale) e rumori ridotti",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "valvola_chiusa_non_chiude",
+      "name": "Valvola di arresto non chiude",
+      "category": "valvole",
+      "severity": "error",
+      "description": "La valvola di intercettazione dell'acqua (sotto il lavandino o al contatore) non chiude completamente il flusso.",
+      "visual_symptoms": [
+        "Acqua che continua a scorrere anche con valvola chiusa",
+        "Impossibilità di riparare rubinetti senza chiudere l'acqua principale",
+        "Valvola che gira liberamente senza resistenza"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Valvola a sfera con sede usurata dal calcare o dall'usura",
+          "probability": 0.50,
+          "test": "Chiudere completamente la valvola (90°): se scorre ancora acqua, la sfera è danneggiata"
+        },
+        {
+          "cause": "Valvola a saracinesca con guarnizione usurata",
+          "probability": 0.35,
+          "test": "Se la valvola si avvita completamente ma l'acqua scorre ancora, la guarnizione è consumata"
+        },
+        {
+          "cause": "Valvola bloccata dal calcare in posizione aperta",
+          "probability": 0.15,
+          "test": "Se la valvola non si muove o si muove con difficoltà, il calcare ha bloccato il meccanismo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Tentare di lubrificare la valvola con spray sbloccante WD-40 e aprirla/chiuderla più volte per sbloccarla dal calcare",
+              "verification": "La valvola si muove liberamente e chiude l'acqua",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la valvola è danneggiata, chiudere l'acqua dalla valvola generale esterna e far sostituire la valvola da un idraulico",
+              "verification": "Nuova valvola installata che chiude completamente il flusso",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

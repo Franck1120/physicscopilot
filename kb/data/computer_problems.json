@@ -1,0 +1,955 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "computer",
+  "total": 20,
+  "problems": [
+    {
+      "id": "bsod",
+      "name": "BSOD (Blue Screen of Death)",
+      "category": "sistema",
+      "severity": "error",
+      "description": "Windows mostra una schermata blu con un codice di errore e riavvia il PC, interrompendo il lavoro in corso.",
+      "visual_symptoms": [
+        "Schermata blu con codice errore e faccina triste",
+        "PC che si riavvia automaticamente",
+        "Errori come IRQL_NOT_LESS_OR_EQUAL, PAGE_FAULT_IN_NONPAGED_AREA, SYSTEM_SERVICE_EXCEPTION"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Driver di dispositivo incompatibile o corrotto",
+          "probability": 0.40,
+          "test": "Verificare se il BSOD è apparso dopo l'installazione di nuovo hardware o aggiornamento driver"
+        },
+        {
+          "cause": "RAM difettosa o instabile",
+          "probability": 0.30,
+          "test": "Eseguire Windows Memory Diagnostic (mdsched.exe) per testare la RAM"
+        },
+        {
+          "cause": "File di sistema corrotti",
+          "probability": 0.20,
+          "test": "Eseguire sfc /scannow nel prompt dei comandi come amministratore"
+        },
+        {
+          "cause": "Hard disk con settori danneggiati",
+          "probability": 0.10,
+          "test": "Eseguire chkdsk /f /r C: dal prompt dei comandi"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Annotare il codice di errore dal BSOD. Riavviare in modalità sicura (F8 o Shift+Riavvia > Risoluzione problemi > Opzioni avanzate > Impostazioni di avvio > Abilita modalità provvisoria)",
+              "verification": "PC avviato in modalità sicura senza BSOD",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Eseguire sfc /scannow dal prompt dei comandi come amministratore. Attendere il completamento della scansione e la riparazione dei file corrotti",
+              "verification": "Scansione completata senza errori o con errori riparati",
+              "time_seconds": 1800
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Verificare i driver aggiornati di recente tramite Gestione Dispositivi. Disinstallare o ripristinare i driver problematici",
+              "verification": "Driver problematico rimosso o ripristinato",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Eseguire Windows Memory Diagnostic (cercare mdsched.exe) per testare la RAM durante il riavvio",
+              "verification": "Nessun errore di memoria rilevato",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pc_lento",
+      "name": "PC molto lento",
+      "category": "prestazioni",
+      "severity": "warning",
+      "description": "Il computer risponde lentamente, le applicazioni impiegano molto tempo ad aprirsi e il sistema è quasi inutilizzabile.",
+      "visual_symptoms": [
+        "Icone che impiegano secondi a rispondere ai clic",
+        "Disco fisso con accesso continuo (spia HD sempre accesa)",
+        "Task Manager con CPU, RAM o disco al 100%"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Troppi programmi in avvio automatico",
+          "probability": 0.35,
+          "test": "Aprire Task Manager (Ctrl+Shift+Esc) > scheda Avvio: verificare quanti programmi si avviano con Windows"
+        },
+        {
+          "cause": "Disco rigido quasi pieno o in avaria",
+          "probability": 0.30,
+          "test": "Verificare lo spazio libero sul disco C: (almeno 15% deve essere libero). Controllare la salute del disco con CrystalDiskInfo"
+        },
+        {
+          "cause": "Malware o adware in esecuzione",
+          "probability": 0.20,
+          "test": "Eseguire una scansione con Windows Defender o Malwarebytes"
+        },
+        {
+          "cause": "RAM insufficiente per i programmi in uso",
+          "probability": 0.15,
+          "test": "Verificare in Task Manager se la RAM è costantemente sopra 90% di utilizzo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Task Manager (Ctrl+Shift+Esc) > scheda Avvio. Disabilitare i programmi non essenziali all'avvio facendo clic destro > Disabilita",
+              "verification": "Solo i programmi essenziali rimangono nell'avvio automatico",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Liberare spazio sul disco: Start > Pulizia disco > selezionare C: > selezionare tutte le categorie e confermare",
+              "verification": "Almeno 10 GB di spazio liberato",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "no_boot",
+      "name": "PC non si avvia (No Boot)",
+      "category": "sistema",
+      "severity": "error",
+      "description": "Il PC non carica Windows e si ferma durante l'avvio, mostrando un messaggio di errore o uno schermo nero.",
+      "visual_symptoms": [
+        "Schermata nera durante l'avvio",
+        "Messaggio NTLDR is missing o BOOTMGR is missing",
+        "Ciclo di riavvio continuo senza caricare Windows",
+        "Logo Windows che non passa"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Boot Record (MBR/BCD) corrotto",
+          "probability": 0.40,
+          "test": "Se appare il messaggio BOOTMGR missing o Boot failure, il record di avvio è corrotto"
+        },
+        {
+          "cause": "Disco rigido guasto o scollegato",
+          "probability": 0.30,
+          "test": "Verificare nel BIOS che il disco sia riconosciuto. Testare con CrystalDiskInfo se possibile"
+        },
+        {
+          "cause": "File di sistema Windows corrotti",
+          "probability": 0.20,
+          "test": "Se il PC si avvia a metà e si riavvia, i file di sistema potrebbero essere corrotti"
+        },
+        {
+          "cause": "Aggiornamento Windows non completato correttamente",
+          "probability": 0.10,
+          "test": "Verificare se il problema è comparso durante o dopo un aggiornamento Windows"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Avviare da una chiavetta USB con Windows Recovery. Scegliere Risoluzione problemi > Opzioni avanzate > Prompt dei comandi e digitare: bootrec /fixmbr poi bootrec /fixboot poi bootrec /rebuildbcd",
+              "verification": "Comandi eseguiti senza errori, riavviare e verificare",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Se il problema persiste, da Recovery Console eseguire: sfc /scannow /offbootdir=C:\\ /offwindir=C:\\Windows",
+              "verification": "File di sistema verificati e riparati",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "virus_malware",
+      "name": "Virus o malware sul PC",
+      "category": "sicurezza",
+      "severity": "error",
+      "description": "Il PC mostra comportamenti anomali causati da software malevolo: pubblicità invasiva, rallentamenti, modifiche non autorizzate.",
+      "visual_symptoms": [
+        "Pubblicità pop-up che appaiono costantemente",
+        "Browser con homepage cambiata senza consenso",
+        "PC molto lento con processi sconosciuti in Task Manager",
+        "Antivirus disabilitato autonomamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Download di software da fonti non affidabili",
+          "probability": 0.45,
+          "test": "Verificare i programmi installati di recente nelle ultime settimane"
+        },
+        {
+          "cause": "Email con allegati malevoli aperta",
+          "probability": 0.35,
+          "test": "Verificare se si sono aperti allegati da email sospette"
+        },
+        {
+          "cause": "Sistema operativo o browser non aggiornato con vulnerabilità sfruttata",
+          "probability": 0.20,
+          "test": "Verificare gli aggiornamenti in sospeso di Windows e del browser"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Eseguire una scansione completa con Windows Defender: Sicurezza Windows > Protezione da virus e minacce > Opzioni di analisi > Analisi completa",
+              "verification": "Scansione completata, minacce rimosse",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Scaricare e eseguire Malwarebytes (versione gratuita) per una seconda opinione. Rimuovere tutte le minacce rilevate",
+              "verification": "Nessuna minaccia trovata, comportamenti anomali cessati",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ventola_rumorosa",
+      "name": "Ventola del PC rumorosa",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "La ventola del PC produce un rumore forte, cigolìo o ronzio anomalo durante il funzionamento.",
+      "visual_symptoms": [
+        "Rumore di cigolìo o ronzio dal PC",
+        "Rumore che aumenta sotto carico (giochi, video)",
+        "Temperature elevate nonostante la ventola giri veloce"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Ventola sporca di polvere che causa vibrazione",
+          "probability": 0.50,
+          "test": "Aprire il case e verificare se le ventole e i dissipatori sono ricoperti di polvere"
+        },
+        {
+          "cause": "Cuscinetto della ventola usurato",
+          "probability": 0.35,
+          "test": "Il cigolìo che persiste anche con ventola pulita indica cuscinetti deteriorati"
+        },
+        {
+          "cause": "Ventola che tocca un cavo o un ostacolo",
+          "probability": 0.15,
+          "test": "Aprire il case e verificare che nessun cavo tocchi le pale delle ventole"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il PC e scollegarlo dalla corrente. Aprire il case. Pulire le ventole e i dissipatori con aria compressa (a distanza di 20-30cm) e un pennello morbido",
+              "verification": "Ventole pulite, nessun accumulo di polvere",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Verificare che tutti i cavi siano lontani dalle pale delle ventole e che le ventole siano fissate correttamente",
+              "verification": "Rumore ridotto o assente dopo la pulizia",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tastiera_non_risponde",
+      "name": "Tastiera non funziona",
+      "category": "periferiche",
+      "severity": "warning",
+      "description": "La tastiera non registra i tasti premuti o alcuni tasti non funzionano correttamente.",
+      "visual_symptoms": [
+        "Tasti che non producono caratteri",
+        "Caratteri sbagliati rispetto ai tasti premuti",
+        "Tastiera completamente non risponde"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Driver tastiera corrotti o mancanti",
+          "probability": 0.35,
+          "test": "Verificare Gestione Dispositivi per errori sulla tastiera"
+        },
+        {
+          "cause": "Connessione USB o PS/2 difettosa",
+          "probability": 0.30,
+          "test": "Scollegare e ricollegare la tastiera o provarla su un'altra porta USB"
+        },
+        {
+          "cause": "Tasti fisicamente bloccati da sporco o liquido versato",
+          "probability": 0.25,
+          "test": "Verificare se i tasti sono fisicamente bloccati o se si è versato del liquido"
+        },
+        {
+          "cause": "Layout tastiera cambiato nelle impostazioni",
+          "probability": 0.10,
+          "test": "Verificare nelle impostazioni di Windows la lingua e il layout della tastiera"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Scollegare la tastiera, attendere 10 secondi e ricollegarla a una porta USB diversa. Riavviare il PC se necessario",
+              "verification": "La tastiera viene riconosciuta e funziona",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Verificare il layout tastiera: Impostazioni > Ora e lingua > Lingua > Lingua preferita > Opzioni > Layout tastiera",
+              "verification": "Layout corretto impostato",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mouse_non_funziona",
+      "name": "Mouse non funziona",
+      "category": "periferiche",
+      "severity": "warning",
+      "description": "Il mouse non si muove, non registra i clic o ha un comportamento erratico.",
+      "visual_symptoms": [
+        "Cursore fermo che non si muove",
+        "Cursore che salta o si muove da solo",
+        "Clic non registrati o doppi clic indesiderati"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sensore ottico del mouse sporco",
+          "probability": 0.35,
+          "test": "Ispezionare il fondo del mouse: il sensore ottico sporco causa movimenti erratici"
+        },
+        {
+          "cause": "Connessione USB instabile o porta difettosa",
+          "probability": 0.30,
+          "test": "Provare il mouse su una porta USB diversa"
+        },
+        {
+          "cause": "Driver mouse corrotti",
+          "probability": 0.25,
+          "test": "Verificare Gestione Dispositivi per errori sul mouse"
+        },
+        {
+          "cause": "Batteria scarica (mouse wireless)",
+          "probability": 0.10,
+          "test": "Sostituire le batterie del mouse wireless"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire il sensore ottico del mouse con un cotton fioc leggermente inumidito con alcool isopropilico",
+              "verification": "Sensore pulito e cursore che si muove in modo fluido",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Scollegare e ricollegare il mouse a una porta USB diversa. Per mouse wireless, sostituire le batterie o ricaricarle",
+              "verification": "Mouse funzionante e riconosciuto dal sistema",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "internet_lento",
+      "name": "Internet molto lento",
+      "category": "connettivita",
+      "severity": "warning",
+      "description": "La connessione internet sul PC è molto più lenta del normale, con pagine che caricano lentamente o streaming che si interrompe.",
+      "visual_symptoms": [
+        "Pagine web che impiegano molto tempo a caricarsi",
+        "Download molto lenti rispetto alla velocità nominale",
+        "Video in streaming che si interrompe continuamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Router o modem che necessita di riavvio",
+          "probability": 0.35,
+          "test": "Eseguire un test di velocità (speedtest.net): se è lenta, verificare se anche altri dispositivi hanno lo stesso problema"
+        },
+        {
+          "cause": "Adattatore di rete con driver obsoleto",
+          "probability": 0.25,
+          "test": "Aggiornare i driver della scheda di rete in Gestione Dispositivi"
+        },
+        {
+          "cause": "Malware che usa banda internet in background",
+          "probability": 0.25,
+          "test": "Verificare in Task Manager la scheda Performance > Ethernet o Wi-Fi per processi che usano rete"
+        },
+        {
+          "cause": "Interferenze Wi-Fi o segnale debole",
+          "probability": 0.15,
+          "test": "Avvicinare il PC al router e verificare se la velocità migliora"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Riavviare il router scollegandolo per 30 secondi. Riconnettere e attendere 2 minuti per il ripristino completo",
+              "verification": "Velocità di connessione migliorata dopo il riavvio del router",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Verificare in Task Manager (Ctrl+Shift+Esc > Performance > Ethernet/Wi-Fi) quali processi usano la rete. Terminare processi non necessari che consumano banda",
+              "verification": "Nessun processo anomalo che consuma banda in background",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stampante_offline",
+      "name": "Stampante offline",
+      "category": "periferiche",
+      "severity": "info",
+      "description": "Windows mostra la stampante come offline e non invia i documenti in stampa.",
+      "visual_symptoms": [
+        "Icona stampante con indicatore Offline",
+        "Documenti bloccati nella coda di stampa",
+        "Messaggi di errore durante la stampa"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Stampante spenta o non connessa alla rete",
+          "probability": 0.35,
+          "test": "Verificare che la stampante sia accesa e connessa (USB o rete WiFi)"
+        },
+        {
+          "cause": "Coda di stampa bloccata con un lavoro corrotto",
+          "probability": 0.35,
+          "test": "Aprire la coda di stampa: se ci sono lavori in sospeso, il primo potrebbe bloccare la coda"
+        },
+        {
+          "cause": "Driver stampante corrotti o obsoleti",
+          "probability": 0.30,
+          "test": "Verificare Gestione Dispositivi o il sito del produttore per driver aggiornati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Pannello di controllo > Dispositivi e stampanti. Clic destro sulla stampante > Vedi cosa si sta stampando. Selezionare tutti i documenti e cancellarli",
+              "verification": "Coda di stampa vuota",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Aprire Servizi (services.msc), trovare Print Spooler, fare clic destro > Riavvia. Poi clic destro sulla stampante > Imposta come predefinita e disabilita la modalità offline",
+              "verification": "Stampante Online e pronta alla stampa",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "disco_pieno",
+      "name": "Disco rigido pieno",
+      "category": "archiviazione",
+      "severity": "warning",
+      "description": "Il disco rigido del PC è quasi esaurito, causando rallentamenti, impossibilità di salvare file e aggiornare il sistema.",
+      "visual_symptoms": [
+        "Avviso Spazio disco insufficiente",
+        "Impossibilità di installare aggiornamenti",
+        "PC lento con attività disco continua"
+      ],
+      "probable_causes": [
+        {
+          "cause": "File temporanei e cache accumulati nel tempo",
+          "probability": 0.40,
+          "test": "Eseguire Pulizia disco: verifica quanti GB possono essere liberati"
+        },
+        {
+          "cause": "File grandi (video, backup) non gestiti",
+          "probability": 0.35,
+          "test": "Usare WinDirStat o Esplora file > Proprietà disco per vedere quali cartelle occupano più spazio"
+        },
+        {
+          "cause": "Vecchi file di Windows Update ancora presenti",
+          "probability": 0.25,
+          "test": "Verificare la cartella Windows.old o C:\\Windows\\SoftwareDistribution\\Download"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Eseguire Pulizia disco: cercare Pulizia disco nel menu Start. Selezionare C:. Cliccare Elimina file di sistema e selezionare tutte le categorie",
+              "verification": "Almeno 5-10 GB liberati",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Disinstallare programmi non utilizzati: Impostazioni > App > App installate > ordinare per dimensione e disinstallare quelli non necessari",
+              "verification": "Spazio libero aumentato significativamente",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aggiornamenti_falliti",
+      "name": "Aggiornamenti Windows che falliscono",
+      "category": "sistema",
+      "severity": "warning",
+      "description": "Gli aggiornamenti di Windows non si installano correttamente, mostrando codici di errore o bloccandosi.",
+      "visual_symptoms": [
+        "Aggiornamenti con stato Errore nell'installazione",
+        "Codici errore tipo 0x80070002 o 0x800F0922",
+        "PC che si aggiorna e poi ripristina le modifiche al riavvio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cartella Windows Update corrotta",
+          "probability": 0.40,
+          "test": "Eseguire lo strumento di risoluzione dei problemi di Windows Update"
+        },
+        {
+          "cause": "Spazio disco insufficiente per l'aggiornamento",
+          "probability": 0.35,
+          "test": "Verificare che ci siano almeno 10-20 GB liberi su C:"
+        },
+        {
+          "cause": "Servizi Windows Update non funzionanti",
+          "probability": 0.25,
+          "test": "Verificare in services.msc che Windows Update e Background Intelligent Transfer siano in esecuzione"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Eseguire lo strumento di risoluzione problemi: Impostazioni > Sistema > Risoluzione dei problemi > Windows Update > Esegui",
+              "verification": "Lo strumento identifica e corregge il problema",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Resettare i componenti di Windows Update dal prompt come amministratore: net stop wuauserv, poi eliminare C:\\Windows\\SoftwareDistribution, poi net start wuauserv. Riprovare gli aggiornamenti",
+              "verification": "Aggiornamenti scaricati e installati con successo",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pc_si_spegne_da_solo",
+      "name": "PC si spegne da solo",
+      "category": "hardware",
+      "severity": "error",
+      "description": "Il PC si spegne improvvisamente senza preavviso, come se si staccasse la corrente.",
+      "visual_symptoms": [
+        "Spegnimento improvviso senza messaggi di errore",
+        "PC che si spegne dopo breve utilizzo",
+        "Spegnimento durante operazioni intensive"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Surriscaldamento del processore o della GPU",
+          "probability": 0.50,
+          "test": "Usare HWMonitor o Core Temp per verificare le temperature: CPU oltre 90°C o GPU oltre 95°C sono critiche"
+        },
+        {
+          "cause": "Alimentatore insufficiente o in avaria",
+          "probability": 0.35,
+          "test": "Se il PC si spegne solo sotto carico intenso, l'alimentatore potrebbe non riuscire a fornire abbastanza watt"
+        },
+        {
+          "cause": "RAM instabile o difettosa",
+          "probability": 0.15,
+          "test": "Testare con Windows Memory Diagnostic o MemTest86"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il case e pulire dissipatori e ventole dalla polvere con aria compressa. Assicurarsi che tutte le ventole girino e che il dissipatore sia fissato correttamente al processore",
+              "verification": "Temperature CPU ridotte, PC stabile anche sotto carico",
+              "time_seconds": 600
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Sostituire la pasta termica sul processore: rimuovere il dissipatore, pulire la vecchia pasta con alcool isopropilico, applicare pasta termica di qualità e rimontare il dissipatore",
+              "verification": "Temperature significativamente ridotte",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "usb_non_riconosciuta",
+      "name": "USB non riconosciuta",
+      "category": "periferiche",
+      "severity": "info",
+      "description": "Windows non riconosce un dispositivo USB collegato, senza mostrare nessuna notifica o icona in Esplora file.",
+      "visual_symptoms": [
+        "Nessun suono di connessione USB",
+        "Dispositivo non appare in Esplora file",
+        "Messaggio Dispositivo USB non riconosciuto"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Porta USB difettosa o con alimentazione insufficiente",
+          "probability": 0.35,
+          "test": "Provare il dispositivo su una porta USB diversa (preferire quelle direttamente sul PC, non su hub)"
+        },
+        {
+          "cause": "Driver USB Hub corrotto",
+          "probability": 0.30,
+          "test": "Verificare Gestione Dispositivi per dispositivi USB con errori (punto esclamativo giallo)"
+        },
+        {
+          "cause": "Dispositivo USB difettoso o cavo danneggiato",
+          "probability": 0.25,
+          "test": "Testare il dispositivo o la chiavetta su un altro PC"
+        },
+        {
+          "cause": "Impostazione di risparmio energetico che spegne le porte USB",
+          "probability": 0.10,
+          "test": "Verificare nelle impostazioni di risparmio energetico delle porte USB"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Scollegare il dispositivo USB, aspettare 10 secondi e ricollegarlo a una porta USB diversa del PC (evitare gli hub USB)",
+              "verification": "Il dispositivo viene riconosciuto e appare in Esplora file",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Aprire Gestione Dispositivi, espandere Controller USB, fare clic destro su USB Root Hub > Proprietà > Gestione energia > togliere il segno da Consenti al computer di spegnere il dispositivo",
+              "verification": "Dispositivi USB sempre alimentati e riconosciuti",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audio_assente",
+      "name": "Audio assente",
+      "category": "audio",
+      "severity": "warning",
+      "description": "Il PC non produce alcun suono nonostante il volume sia alzato, né dagli altoparlanti né dalle cuffie.",
+      "visual_symptoms": [
+        "Icona volume con croce rossa",
+        "Nessun suono da altoparlanti o cuffie",
+        "Barra del volume che si muove ma nessun suono"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Driver audio corrotti o disinstallati",
+          "probability": 0.40,
+          "test": "Verificare Gestione Dispositivi > Controller audio: se c'è un punto esclamativo, il driver manca"
+        },
+        {
+          "cause": "Dispositivo di riproduzione errato selezionato",
+          "probability": 0.35,
+          "test": "Clic destro sull'icona volume nella taskbar > Suoni > scheda Riproduzione: verificare quale dispositivo è predefinito"
+        },
+        {
+          "cause": "Servizio audio di Windows non in esecuzione",
+          "probability": 0.25,
+          "test": "Verificare in services.msc che Windows Audio sia in esecuzione"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Clic destro sull'icona del volume nella barra delle applicazioni > Apri impostazioni audio. Verificare il dispositivo di output: selezionare gli altoparlanti o cuffie corrette",
+              "verification": "Dispositivo audio corretto selezionato e audio funzionante",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Riavviare il servizio audio: cercare services.msc > Windows Audio > clic destro > Riavvia",
+              "verification": "Audio ripristinato",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "driver_mancante",
+      "name": "Driver mancante o danneggiato",
+      "category": "sistema",
+      "severity": "warning",
+      "description": "Un dispositivo hardware del PC non funziona perché manca il driver o il driver è corrotto.",
+      "visual_symptoms": [
+        "Punto esclamativo giallo su un dispositivo in Gestione Dispositivi",
+        "Hardware che non funziona correttamente",
+        "Messaggio Driver del dispositivo non trovato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Driver non installato dopo reinstallazione Windows",
+          "probability": 0.40,
+          "test": "Verificare Gestione Dispositivi per dispositivi sconosciuti (con punto esclamativo)"
+        },
+        {
+          "cause": "Driver aggiornato che ha introdotto un bug",
+          "probability": 0.35,
+          "test": "Verificare se il problema è comparso dopo un aggiornamento automatico del driver"
+        },
+        {
+          "cause": "File del driver corrotti da virus o arresto imprevisto",
+          "probability": 0.25,
+          "test": "Eseguire sfc /scannow per verificare file di sistema corrotti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Gestione Dispositivi (clic destro su Start > Gestione dispositivi). Trovare il dispositivo con il punto esclamativo. Clic destro > Aggiorna driver > Cerca automaticamente",
+              "verification": "Driver trovato e installato correttamente",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se Windows non trova il driver, scaricare il driver aggiornato dal sito del produttore del dispositivo e installarlo manualmente",
+              "verification": "Driver installato e dispositivo funzionante senza errori in Gestione Dispositivi",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ram_insufficiente",
+      "name": "RAM insufficiente",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Il PC non ha abbastanza memoria RAM per eseguire i programmi necessari, causando rallentamenti e crash.",
+      "visual_symptoms": [
+        "RAM al 90-100% in Task Manager con poche applicazioni aperte",
+        "PC molto lento con disco in attività continua",
+        "Avviso memoria insufficiente da Windows"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Troppi programmi aperti contemporaneamente",
+          "probability": 0.45,
+          "test": "Verificare in Task Manager la quantità di RAM usata e quali processi consumano di più"
+        },
+        {
+          "cause": "RAM fisicamente insufficiente per il sistema operativo e le applicazioni usate",
+          "probability": 0.40,
+          "test": "Se la RAM è sempre al massimo anche con pochi programmi aperti, la quantità è insufficiente"
+        },
+        {
+          "cause": "Memory leak in un'applicazione specifica",
+          "probability": 0.15,
+          "test": "Se la RAM aumenta progressivamente nel tempo con le stesse applicazioni, c'è un memory leak"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere le applicazioni non necessarie. Verificare in Task Manager quali processi consumano più RAM e terminarli se non necessari",
+              "verification": "Utilizzo RAM sceso sotto il 70%",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Aumentare il file di paging: Impostazioni > Sistema > Info > Impostazioni di sistema avanzate > Prestazioni > Impostazioni > Avanzate > Memoria virtuale > Modifica. Impostare un valore gestito dal sistema",
+              "verification": "Sistema meno lento anche con poca RAM fisica",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pc_si_blocca",
+      "name": "PC si blocca (freeze)",
+      "category": "sistema",
+      "severity": "error",
+      "description": "Il PC si congela completamente, non risponde a mouse e tastiera e richiede un riavvio forzato.",
+      "visual_symptoms": [
+        "Schermata congelata che non risponde",
+        "Mouse che non si muove",
+        "Sistema che non risponde nemmeno a Ctrl+Alt+Canc"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Surriscaldamento che causa protezione termica",
+          "probability": 0.35,
+          "test": "Verificare le temperature con HWMonitor prima che si congeli"
+        },
+        {
+          "cause": "Disco rigido con settori danneggiati",
+          "probability": 0.30,
+          "test": "Verificare la salute del disco con CrystalDiskInfo: valori in giallo o rosso indicano problemi"
+        },
+        {
+          "cause": "RAM difettosa",
+          "probability": 0.25,
+          "test": "Eseguire MemTest86 per testare la RAM per diverse ore"
+        },
+        {
+          "cause": "Driver video o audio instabile",
+          "probability": 0.10,
+          "test": "Verificare se il freeze avviene in specifiche situazioni (giochi, video)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire l'interno del PC dalla polvere, specialmente le ventole e il dissipatore della CPU. Verificare che tutte le ventole funzionino",
+              "verification": "Temperature ridotte e sistema più stabile",
+              "time_seconds": 600
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Verificare la salute del disco con CrystalDiskInfo (scaricabile gratuitamente). Se il disco mostra Attenzione o Guasto, fare un backup immediato e sostituirlo",
+              "verification": "Disco in stato OK o sostituito con uno nuovo",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "errore_bios",
+      "name": "Errore BIOS / CMOS Battery",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Il PC mostra messaggi di errore all'avvio relativi al BIOS, come data/ora persa o impostazioni CMOS resettate.",
+      "visual_symptoms": [
+        "Messaggio CMOS Checksum Error o CMOS Battery Failed",
+        "Data e ora resettate ad ogni avvio",
+        "PC che si ferma con richiesta di premere F1 per entrare nel BIOS"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria CMOS (CR2032) scarica",
+          "probability": 0.75,
+          "test": "La batteria CMOS dura 3-5 anni. Se il PC ha più di 5 anni, è quasi certamente la causa"
+        },
+        {
+          "cause": "Impostazioni BIOS corrotte",
+          "probability": 0.25,
+          "test": "Se la sostituzione della batteria non risolve, le impostazioni del BIOS potrebbero essere corrotte"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il PC e scollegarlo dalla corrente. Aprire il case e individuare la batteria piatta rotonda (CR2032) sulla scheda madre. Rimuoverla e portarla in un negozio di elettronica per acquistare una batteria identica",
+              "verification": "Nuova batteria CR2032 acquistata",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Inserire la nuova batteria con il lato positivo (+) rivolto verso l'alto. Richiudere il case, collegare il PC e accenderlo. Impostare data e ora corrette nel BIOS se richiesto",
+              "verification": "Nessun messaggio di errore CMOS all'avvio, data e ora mantenute",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "schermo_artefatti_grafici",
+      "name": "Schermo con artefatti grafici",
+      "category": "video",
+      "severity": "error",
+      "description": "Lo schermo del PC mostra pixel colorati, righe, triangoli neri o altri elementi grafici anomali durante l'uso.",
+      "visual_symptoms": [
+        "Pixel colorati sparsi sullo schermo",
+        "Triangoli neri o texture incomplete in 3D",
+        "Righe o blocchi colorati che appaiono sullo schermo",
+        "Artefatti che peggiorano sotto carico grafico"
+      ],
+      "probable_causes": [
+        {
+          "cause": "GPU surriscaldata",
+          "probability": 0.40,
+          "test": "Verificare la temperatura della GPU con GPU-Z o HWMonitor: oltre 90°C è critico"
+        },
+        {
+          "cause": "Driver video corrotto o incompatibile",
+          "probability": 0.35,
+          "test": "Disinstallare i driver GPU con DDU (Display Driver Uninstaller) e reinstallare l'ultima versione"
+        },
+        {
+          "cause": "GPU in via di guasto (VRAM difettosa)",
+          "probability": 0.25,
+          "test": "Eseguire un test della VRAM con GPU-Z o 3DMark per identificare errori di memoria"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire la GPU dalla polvere, specialmente il dissipatore e le ventole. Verificare che le ventole della GPU girino correttamente",
+              "verification": "Temperature GPU ridotte e artefatti scomparsi o ridotti",
+              "time_seconds": 600
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Disinstallare completamente i driver GPU usando DDU in modalità sicura. Scaricare e installare i driver più recenti dal sito NVIDIA o AMD",
+              "verification": "Driver puliti reinstallati, artefatti grafici assenti",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

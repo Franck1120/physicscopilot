@@ -1,0 +1,953 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "appliances",
+  "total": 20,
+  "problems": [
+    {
+      "id": "lavatrice_non_scarica",
+      "name": "Lavatrice non scarica l'acqua",
+      "category": "lavatrice",
+      "severity": "error",
+      "description": "La lavatrice termina il ciclo senza aver scaricato l'acqua, lasciando i panni bagnati nel cestello pieno d'acqua.",
+      "visual_symptoms": [
+        "Acqua rimasta nel cestello al termine del ciclo",
+        "Oblò che non si apre per blocco di sicurezza",
+        "Codice errore E21 o F21 sul display"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Filtro pompa scarico ostruito da pelucchi o corpi estranei",
+          "probability": 0.50,
+          "test": "Aprire il pannello nella parte anteriore in basso: il filtro pompa è il tappo rotondo"
+        },
+        {
+          "cause": "Tubo di scarico piegato, ostruito o mal posizionato",
+          "probability": 0.30,
+          "test": "Verificare che il tubo di scarico non sia piegato e che l'estremità sia a un'altezza corretta (60-90 cm)"
+        },
+        {
+          "cause": "Pompa di scarico guasta",
+          "probability": 0.20,
+          "test": "Se dopo aver pulito il filtro l'acqua non scende, la pompa potrebbe essere guasta (fare girare la girante manualmente)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Posizionare asciugamani sul pavimento. Aprire il pannello anteriore in basso. Svitare lentamente il tappo del filtro per scaricare l'acqua residua. Rimuovere completamente il filtro",
+              "verification": "Filtro estratto e acqua defluita",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Pulire il filtro rimuovendo pelucchi, monete, bottoni o altri oggetti. Controllare anche l'alloggiamento del filtro. Reinserire il filtro avvitandolo bene",
+              "verification": "Filtro pulito e reinserito correttamente",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Avviare un ciclo breve di centrifuga per verificare che la lavatrice scarichi correttamente",
+              "verification": "La lavatrice scarica l'acqua e termina il ciclo normalmente",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavatrice_vibra_forte",
+      "name": "Lavatrice vibra e fa rumore forte",
+      "category": "lavatrice",
+      "severity": "warning",
+      "description": "La lavatrice vibra eccessivamente durante la centrifuga, producendo rumori forti e spostandosi sul pavimento.",
+      "visual_symptoms": [
+        "Lavatrice che si sposta sul pavimento durante la centrifuga",
+        "Rumore di sbattimento forte nella fase di centrifuga",
+        "Vibrazioni trasmesse al pavimento e alle pareti vicine"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Carico non bilanciato nel cestello",
+          "probability": 0.45,
+          "test": "Aprire il cestello e verificare se i panni sono distribuiti uniformemente o ammucchiati da un lato"
+        },
+        {
+          "cause": "Piedini di livellamento non regolati o superficie non piana",
+          "probability": 0.35,
+          "test": "Mettere una livella sulla lavatrice: deve essere perfettamente in piano su tutti e quattro i lati"
+        },
+        {
+          "cause": "Viti di trasporto (bulloni rossi) non rimosse",
+          "probability": 0.20,
+          "test": "Verificare sul retro della lavatrice: se è nuova o è stata spostata, potrebbero esserci ancora i bulloni di trasporto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il cestello e ridistribuire i panni uniformemente. Aggiungere o togliere pezzi per bilanciare il carico. Non lavare un solo capo pesante alla volta",
+              "verification": "Panni distribuiti uniformemente nel cestello",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Regolare i piedini avvitandoli o svitandoli finché la lavatrice è perfettamente in piano. Serrare il controdado di blocco su ciascun piedino",
+              "verification": "La livella indica che la lavatrice è in piano",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frigo_troppo_caldo",
+      "name": "Frigorifero troppo caldo",
+      "category": "frigorifero",
+      "severity": "error",
+      "description": "La temperatura interna del frigorifero è troppo alta, rischiando di deteriorare gli alimenti.",
+      "visual_symptoms": [
+        "Alimenti che si deteriorano prima del previsto",
+        "Termometro interno sopra 8°C",
+        "Condensa eccessiva all'interno"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Temperatura impostata troppo alta",
+          "probability": 0.35,
+          "test": "Verificare la regolazione del termostato: deve essere tra 3 e 5°C"
+        },
+        {
+          "cause": "Guarnizione porta deteriorata",
+          "probability": 0.30,
+          "test": "Inserire un foglio di carta nella porta e chiuderla: se il foglio si estrae facilmente, la guarnizione non sigilla"
+        },
+        {
+          "cause": "Griglia condensatore sporca sul retro/sotto",
+          "probability": 0.25,
+          "test": "Verificare la griglia sul retro o sotto il frigo: se coperta di polvere, il condensatore non raffredda"
+        },
+        {
+          "cause": "Frigo troppo carico o mal organizzato",
+          "probability": 0.10,
+          "test": "Verificare che l'aria possa circolare all'interno e che i ripiani non blocchino le bocchette"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Impostare il termostato del frigorifero tra 3 e 5°C. Attendere 24 ore e misurare la temperatura con un termometro da frigo",
+              "verification": "Temperatura interna tra 3 e 5°C",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Pulire la griglia del condensatore sul retro o sotto il frigorifero con un aspirapolvere e un pennello per rimuovere la polvere accumulata",
+              "verification": "Griglia pulita e libera da polvere",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frigo_ghiaccio_in_fondo",
+      "name": "Frigorifero fa ghiaccio in fondo",
+      "category": "frigorifero",
+      "severity": "warning",
+      "description": "Si accumula ghiaccio sul fondo del frigorifero o nella zona evaporatore, ostruendo il sistema di sbrinamento.",
+      "visual_symptoms": [
+        "Lastra di ghiaccio sul fondo del comparto frigo",
+        "Acqua che si accumula sotto i cassetti delle verdure",
+        "Riduzione della capacità di raffreddamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Foro di scarico della condensa ostruito",
+          "probability": 0.55,
+          "test": "Cercare il piccolo foro sul fondo del comparto frigo (spesso dietro il cassetto verdure): versare un po' di acqua e verificare se scende"
+        },
+        {
+          "cause": "Guarnizione porta che non sigilla e introduce umidità",
+          "probability": 0.30,
+          "test": "Testare la guarnizione con il test del foglio di carta"
+        },
+        {
+          "cause": "Sistema di sbrinamento automatico guasto",
+          "probability": 0.15,
+          "test": "Se il ghiaccio si accumula anche dopo aver scongelato manualmente, il sistema di sbrinamento è guasto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svuotare il frigorifero e lasciarlo scongelare per 24-48 ore con la porta aperta. Rimuovere tutta l'acqua con asciugamani",
+              "verification": "Ghiaccio completamente rimosso",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Pulire il foro di scarico condensa sul fondo con uno stuzzicadenti o uno scovolino morbido per rimuovere eventuali ostruzioni",
+              "verification": "Il foro è libero e l'acqua scende nel vano motore",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavastoviglie_non_asciuga",
+      "name": "Lavastoviglie non asciuga i piatti",
+      "category": "lavastoviglie",
+      "severity": "info",
+      "description": "Al termine del ciclo di lavaggio, le stoviglie risultano ancora bagnate, soprattutto la plastica.",
+      "visual_symptoms": [
+        "Stoviglie bagnate al termine del ciclo",
+        "Gocce d'acqua su piatti e bicchieri",
+        "Plastica sempre bagnata anche dopo il ciclo di asciugatura"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Brillantante esaurito o non caricato",
+          "probability": 0.45,
+          "test": "Verificare il serbatoio del brillantante: se vuoto o la spia è accesa, ricaricare"
+        },
+        {
+          "cause": "Dosaggio brillantante troppo basso",
+          "probability": 0.30,
+          "test": "Aumentare il dosaggio del brillantante nella regolazione della lavastoviglie (spesso da 1 a 4)"
+        },
+        {
+          "cause": "Programma scelto senza fase di asciugatura",
+          "probability": 0.25,
+          "test": "Verificare se il programma selezionato include l'asciugatura (Eco spesso esclude l'asciugatura riscaldata)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il vano brillantante (solitamente accanto a quello del sale) e riempirlo con brillantante liquido apposito",
+              "verification": "Spia brillantante spenta e serbatoio pieno",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Aumentare il dosaggio brillantante portandolo al massimo (4-6) regolando il cursore nel vano brillantante",
+              "verification": "Stoviglie asciutte al termine del ciclo successivo",
+              "time_seconds": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavastoviglie_puzza",
+      "name": "Lavastoviglie con cattivo odore",
+      "category": "lavastoviglie",
+      "severity": "info",
+      "description": "La lavastoviglie emette odori sgradevoli durante il funzionamento o quando si apre lo sportello.",
+      "visual_symptoms": [
+        "Odore di muffa o di cibo marcio all'apertura",
+        "Odore sgradevole sulle stoviglie dopo il lavaggio",
+        "Residui scuri o bianchi visibili nel cestello o sui bracci rotanti"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Filtro sporco con residui di cibo",
+          "probability": 0.50,
+          "test": "Rimuovere il filtro sul fondo della lavastoviglie: se pieno di detriti e maleodorante, è il problema"
+        },
+        {
+          "cause": "Guarnizione porta con muffa o sporco",
+          "probability": 0.30,
+          "test": "Ispezionare la guarnizione della porta (sopra e nei lati): cercare muffa nera o residui"
+        },
+        {
+          "cause": "Bracci rotanti ostruiti",
+          "probability": 0.20,
+          "test": "Rimuovere i bracci rotanti e verificare i forellini: se ostruiti da calcare o detriti, vanno puliti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere e lavare il filtro sotto acqua corrente con uno spazzolino. Pulire la guarnizione della porta con un panno umido e bicarbonato",
+              "verification": "Filtro pulito e guarnizione priva di muffa",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Avviare un ciclo di pulizia a vuoto (70-90°C) con una tazza di aceto bianco posizionata sul ripiano superiore. Poi avviare un secondo ciclo con bicarbonato sul fondo",
+              "verification": "Odori eliminati dopo i cicli di pulizia",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forno_non_scalda",
+      "name": "Forno non scalda",
+      "category": "forno",
+      "severity": "error",
+      "description": "Il forno non raggiunge la temperatura impostata o non si scalda affatto.",
+      "visual_symptoms": [
+        "Forno freddo o tiepido dopo 20+ minuti di preriscaldamento",
+        "Cibo non cotto correttamente",
+        "Spia temperatura sempre accesa senza raggiungere il setpoint"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Resistenza forno bruciata",
+          "probability": 0.45,
+          "test": "Ispezionare visivamente la resistenza (fil rosso sul fondo o in alto): cercare rotture o punti anneriti"
+        },
+        {
+          "cause": "Termostatato forno guasto",
+          "probability": 0.35,
+          "test": "Se il forno si accende ma non raggiunge la temperatura corretta, il termostato potrebbe non regolare bene"
+        },
+        {
+          "cause": "Fusibile interno del forno bruciato",
+          "probability": 0.20,
+          "test": "Verificare se anche il grill funziona: se nulla funziona, potrebbe esserci un fusibile bruciato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che il forno non sia in modalità blocco bambini o timer. Controllare le impostazioni nel pannello di controllo",
+              "verification": "Modalità corretta selezionata e blocco disattivato",
+              "time_seconds": 60
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Con il forno freddo e disconnesso dalla corrente, ispezionare visivamente la resistenza sul fondo: se presenta rotture o punti bruciati, va sostituita",
+              "verification": "Resistenza integra o identificata come guasta",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Contattare un tecnico per la sostituzione della resistenza o del termostato",
+              "verification": "Forno che raggiunge la temperatura impostata",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forno_brucia_sotto",
+      "name": "Forno brucia i cibi sotto",
+      "category": "forno",
+      "severity": "warning",
+      "description": "I cibi cotti nel forno risultano bruciati sul fondo ma crudi o poco cotti in superficie.",
+      "visual_symptoms": [
+        "Fondo delle teglie bruciato o annerito",
+        "Cibi con base bruciacchiata e superficie chiara",
+        "Fumo dalla base del forno durante la cottura"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Temperatura impostata troppo alta per il tipo di cottura",
+          "probability": 0.40,
+          "test": "Verificare la ricetta e confrontare con la temperatura impostata"
+        },
+        {
+          "cause": "Funzione grill inferiore attiva invece di statico o ventilato",
+          "probability": 0.35,
+          "test": "Verificare la modalità selezionata sul pannello: il simbolo deve corrispondere alla cottura desiderata"
+        },
+        {
+          "cause": "Termostato non calibrato che indica meno del reale",
+          "probability": 0.25,
+          "test": "Misurare la temperatura reale interna con un termometro da forno"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare la modalità di cottura selezionata (statico, ventilato, grill). Per cotture tradizionali usare la modalità statica. Abbassare la temperatura di 10-20°C rispetto alla ricetta",
+              "verification": "Modalità e temperatura corretti per il tipo di cottura",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Posizionare la teglia su un ripiano più alto e inserire una teglia vuota sul ripiano inferiore per schermare il calore diretto della resistenza",
+              "verification": "Cottura più uniforme senza bruciature sul fondo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "asciugatrice_non_asciuga",
+      "name": "Asciugatrice non asciuga",
+      "category": "asciugatrice",
+      "severity": "error",
+      "description": "I panni rimangono umidi o bagnati al termine del ciclo di asciugatura.",
+      "visual_symptoms": [
+        "Panni ancora umidi o bagnati al termine del ciclo",
+        "Ciclo che dura molto più del normale",
+        "Calore ridotto o assente nell'asciugatrice"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Filtro pelucchi completamente intasato",
+          "probability": 0.50,
+          "test": "Aprire lo sportello e verificare il filtro: se ricoperto di pelucchi e non passa aria, è il problema"
+        },
+        {
+          "cause": "Tubo di scarico aria ostruito o piegato",
+          "probability": 0.30,
+          "test": "Verificare che il tubo di uscita dell'aria calda non sia piegato o ostruito all'esterno"
+        },
+        {
+          "cause": "Carico troppo pesante per un singolo ciclo",
+          "probability": 0.20,
+          "test": "Verificare se il peso del bucato supera la capacità massima dell'asciugatrice"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere e pulire il filtro pelucchi dopo ogni ciclo. Pulire anche il vano del filtro con aspirapolvere per rimuovere pelucchi accumulati nel tempo",
+              "verification": "Filtro pulito e aria che scorre liberamente",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Ridurre il carico a metà della capacità massima per ciclo. Asciugare i capi pesanti (jeans, asciugamani) separatamente",
+              "verification": "Panni completamente asciutti al termine del ciclo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "microonde_scintille",
+      "name": "Microonde produce scintille",
+      "category": "microonde",
+      "severity": "error",
+      "description": "Il microonde genera scintille o archi elettrici durante il funzionamento, potenzialmente pericoloso.",
+      "visual_symptoms": [
+        "Scintille visibili all'interno del microonde",
+        "Archi elettrici di colore blu o bianco",
+        "Odore di bruciato durante il funzionamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Oggetti metallici o stoviglie con parti metalliche inseriti nel microonde",
+          "probability": 0.50,
+          "test": "Verificare che non ci siano posate, contenitori con bordi metallici o alluminio nel microonde"
+        },
+        {
+          "cause": "Guida d'onda sporca o bruciata",
+          "probability": 0.35,
+          "test": "Aprire il microonde e ispezionare il rivestimento laterale (guida d'onda): cercare zone annerite o scrostate"
+        },
+        {
+          "cause": "Piatto girevole rotto o mal posizionato",
+          "probability": 0.15,
+          "test": "Verificare che il piatto girevole sia integro e posizionato correttamente sul supporto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "STOP: Spegnere immediatamente il microonde. Rimuovere qualsiasi oggetto metallico. Non usare contenitori con bordi dorati o metallizzati",
+              "verification": "Nessun oggetto metallico presente nel microonde",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Pulire l'interno con un panno umido, prestando attenzione alla guida d'onda (coperchio di plastica sul lato interno). Se la guida è bruciata, farla sostituire da un tecnico prima di riusare il microonde",
+              "verification": "Interno pulito e guida d'onda integra",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aspirapolvere_perde_aspirazione",
+      "name": "Aspirapolvere perde aspirazione",
+      "category": "aspirapolvere",
+      "severity": "warning",
+      "description": "La potenza di aspirazione dell'aspirapolvere è notevolmente ridotta rispetto al normale.",
+      "visual_symptoms": [
+        "Sporco che non viene raccolto",
+        "Rumore del motore cambiato (più acuto)",
+        "Indicatore ostruzione acceso"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sacchetto o contenitore polvere pieno",
+          "probability": 0.45,
+          "test": "Verificare il livello del sacchetto o del contenitore della polvere"
+        },
+        {
+          "cause": "Filtro HEPA ostruito",
+          "probability": 0.35,
+          "test": "Rimuovere e ispezionare il filtro HEPA: se grigio e compatto, è intasato"
+        },
+        {
+          "cause": "Ostruzione nel tubo o nella testina",
+          "probability": 0.20,
+          "test": "Rimuovere tubo e testina e soffiare aria compressa per verificare se c'è ostruzione"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svuotare il contenitore polvere o sostituire il sacchetto. Pulire il filtro HEPA sotto acqua fredda (solo se lavabile) e lasciarlo asciugare 24 ore prima di reinserirlo",
+              "verification": "Aspirazione ripristinata",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Smontare tubo, curva e testina per cercare eventuali ostruzioni. Inserire un lungo bastone morbido per rimuovere eventuali blocchi",
+              "verification": "Nessuna ostruzione, flusso d'aria regolare",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ferro_stiro_perde_acqua",
+      "name": "Ferro da stiro perde acqua",
+      "category": "stiratura",
+      "severity": "warning",
+      "description": "Il ferro da stiro perde acqua dai fori del vapore o dalla base, macchiando i vestiti.",
+      "visual_symptoms": [
+        "Gocce d'acqua sui vestiti durante la stiratura",
+        "Acqua che cola dalla base del ferro",
+        "Vapore irregolare con gocce"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Serbatoio troppo pieno o inclinazione del ferro errata",
+          "probability": 0.40,
+          "test": "Tenere il ferro in posizione orizzontale e non riempire oltre il livello MAX"
+        },
+        {
+          "cause": "Ferro non abbastanza caldo per la modalità vapore",
+          "probability": 0.35,
+          "test": "Verificare che la temperatura impostata sia sufficiente per generare vapore (solitamente oltre 2 pallini)"
+        },
+        {
+          "cause": "Calcare accumulato che ostruisce i fori del vapore",
+          "probability": 0.25,
+          "test": "Ispezionare la piastra: fori parzialmente ostruiti da depositi bianchi indicano calcare"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svuotare completamente il serbatoio. Riempirlo con acqua distillata (non oltre il MAX). Impostare una temperatura adeguata alla modalità vapore e attendere il preriscaldamento completo",
+              "verification": "Vapore regolare senza gocce",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Usare la funzione anticalcare o Calc-Clean del ferro: riempire il serbatoio a metà, portare al MAX di temperatura, tenere sopra la vasca e premere il pulsante Calc-Clean per espellere il calcare con getti di vapore",
+              "verification": "Fori del vapore liberi da calcare",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frigorifero_rumoroso",
+      "name": "Frigorifero rumoroso",
+      "category": "frigorifero",
+      "severity": "info",
+      "description": "Il frigorifero produce rumori insoliti come gorgoglii, clacson, vibrazioni o ticchettii.",
+      "visual_symptoms": [
+        "Gorgoglii o borbottii continui o intermittenti",
+        "Vibrazione trasmessa alle superfici di appoggio",
+        "Rumore di scorrimento del gas refrigerante"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Frigorifero non livellato",
+          "probability": 0.40,
+          "test": "Verificare che i piedini siano regolati correttamente e il frigorifero sia leggermente inclinato verso la parete"
+        },
+        {
+          "cause": "Compressore in avvio normale",
+          "probability": 0.35,
+          "test": "I rumori che durano pochi secondi all'avvio del compressore sono normali"
+        },
+        {
+          "cause": "Ventola del condensatore ostruita",
+          "probability": 0.25,
+          "test": "Verificare sul retro o sotto il frigo se la ventola del condensatore gira liberamente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Regolare i piedini anteriori del frigorifero in modo che sia leggermente inclinato verso la parete (circa 1 cm più basso davanti). Questo aiuta la chiusura automatica della porta",
+              "verification": "Vibrazioni ridotte e frigorifero stabile",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Assicurarsi che il frigorifero non tocchi pareti o mobili laterali. Lasciare almeno 5 cm di spazio su ogni lato",
+              "verification": "Nessun contatto con superfici circostanti",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavatrice_non_centrifuga",
+      "name": "Lavatrice non centrifuga",
+      "category": "lavatrice",
+      "severity": "warning",
+      "description": "La lavatrice non esegue la fase di centrifuga, lasciando i panni molto bagnati.",
+      "visual_symptoms": [
+        "Panni molto bagnati al termine del ciclo",
+        "Ciclo che termina prima della centrifuga",
+        "Codice errore di sbilancio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Carico sbilanciato che impedisce la centrifuga per sicurezza",
+          "probability": 0.50,
+          "test": "La lavatrice tenta di bilanciare il carico: se i panni sono tutti da un lato, si blocca"
+        },
+        {
+          "cause": "Coperchio o oblò non chiuso correttamente",
+          "probability": 0.30,
+          "test": "Verificare che lo sportello sia completamente chiuso e il blocco oblò sia attivato"
+        },
+        {
+          "cause": "Ammortizzatori o sospensioni usurate",
+          "probability": 0.20,
+          "test": "Se la lavatrice oscilla molto durante la centrifuga, le sospensioni potrebbero essere guaste"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il cestello e ridistribuire i panni in modo uniforme. Separare capi pesanti da leggeri per equilibrare il carico",
+              "verification": "Lavatrice esegue la centrifuga regolarmente",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Avviare solo il programma di centrifuga dopo aver riposizionato i panni. Se la lavatrice si blocca nuovamente, ridurre il carico",
+              "verification": "Centrifuga completata con panni adeguatamente strizzati",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lavastoviglie_non_scarica",
+      "name": "Lavastoviglie non scarica",
+      "category": "lavastoviglie",
+      "severity": "error",
+      "description": "La lavastoviglie non svuota l'acqua al termine del ciclo, lasciando acqua sul fondo.",
+      "visual_symptoms": [
+        "Acqua ferma sul fondo della lavastoviglie",
+        "Sportello che non si può aprire per blocco di sicurezza",
+        "Codice errore di scarico sul display"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Filtro della lavastoviglie intasato",
+          "probability": 0.45,
+          "test": "Rimuovere il filtro sul fondo della lavastoviglie: se pieno di detriti, va pulito"
+        },
+        {
+          "cause": "Tubo di scarico ostruito o mal collegato al sifone",
+          "probability": 0.35,
+          "test": "Verificare il collegamento del tubo di scarico sotto il lavello: deve avere un sifone o una valvola antiritorno"
+        },
+        {
+          "cause": "Pompa di scarico bloccata",
+          "probability": 0.20,
+          "test": "Se il filtro è pulito ma l'acqua non scende, la pompa di scarico potrebbe essere bloccata da corpi estranei"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere e pulire il filtro sul fondo della lavastoviglie. Pulire anche la zona intorno al filtro da eventuali detriti",
+              "verification": "Filtro pulito e reinserito correttamente",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verificare il tubo di scarico sotto il lavello: deve essere collegato ad un'altezza di almeno 60 cm (anti-sifone) o avere una valvola di non ritorno",
+              "verification": "Connessione scarico corretta e acqua che defluisce",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forno_ventilato_non_funziona",
+      "name": "Ventilatore forno non funziona",
+      "category": "forno",
+      "severity": "warning",
+      "description": "In modalità ventilata, il ventilatore del forno non si avvia, rendendo la cottura non uniforme.",
+      "visual_symptoms": [
+        "Assenza di rumore del ventilatore in modalità ventilata",
+        "Cottura non uniforme (un lato più cotto dell'altro)",
+        "Forno che impiega molto più tempo a cuocere"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Motore del ventilatore guasto",
+          "probability": 0.55,
+          "test": "In modalità ventilata, aprire il forno e verificare se la girante sul fondo ruota"
+        },
+        {
+          "cause": "Condensatore del motore del ventilatore guasto",
+          "probability": 0.30,
+          "test": "Se il motore ronza ma non gira, il condensatore potrebbe essere guasto"
+        },
+        {
+          "cause": "Scheda elettronica che non attiva il ventilatore",
+          "probability": 0.15,
+          "test": "Se il ventilatore funziona in alcuni programmi ma non in altri, il problema è nella scheda"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che il forno non sia in modalità grill o statica. Selezionare esplicitamente la modalità ventilata e verificare se il ventilatore parte",
+              "verification": "Rumore del ventilatore udibile dopo selezione modalità corretta",
+              "time_seconds": 30
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Contattare un tecnico per la diagnosi e sostituzione del motore del ventilatore o del condensatore",
+              "verification": "Il ventilatore funziona correttamente in tutte le modalità ventilate",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "freezer_si_sbrina_da_solo",
+      "name": "Freezer si sbrina autonomamente",
+      "category": "frigorifero",
+      "severity": "error",
+      "description": "Il congelatore perde temperatura e il ghiaccio si scioglie parzialmente, compromettendo la conservazione degli alimenti.",
+      "visual_symptoms": [
+        "Alimenti del freezer parzialmente scongelati o con cristalli di ghiaccio in superficie",
+        "Acqua che cola dal congelatore",
+        "Temperatura del freezer sopra -12°C"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Porta del freezer non chiude completamente",
+          "probability": 0.40,
+          "test": "Verificare la guarnizione e che la porta si chiuda ermeticamente su tutto il perimetro"
+        },
+        {
+          "cause": "Sistema di sbrinamento automatico difettoso che sbrina troppo spesso",
+          "probability": 0.35,
+          "test": "Verificare se lo sbrinamento avviene più volte al giorno (normale: 1-2 volte ogni 6-8 ore)"
+        },
+        {
+          "cause": "Thermostat del freezer guasto",
+          "probability": 0.25,
+          "test": "Se il freezer non si raffredda adeguatamente, il termostato potrebbe non richiedere abbastanza raffreddamento"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare la guarnizione del freezer con il test del foglio di carta. Se non sigilla, pulire la guarnizione con acqua calda e sapone per ammorbidirla",
+              "verification": "Guarnizione che sigilla su tutto il perimetro",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verificare che il congelatore non sia troppo pieno (ostruisce la circolazione dell'aria) e che gli alimenti non blocchino le bocchette dell'aria fredda",
+              "verification": "Aria fredda in circolazione e temperatura sotto -18°C",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "macchina_caffe_pressione_bassa",
+      "name": "Macchina caffè a bassa pressione",
+      "category": "macchina_caffe",
+      "severity": "warning",
+      "description": "La macchina del caffè produce una bevanda acquosa, senza crema o con crema molto chiara, per insufficiente pressione.",
+      "visual_symptoms": [
+        "Caffè acquoso senza crema",
+        "Crema molto chiara o assente",
+        "Erogazione molto lenta o troppo veloce"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pressione di macinatura del caffè errata (troppo grossolana o troppo fine)",
+          "probability": 0.40,
+          "test": "Verificare la macinatura: troppo grossolana porta a erogazione veloce e caffè acquoso; troppo fine blocca l'erogazione"
+        },
+        {
+          "cause": "Calcare che ostruisce il circuito idraulico",
+          "probability": 0.35,
+          "test": "Verificare se la spia decalcificazione è accesa o se è molto tempo che non si esegue la decalcificazione"
+        },
+        {
+          "cause": "Dosi di caffè insufficienti nel portafiltro",
+          "probability": 0.25,
+          "test": "Verificare che la dose di caffè macinato sia corretta (solitamente 7-9g per espresso singolo)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Regolare la macinatura verso più fine se l'erogazione è troppo rapida (meno di 20 secondi per 25ml). Se è troppo lenta, macinare più grosso",
+              "verification": "Erogazione di 25-30 ml in 25-30 secondi con crema nocciola",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Eseguire il ciclo di decalcificazione con il prodotto decalcificante appropriato per la macchina",
+              "verification": "Ciclo di decalcificazione completato e pressione migliorata",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "robot_cucina_si_blocca",
+      "name": "Robot da cucina si blocca",
+      "category": "robot_cucina",
+      "severity": "warning",
+      "description": "Il robot da cucina si ferma durante il funzionamento, spesso per sovraccarico o surriscaldamento.",
+      "visual_symptoms": [
+        "Robot che si ferma improvvisamente durante la lavorazione",
+        "LED di errore o di surriscaldamento acceso",
+        "Motore che ronza senza che la lama giri"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Surriscaldamento del motore per uso prolungato",
+          "probability": 0.45,
+          "test": "Verificare se il robot è stato utilizzato continuativamente per più di 10-15 minuti"
+        },
+        {
+          "cause": "Carico eccessivo per la potenza del robot",
+          "probability": 0.35,
+          "test": "Verificare se la quantità di alimenti supera la capacità massima del robot"
+        },
+        {
+          "cause": "Protezione di sicurezza del coperchio non attivata",
+          "probability": 0.20,
+          "test": "Verificare che il coperchio sia correttamente bloccato in posizione (molti robot non partono senza blocco coperchio)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il robot e lasciarlo raffreddare per 30 minuti con il coperchio aperto. Non superare i tempi di utilizzo indicati nel manuale",
+              "verification": "Dopo il raffreddamento, il robot riparte normalmente",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Ridurre la quantità di alimenti o lavorarli in più riprese. Tagliare gli ingredienti in pezzi più piccoli per ridurre il carico sul motore",
+              "verification": "Il robot funziona continuativamente senza fermarsi",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "asciugatrice_odore_bruciato",
+      "name": "Asciugatrice con odore di bruciato",
+      "category": "asciugatrice",
+      "severity": "error",
+      "description": "L'asciugatrice produce un odore di bruciato durante il ciclo, potenzialmente pericoloso.",
+      "visual_symptoms": [
+        "Odore di bruciato durante il funzionamento",
+        "Panni con odore di bruciato dopo il ciclo",
+        "Fumo visibile dall'asciugatrice"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pelucchi infiammati nel filtro o nel tubo di scarico",
+          "probability": 0.55,
+          "test": "Verificare filtro, vano filtro e tubo di scarico per accumuli di pelucchi"
+        },
+        {
+          "cause": "Elemento riscaldante in contatto con pelucchi",
+          "probability": 0.30,
+          "test": "Se l'odore è molto forte e c'è fumo, spegnere immediatamente: pelucchi nell'elemento riscaldante"
+        },
+        {
+          "cause": "Cinghia di trasmissione del tamburo usurata",
+          "probability": 0.15,
+          "test": "Odore di gomma bruciata indica la cinghia"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "ATTENZIONE: Spegnere immediatamente l'asciugatrice se c'è fumo. Pulire accuratamente il filtro, il vano del filtro e il tubo di scarico. Non riaccendere fino a pulizia completa",
+              "verification": "Filtro e tubo di scarico completamente privi di pelucchi",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Avviare un ciclo breve a temperatura bassa per verificare che l'odore sia scomparso. Se persiste, contattare un tecnico",
+              "verification": "Nessun odore di bruciato durante il ciclo",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

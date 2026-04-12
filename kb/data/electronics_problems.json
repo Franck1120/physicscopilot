@@ -1,0 +1,969 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "electronics",
+  "total": 20,
+  "problems": [
+    {
+      "id": "schermo_nero",
+      "name": "Schermo nero",
+      "category": "display",
+      "severity": "error",
+      "description": "Lo schermo del dispositivo non si accende o rimane completamente nero nonostante il dispositivo sembri acceso.",
+      "visual_symptoms": [
+        "Schermo completamente nero senza immagine",
+        "Retroilluminazione assente",
+        "Il dispositivo risponde ai tasti ma lo schermo non mostra nulla"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria completamente scarica",
+          "probability": 0.35,
+          "test": "Collegare il caricabatterie e attendere 10 minuti prima di provare ad accendere"
+        },
+        {
+          "cause": "Software bloccato o crash di sistema",
+          "probability": 0.30,
+          "test": "Premere il tasto di accensione per 10-15 secondi per forzare il riavvio"
+        },
+        {
+          "cause": "Schermo fisicamente danneggiato o connettore scollegato",
+          "probability": 0.25,
+          "test": "Verificare se ci sono segni di caduta o pressione sullo schermo"
+        },
+        {
+          "cause": "Aggiornamento software fallito",
+          "probability": 0.10,
+          "test": "Verificare se il problema è comparso dopo un aggiornamento"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Collegare il dispositivo al caricabatterie originale e attendere almeno 15 minuti",
+              "verification": "L'indicatore di carica appare sullo schermo",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Eseguire un hard reset: tenere premuto il tasto di accensione (e volume giù su Android) per 10-15 secondi",
+              "verification": "Il dispositivo si riavvia e lo schermo si accende",
+              "time_seconds": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "batteria_non_carica",
+      "name": "Batteria non si carica",
+      "category": "batteria",
+      "severity": "error",
+      "description": "Il dispositivo non aumenta la percentuale di carica quando collegato all'alimentatore, o carica molto lentamente.",
+      "visual_symptoms": [
+        "Percentuale batteria non aumenta durante la carica",
+        "Indicatore di carica assente o con simbolo di errore",
+        "Dispositivo che si spegne nonostante collegato alla corrente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cavo di ricarica danneggiato o non originale",
+          "probability": 0.40,
+          "test": "Provare con un cavo diverso, preferibilmente originale o certificato"
+        },
+        {
+          "cause": "Porta di ricarica sporca o danneggiata",
+          "probability": 0.30,
+          "test": "Ispezionare la porta USB con una torcia: cercare lint, sporco o pin piegati"
+        },
+        {
+          "cause": "Batteria deteriorata o a fine vita",
+          "probability": 0.20,
+          "test": "Verificare la salute della batteria nelle impostazioni (iOS: Impostazioni > Batteria; Android: app come AccuBattery)"
+        },
+        {
+          "cause": "Alimentatore non compatibile o di potenza insufficiente",
+          "probability": 0.10,
+          "test": "Provare con l'alimentatore originale del dispositivo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire delicatamente la porta di ricarica con un bastoncino di legno (non metallico) o aria compressa per rimuovere eventuale sporco o pelucchi",
+              "verification": "La porta è visibilmente pulita e i pin non sono piegati",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Provare con un cavo e alimentatore diversi, preferibilmente originali. Collegare e verificare se appare l'indicatore di carica",
+              "verification": "Il dispositivo mostra l'indicatore di carica attivo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "surriscaldamento_dispositivo",
+      "name": "Surriscaldamento dispositivo",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Il dispositivo diventa eccessivamente caldo durante l'uso o la carica, rischiando danni ai componenti o alla batteria.",
+      "visual_symptoms": [
+        "Temperatura elevata al tatto sul retro del dispositivo",
+        "Avviso di temperatura sullo schermo",
+        "Prestazioni ridotte automaticamente dal sistema",
+        "Batteria che si scarica rapidamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "App in background che consumano CPU eccessiva",
+          "probability": 0.40,
+          "test": "Verificare l'utilizzo della CPU nel gestore attività o impostazioni batteria"
+        },
+        {
+          "cause": "Carica wireless e uso simultaneo del dispositivo",
+          "probability": 0.25,
+          "test": "Verificare se il surriscaldamento avviene solo durante la carica wireless"
+        },
+        {
+          "cause": "Custodia che non permette la dissipazione del calore",
+          "probability": 0.20,
+          "test": "Rimuovere la custodia e verificare se la temperatura si riduce"
+        },
+        {
+          "cause": "Bug software o aggiornamento mal ottimizzato",
+          "probability": 0.15,
+          "test": "Verificare se il problema è comparso dopo un aggiornamento"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere tutte le app in background: toccare il tasto multitasking e chiudere tutte le app. Riavviare il dispositivo",
+              "verification": "Il dispositivo torna a una temperatura normale",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Rimuovere la custodia durante la carica e l'uso intenso per migliorare la dissipazione del calore",
+              "verification": "Temperatura ridotta al tatto",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "porta_usb_non_funziona",
+      "name": "Porta USB non funziona",
+      "category": "connettività",
+      "severity": "warning",
+      "description": "La porta USB del dispositivo non riconosce i dispositivi collegati o non permette il trasferimento dati.",
+      "visual_symptoms": [
+        "Nessun riconoscimento del dispositivo collegato",
+        "Nessun suono di connessione",
+        "Dispositivo collegato non compare nel file manager"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Driver USB non installato o corrotto",
+          "probability": 0.35,
+          "test": "Verificare Gestione dispositivi in Windows per errori sui driver USB"
+        },
+        {
+          "cause": "Porta USB fisicamente danneggiata o sporca",
+          "probability": 0.30,
+          "test": "Provare un altro dispositivo USB sulla stessa porta. Ispezionare i pin della porta"
+        },
+        {
+          "cause": "Cavo USB difettoso",
+          "probability": 0.25,
+          "test": "Provare con un cavo USB diverso e certificato"
+        },
+        {
+          "cause": "Impostazione modalità USB errata sul dispositivo mobile",
+          "probability": 0.10,
+          "test": "Verificare le opzioni USB nel pannello delle notifiche (Android) dopo la connessione"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Provare con un cavo USB diverso e collegare a una porta USB diversa del computer",
+              "verification": "Il dispositivo viene riconosciuto",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Su Android, abbassare la barra delle notifiche dopo la connessione e selezionare il tipo di connessione USB (Trasferimento file / MTP)",
+              "verification": "Il dispositivo appare come unità nel file manager",
+              "time_seconds": 30
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Aggiornare o reinstallare i driver USB: aprire Gestione dispositivi, trovare il dispositivo con errore, cliccare con tasto destro e scegliere Aggiorna driver",
+              "verification": "Driver aggiornato senza errori in Gestione dispositivi",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi_non_connette",
+      "name": "WiFi non si connette",
+      "category": "connettività",
+      "severity": "warning",
+      "description": "Il dispositivo non riesce a connettersi alla rete WiFi o si disconnette continuamente.",
+      "visual_symptoms": [
+        "Icona WiFi con punto esclamativo o croce",
+        "Messaggio di errore durante la connessione",
+        "Connessione instabile con frequenti disconnessioni"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Credenziali WiFi errate o rete con problemi",
+          "probability": 0.35,
+          "test": "Verificare che la password inserita sia corretta e che altri dispositivi si connettano alla stessa rete"
+        },
+        {
+          "cause": "Cache di rete corrotta sul dispositivo",
+          "probability": 0.30,
+          "test": "Dimenticare la rete e riconnettersi"
+        },
+        {
+          "cause": "Router con problemi o firmware obsoleto",
+          "probability": 0.25,
+          "test": "Riavviare il router e verificare se altri dispositivi hanno lo stesso problema"
+        },
+        {
+          "cause": "Indirizzo IP in conflitto",
+          "probability": 0.10,
+          "test": "Impostare manualmente un indirizzo IP fisso sul dispositivo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Andare nelle impostazioni WiFi, toccare la rete problematica, selezionare 'Dimentica rete'. Riavviare il dispositivo e riconnettersi inserendo di nuovo la password",
+              "verification": "Il dispositivo si connette con successo e ottiene connessione internet",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Riavviare il router scollegandolo per 30 secondi e ricollegandolo. Attendere 2 minuti e riprovare la connessione",
+              "verification": "Il router si riavvia e il dispositivo si connette correttamente",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bluetooth_non_trova_dispositivi",
+      "name": "Bluetooth non trova dispositivi",
+      "category": "connettività",
+      "severity": "info",
+      "description": "Il Bluetooth del dispositivo è attivo ma non rileva i dispositivi vicini durante la scansione.",
+      "visual_symptoms": [
+        "Lista dispositivi Bluetooth vuota durante la scansione",
+        "Dispositivi noti non compaiono nella lista",
+        "Connessione Bluetooth instabile o che cade"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Dispositivo target non in modalità abbinamento",
+          "probability": 0.45,
+          "test": "Verificare che il dispositivo da connettere sia in modalità pairing (visibile/rilevabile)"
+        },
+        {
+          "cause": "Distanza eccessiva o interferenze",
+          "probability": 0.30,
+          "test": "Avvicinare i dispositivi e allontanare fonti di interferenza (router WiFi, microonde)"
+        },
+        {
+          "cause": "Cache Bluetooth corrotta",
+          "probability": 0.25,
+          "test": "Disattivare e riattivare il Bluetooth, poi cancellare la cache dell'app Bluetooth (Android)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Disattivare il Bluetooth sul dispositivo, attendere 10 secondi e riattivarlo. Assicurarsi che il dispositivo target sia in modalità pairing visibile",
+              "verification": "Il dispositivo target appare nella lista durante la scansione",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Se il dispositivo era già abbinato, rimuoverlo dalla lista dispositivi e riabbinarlo da zero",
+              "verification": "Abbinamento completato con successo",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "altoparlante_distorto",
+      "name": "Altoparlante distorto",
+      "category": "audio",
+      "severity": "warning",
+      "description": "L'audio dell'altoparlante del dispositivo è distorto, gracchiante o con rumori statici.",
+      "visual_symptoms": [
+        "Audio gracchiante o distorto agli alti volumi",
+        "Rumori statici durante la riproduzione",
+        "Voce incomprensibile durante le chiamate"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Altoparlante sporco con polvere o detriti",
+          "probability": 0.40,
+          "test": "Ispezionare la griglia dell'altoparlante con una torcia per cercare ostruzioni"
+        },
+        {
+          "cause": "Volume al massimo che causa distorsione fisica",
+          "probability": 0.30,
+          "test": "Ridurre il volume a 70% e verificare se la distorsione sparisce"
+        },
+        {
+          "cause": "Altoparlante danneggiato fisicamente (caduta o umidità)",
+          "probability": 0.30,
+          "test": "Verificare se c'è stata un'esposizione ad acqua o caduta recente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Ridurre il volume al 70% e testare l'audio. Se la distorsione sparisce, evitare volumi massimi",
+              "verification": "Audio chiaro al volume ridotto",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Pulire delicatamente la griglia dell'altoparlante con uno spazzolino morbido o aria compressa a bassa pressione per rimuovere polvere e detriti",
+              "verification": "Griglia pulita e audio migliorato",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "microfono_non_funziona",
+      "name": "Microfono non funziona",
+      "category": "audio",
+      "severity": "warning",
+      "description": "Il microfono del dispositivo non registra audio o la voce risulta incomprensibile durante le chiamate.",
+      "visual_symptoms": [
+        "Interlocutori che non sentono o sentono male durante le chiamate",
+        "Registrazioni audio silenziose o con voce impercettibile",
+        "App di registrazione che non rileva input audio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Microfono ostruito da sporco, case o dita",
+          "probability": 0.40,
+          "test": "Verificare che il foro del microfono non sia coperto dalla custodia o da sporco"
+        },
+        {
+          "cause": "App specifica che non ha il permesso di accesso al microfono",
+          "probability": 0.35,
+          "test": "Verificare i permessi dell'app nelle impostazioni"
+        },
+        {
+          "cause": "Microfono hardware danneggiato",
+          "probability": 0.25,
+          "test": "Testare il microfono con più app diverse per isolare se il problema è hardware o software"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che la custodia non copra il foro del microfono (solitamente in basso, vicino alla porta di ricarica). Pulire il foro con uno spazzolino morbido",
+              "verification": "Il foro del microfono è libero",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Andare in Impostazioni > App > selezionare l'app problematica > Permessi e verificare che il microfono sia autorizzato",
+              "verification": "Permesso microfono attivato per l'app",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "touch_screen_non_risponde",
+      "name": "Touch screen non risponde",
+      "category": "display",
+      "severity": "error",
+      "description": "Lo schermo touch del dispositivo non registra i tocchi o risponde in modo erratico.",
+      "visual_symptoms": [
+        "Tocchi non registrati o registrati nel punto sbagliato",
+        "Schermo che si attiva da solo (ghost touch)",
+        "Solo alcune aree dello schermo rispondono"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Protezione schermo difettosa o mal applicata",
+          "probability": 0.35,
+          "test": "Rimuovere la protezione schermo e testare il touch direttamente"
+        },
+        {
+          "cause": "Mani bagnate o schermo umido",
+          "probability": 0.25,
+          "test": "Asciugare le dita e lo schermo e riprovare"
+        },
+        {
+          "cause": "Bug software o app bloccata",
+          "probability": 0.25,
+          "test": "Riavviare il dispositivo e verificare se il problema persiste"
+        },
+        {
+          "cause": "Schermo danneggiato fisicamente",
+          "probability": 0.15,
+          "test": "Verificare se ci sono crepe o danni fisici visibili sul pannello"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere la protezione schermo se presente. Asciugare lo schermo con un panno morbido e asciutto. Riavviare il dispositivo",
+              "verification": "Il touch screen risponde correttamente ai tocchi",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fotocamera_sfocata",
+      "name": "Fotocamera sfocata",
+      "category": "fotocamera",
+      "severity": "info",
+      "description": "Le foto scattate con la fotocamera del dispositivo risultano sempre sfocate o con messa a fuoco lenta.",
+      "visual_symptoms": [
+        "Foto sfocate o mosse",
+        "Autofocus lento o che non trova il fuoco",
+        "Immagini sfocate anche con buona luce"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Obiettivo della fotocamera sporco",
+          "probability": 0.50,
+          "test": "Ispezionare l'obiettivo con luce: cercare impronte, grasso o graffi"
+        },
+        {
+          "cause": "Obiettivo fisicamente danneggiato (caduta)",
+          "probability": 0.30,
+          "test": "Verificare se ci sono crepe o segni di impatto sull'obiettivo"
+        },
+        {
+          "cause": "Bug nell'app fotocamera",
+          "probability": 0.20,
+          "test": "Provare con un'app fotocamera diversa per verificare se il problema è nell'app"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire delicatamente l'obiettivo della fotocamera con un panno in microfibra asciutto, usando movimenti circolari. Non usare liquidi o tessuti abrasivi",
+              "verification": "L'obiettivo è privo di impronte e la fotocamera mette a fuoco correttamente",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Cancellare la cache dell'app fotocamera (Impostazioni > App > Fotocamera > Cancella cache) e riavviarla",
+              "verification": "L'app fotocamera funziona correttamente",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notifiche_non_arrivano",
+      "name": "Notifiche non arrivano",
+      "category": "software",
+      "severity": "info",
+      "description": "Le notifiche di app o messaggi non vengono ricevute o arrivano in ritardo sul dispositivo.",
+      "visual_symptoms": [
+        "Nessuna notifica push anche per messaggi importanti",
+        "Notifiche che arrivano in ritardo di ore",
+        "Badge delle app non aggiornati"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Notifiche disattivate nelle impostazioni dell'app",
+          "probability": 0.40,
+          "test": "Verificare Impostazioni > Notifiche > selezionare l'app"
+        },
+        {
+          "cause": "Modalità risparmio energetico o non disturbare attiva",
+          "probability": 0.35,
+          "test": "Verificare se la modalità Non disturbare è attiva nella barra delle notifiche"
+        },
+        {
+          "cause": "App in background bloccata dall'ottimizzazione batteria",
+          "probability": 0.25,
+          "test": "Verificare le impostazioni di ottimizzazione batteria per l'app specifica"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Disattivare la modalità Non disturbare. Andare in Impostazioni > Notifiche > selezionare l'app e abilitare tutte le notifiche",
+              "verification": "L'app può inviare notifiche",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Disabilitare l'ottimizzazione batteria per l'app: Impostazioni > Batteria > Ottimizzazione batteria > selezionare l'app > Non ottimizzare",
+              "verification": "L'app riceve notifiche in tempo reale",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "app_chiude_da_sola",
+      "name": "App si chiude da sola (crash)",
+      "category": "software",
+      "severity": "warning",
+      "description": "Un'applicazione si chiude inaspettatamente o mostra un messaggio di errore durante l'utilizzo.",
+      "visual_symptoms": [
+        "App che chiude improvvisamente senza preavviso",
+        "Messaggio di errore app non risponde",
+        "App che si blocca su una schermata specifica"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cache dell'app corrotta",
+          "probability": 0.40,
+          "test": "Cancellare la cache dell'app e riprovare"
+        },
+        {
+          "cause": "Versione dell'app non compatibile con la versione OS",
+          "probability": 0.30,
+          "test": "Verificare se ci sono aggiornamenti disponibili per l'app"
+        },
+        {
+          "cause": "Memoria RAM insufficiente",
+          "probability": 0.30,
+          "test": "Chiudere tutte le altre app e verificare se il crash persiste"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Andare in Impostazioni > App > selezionare l'app problematica > Cancella cache (poi eventualmente Cancella dati)",
+              "verification": "Cache cancellata, aprire nuovamente l'app",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Aggiornare l'app all'ultima versione disponibile nel Play Store o App Store",
+              "verification": "App aggiornata e funzionante senza crash",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memoria_piena",
+      "name": "Memoria interna piena",
+      "category": "software",
+      "severity": "warning",
+      "description": "La memoria interna del dispositivo è esaurita, impedendo nuove installazioni, aggiornamenti e rallentando il sistema.",
+      "visual_symptoms": [
+        "Avviso di spazio di archiviazione insufficiente",
+        "Impossibilità di scattare foto o scaricare file",
+        "Sistema rallentato e app lente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "App e dati accumulati nel tempo senza manutenzione",
+          "probability": 0.45,
+          "test": "Verificare in Impostazioni > Archiviazione quale categoria occupa più spazio"
+        },
+        {
+          "cause": "Cache delle app molto grande",
+          "probability": 0.35,
+          "test": "Verificare la dimensione totale delle cache in Impostazioni > Archiviazione"
+        },
+        {
+          "cause": "Download e media non cancellati",
+          "probability": 0.20,
+          "test": "Verificare la cartella Download e la galleria per file non necessari"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare lo strumento di pulizia integrato: Impostazioni > Archiviazione > Libera spazio. Eliminare i file suggeriti come duplicati, foto sfocate e file temporanei",
+              "verification": "Spazio libero aumentato di almeno 1-2 GB",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Spostare foto e video su cloud (Google Foto, iCloud) e cancellarli dal dispositivo. Disinstallare app non utilizzate",
+              "verification": "Spazio di archiviazione adeguato disponibile",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aggiornamento_fallito",
+      "name": "Aggiornamento sistema operativo fallito",
+      "category": "software",
+      "severity": "error",
+      "description": "L'aggiornamento del sistema operativo si interrompe durante il download o l'installazione, lasciando il dispositivo in uno stato instabile.",
+      "visual_symptoms": [
+        "Aggiornamento bloccato a una certa percentuale",
+        "Messaggio di errore durante l'installazione",
+        "Dispositivo bloccato nella schermata di aggiornamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Spazio di archiviazione insufficiente per l'aggiornamento",
+          "probability": 0.40,
+          "test": "Verificare lo spazio libero disponibile: gli aggiornamenti richiedono solitamente 2-5 GB"
+        },
+        {
+          "cause": "Connessione internet instabile durante il download",
+          "probability": 0.35,
+          "test": "Verificare la qualità della connessione WiFi durante il download"
+        },
+        {
+          "cause": "Batteria insufficiente durante l'installazione",
+          "probability": 0.25,
+          "test": "Verificare che la batteria sia sopra il 50% o collegare il caricabatterie"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Liberare spazio di archiviazione (almeno 5 GB liberi). Collegare il dispositivo al caricabatterie. Connettersi a una rete WiFi stabile e riprovare l'aggiornamento",
+              "verification": "L'aggiornamento parte e prosegue senza interruzioni",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Se il dispositivo è bloccato durante l'installazione, attendere 30 minuti. Se non si sblocca, eseguire un riavvio forzato (tasto accensione + volume giù)",
+              "verification": "Il dispositivo si riavvia nel sistema operativo funzionante",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tasto_volume_rotto",
+      "name": "Tasto volume non funziona",
+      "category": "hardware",
+      "severity": "info",
+      "description": "Il tasto fisico del volume del dispositivo non risponde alla pressione o è bloccato.",
+      "visual_symptoms": [
+        "Pressione del tasto senza reazione del volume",
+        "Tasto incassato o bloccato meccanicamente",
+        "Volume che cambia da solo (tasto bloccato in posizione premuta)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Detriti o sporco bloccano il tasto",
+          "probability": 0.45,
+          "test": "Ispezionare il bordo del tasto con una torcia per verificare la presenza di sporco"
+        },
+        {
+          "cause": "Tasto fisicamente danneggiato",
+          "probability": 0.35,
+          "test": "Premere il tasto lateralmente: se ha eccessivo gioco o è cedevole, potrebbe essere danneggiato"
+        },
+        {
+          "cause": "Bug software che ignora il tasto",
+          "probability": 0.20,
+          "test": "Riavviare il dispositivo e verificare se il tasto funziona dopo il riavvio"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere la custodia. Pulire intorno al tasto del volume con uno spazzolino morbido o aria compressa. Premere il tasto più volte per sbloccare eventuali detriti",
+              "verification": "Il tasto risponde con un click netto",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Usare il controllo volume accessibilità come alternativa: Impostazioni > Accessibilità > Volume come metodo di input",
+              "verification": "Il volume può essere modificato tramite il menu alternativo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jack_cuffie_non_funziona",
+      "name": "Jack cuffie non funziona",
+      "category": "audio",
+      "severity": "info",
+      "description": "Le cuffie collegate al jack audio non producono suono o il dispositivo non le riconosce.",
+      "visual_symptoms": [
+        "Nessun audio nelle cuffie dopo la connessione",
+        "Audio che rimane dagli altoparlanti nonostante le cuffie collegate",
+        "Un solo canale audio funzionante (mono)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Jack sporca o con detriti all'interno",
+          "probability": 0.50,
+          "test": "Ispezionare il foro del jack con una torcia cercando pelucchi o sporco"
+        },
+        {
+          "cause": "Cuffie non completamente inserite",
+          "probability": 0.25,
+          "test": "Inserire completamente il jack e verificare se scatta in posizione"
+        },
+        {
+          "cause": "Jack fisicamente danneggiato",
+          "probability": 0.25,
+          "test": "Provare con cuffie diverse per escludere un problema con le cuffie stesse"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire il jack audio inserendo delicatamente uno stuzzicadenti o bastoncino di legno per rimuovere pelucchi. Non usare oggetti metallici",
+              "verification": "Il jack è pulito e le cuffie vengono riconosciute",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Testare le cuffie con un altro dispositivo e testare altre cuffie sullo stesso dispositivo per isolare il problema",
+              "verification": "Identificato se il problema è nelle cuffie o nel dispositivo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ricarica_lenta",
+      "name": "Ricarica molto lenta",
+      "category": "batteria",
+      "severity": "info",
+      "description": "Il dispositivo si carica molto più lentamente del normale, impiegando il doppio o più del tempo previsto.",
+      "visual_symptoms": [
+        "Percentuale batteria che aumenta di 1% ogni 10+ minuti",
+        "Notifica ricarica lenta sul display",
+        "Dispositivo che si raffredda durante la carica (carica lenta per sicurezza termica)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Alimentatore di bassa potenza o non compatibile con ricarica rapida",
+          "probability": 0.40,
+          "test": "Verificare la potenza dell'alimentatore (Watt) sul coperchio: deve corrispondere alla specifica del dispositivo"
+        },
+        {
+          "cause": "Cavo USB che non supporta la ricarica rapida",
+          "probability": 0.35,
+          "test": "Verificare se il cavo è certificato per la ricarica rapida (USB-PD, Quick Charge, ecc.)"
+        },
+        {
+          "cause": "App in background che consumano energia mentre si carica",
+          "probability": 0.25,
+          "test": "Mettere il dispositivo in modalità aereo durante la carica e confrontare i tempi"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare l'alimentatore originale del dispositivo o uno certificato con la stessa potenza (Watt) e standard di ricarica rapida",
+              "verification": "Il dispositivo mostra la notifica ricarica rapida e la percentuale aumenta più velocemente",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Mettere il dispositivo in modalità aereo durante la ricarica per ridurre il consumo in background",
+              "verification": "Tempo di ricarica ridotto",
+              "time_seconds": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "display_righe_orizzontali",
+      "name": "Display con righe orizzontali",
+      "category": "display",
+      "severity": "error",
+      "description": "Lo schermo del dispositivo mostra righe orizzontali fisse o lampeggianti che ostruiscono la visuale.",
+      "visual_symptoms": [
+        "Righe orizzontali colorate o bianche/nere sul display",
+        "Porzioni dello schermo che mostrano artefatti grafici",
+        "Schermo che lampeggia con righe in sequenza"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Display danneggiato fisicamente (pressione, caduta)",
+          "probability": 0.45,
+          "test": "Verificare se le righe sono apparse dopo una caduta o pressione sullo schermo"
+        },
+        {
+          "cause": "Connettore del display parzialmente scollegato",
+          "probability": 0.35,
+          "test": "Le righe che compaiono e scompaiono premendo delicatamente il bordo dello schermo indicano un connettore allentato"
+        },
+        {
+          "cause": "Problema software o driver grafico",
+          "probability": 0.20,
+          "test": "Riavviare il dispositivo: se le righe spariscono dopo il riavvio, è un problema software"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Riavviare il dispositivo. Se il problema persiste, eseguire un backup completo dei dati immediatamente, in quanto il display potrebbe peggiorare",
+              "verification": "Se le righe spariscono dopo il riavvio, il problema era software",
+              "time_seconds": 120
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Se il problema persiste, portare il dispositivo in assistenza per la sostituzione del display o la riconnessione del connettore",
+              "verification": "Il tecnico ripristina il display funzionante",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "telefono_si_riavvia_da_solo",
+      "name": "Telefono si riavvia da solo",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Il dispositivo si riavvia spontaneamente in modo casuale, interrompendo l'attività in corso.",
+      "visual_symptoms": [
+        "Riavvio improvviso senza input dell'utente",
+        "Schermata di avvio del sistema che appare inaspettatamente",
+        "Riavvii frequenti in determinate condizioni (batteria bassa, uso intenso)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria degradata con picchi di tensione",
+          "probability": 0.40,
+          "test": "Verificare la salute della batteria e osservare se i riavvii avvengono a percentuali specifiche"
+        },
+        {
+          "cause": "Surriscaldamento che attiva la protezione termica",
+          "probability": 0.35,
+          "test": "Verificare se il riavvio avviene dopo uso intenso (giochi, video) o durante la carica"
+        },
+        {
+          "cause": "Bug software o app instabile",
+          "probability": 0.25,
+          "test": "Verificare se il problema è comparso dopo l'installazione di una nuova app"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Avviare il dispositivo in modalità sicura (Safe Mode) per isolare le app di terze parti. Su Android: tenere premuto Spegni > Riavvia in modalità sicura",
+              "verification": "Se i riavvii non avvengono in Safe Mode, il problema è causato da un'app di terze parti",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se il problema è un'app, identificarla e disinstallarla. Se persiste, verificare la salute della batteria e valutarne la sostituzione",
+              "verification": "Nessun riavvio spontaneo dopo la risoluzione",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "impronta_digitale_non_riconosciuta",
+      "name": "Impronta digitale non riconosciuta",
+      "category": "sicurezza",
+      "severity": "info",
+      "description": "Il sensore di impronte digitali non riconosce il dito registrato, richiedendo l'inserimento del PIN.",
+      "visual_symptoms": [
+        "Messaggio impronta non riconosciuta ripetuto",
+        "Sensore che vibra di errore",
+        "Tasso di riconoscimento molto basso"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sensore sporco o dito umido/grasso",
+          "probability": 0.50,
+          "test": "Pulire il sensore e il dito con un panno asciutto e riprovare"
+        },
+        {
+          "cause": "Impronta registrata in condizioni diverse (dito tagliato, pelle secca)",
+          "probability": 0.30,
+          "test": "Confrontare la condizione attuale del dito con quella al momento della registrazione"
+        },
+        {
+          "cause": "Protezione schermo che copre il sensore (sensori in-display)",
+          "probability": 0.20,
+          "test": "Verificare se la protezione schermo è compatibile con il sensore in-display"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire il sensore di impronte con un panno morbido asciutto. Asciugare il dito prima di poggiarlo sul sensore",
+              "verification": "Il sensore riconosce l'impronta correttamente",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Eliminare l'impronta digitale salvata e registrarla nuovamente con più variazioni dell'angolazione del dito",
+              "verification": "Nuova impronta registrata e riconosciuta con alto tasso di successo",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
