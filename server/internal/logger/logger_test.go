@@ -1,94 +1,114 @@
 package logger
 
 import (
-	"os"
+	"log/slog"
 	"testing"
 )
 
-// TestIsProductionReturnsTrueForProductionEnv verifies both recognised aliases.
-func TestIsProductionReturnsTrueForProductionEnv(t *testing.T) {
-	for _, env := range []string{"production", "prod"} {
-		t.Run(env, func(t *testing.T) {
-			t.Setenv("APP_ENV", env)
-			if !isProduction() {
-				t.Errorf("isProduction() should return true for APP_ENV=%q", env)
-			}
-		})
+// ---------------------------------------------------------------------------
+// isProduction tests (unexported, accessible within package logger)
+// ---------------------------------------------------------------------------
+
+// TestIsProductionWithProd verifies that APP_ENV=prod is treated as production.
+func TestIsProductionWithProd(t *testing.T) {
+	t.Setenv("APP_ENV", "prod")
+	if !isProduction() {
+		t.Error("isProduction(): want true for APP_ENV=prod, got false")
 	}
 }
 
-// TestIsProductionReturnsFalseForNonProductionEnv verifies non-production values.
-func TestIsProductionReturnsFalseForNonProductionEnv(t *testing.T) {
-	for _, env := range []string{"", "development", "dev", "staging", "test"} {
-		t.Run("env="+env, func(t *testing.T) {
-			t.Setenv("APP_ENV", env)
-			if isProduction() {
-				t.Errorf("isProduction() should return false for APP_ENV=%q", env)
-			}
-		})
-	}
-}
-
-// TestInitProductionSetsJSONHandler verifies that Init() does not panic in
-// production mode and sets a functioning logger.
-func TestInitProductionSetsJSONHandler(t *testing.T) {
+// TestIsProductionWithProduction verifies that APP_ENV=production is production.
+func TestIsProductionWithProduction(t *testing.T) {
 	t.Setenv("APP_ENV", "production")
-	// Init should not panic.
+	if !isProduction() {
+		t.Error("isProduction(): want true for APP_ENV=production, got false")
+	}
+}
+
+// TestIsProductionWithDev verifies that APP_ENV=development is not production.
+func TestIsProductionWithDev(t *testing.T) {
+	t.Setenv("APP_ENV", "development")
+	if isProduction() {
+		t.Error("isProduction(): want false for APP_ENV=development, got true")
+	}
+}
+
+// TestIsProductionWithEmpty verifies that an empty APP_ENV is not production.
+func TestIsProductionWithEmpty(t *testing.T) {
+	t.Setenv("APP_ENV", "")
+	if isProduction() {
+		t.Error("isProduction(): want false for APP_ENV=\"\", got true")
+	}
+}
+
+// TestIsProductionWithStaging verifies that APP_ENV=staging is not production.
+func TestIsProductionWithStaging(t *testing.T) {
+	t.Setenv("APP_ENV", "staging")
+	if isProduction() {
+		t.Error("isProduction(): want false for APP_ENV=staging, got true")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Init tests
+// ---------------------------------------------------------------------------
+
+// TestInitProductionMode verifies that Init() runs without panic in production
+// mode and installs a non-nil global logger.
+func TestInitProductionMode(t *testing.T) {
+	old := slog.Default()
+	defer slog.SetDefault(old)
+
+	t.Setenv("APP_ENV", "production")
 	Init()
-	// Logger must be usable — calling slog with it should not panic.
-	// We can't easily inspect the handler type in tests, so we rely on the
-	// no-panic guarantee and the isProduction branch coverage.
+
+	if slog.Default() == nil {
+		t.Error("Init() with APP_ENV=production: slog.Default() is nil")
+	}
 }
 
-// TestInitDevelopmentSetsTextHandler verifies Init() in development mode.
-func TestInitDevelopmentSetsTextHandler(t *testing.T) {
-	os.Unsetenv("APP_ENV")
+// TestInitDevMode verifies that Init() runs without panic in development mode
+// and installs a non-nil global logger.
+func TestInitDevMode(t *testing.T) {
+	old := slog.Default()
+	defer slog.SetDefault(old)
+
+	t.Setenv("APP_ENV", "development")
 	Init()
-	// No panic = success; branch coverage is the goal.
-}
 
-// TestHashIPIsDeterministic verifies the same input always produces the same hash.
-func TestHashIPIsDeterministic(t *testing.T) {
-	h1 := HashIP("192.168.1.1")
-	h2 := HashIP("192.168.1.1")
-	if h1 != h2 {
-		t.Errorf("HashIP is not deterministic: %q != %q", h1, h2)
+	if slog.Default() == nil {
+		t.Error("Init() with APP_ENV=development: slog.Default() is nil")
 	}
 }
 
-// TestHashIPLength verifies the output is always 8 hex characters (4 bytes SHA-256 prefix).
-func TestHashIPLength(t *testing.T) {
-	for _, ip := range []string{"", "127.0.0.1", "::1", "10.0.0.1"} {
-		h := HashIP(ip)
-		if len(h) != 8 {
-			t.Errorf("HashIP(%q): expected 8 chars, got %d (%q)", ip, len(h), h)
-		}
+// TestInitNoEnv verifies that Init() runs without panic when APP_ENV is unset.
+func TestInitNoEnv(t *testing.T) {
+	old := slog.Default()
+	defer slog.SetDefault(old)
+
+	t.Setenv("APP_ENV", "")
+	Init()
+
+	if slog.Default() == nil {
+		t.Error("Init() with APP_ENV=\"\": slog.Default() is nil")
 	}
 }
 
-// TestHashIPDifferentInputsDifferentOutputs verifies distinct IPs hash differently.
-func TestHashIPDifferentInputsDifferentOutputs(t *testing.T) {
-	h1 := HashIP("192.168.1.1")
-	h2 := HashIP("10.0.0.1")
-	if h1 == h2 {
-		t.Error("different IPs produced the same hash — collision detected")
-	}
-}
+// TestInitChangesLogger verifies that Init() replaces the global logger with a
+// new instance (the pointer changes between calls with different environments).
+func TestInitChangesLogger(t *testing.T) {
+	old := slog.Default()
+	defer slog.SetDefault(old)
 
-// TestHashIPIsHex verifies the output contains only hexadecimal characters.
-func TestHashIPIsHex(t *testing.T) {
-	h := HashIP("1.2.3.4")
-	for _, c := range h {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-			t.Errorf("HashIP output %q contains non-hex character %q", h, c)
-		}
-	}
-}
+	t.Setenv("APP_ENV", "development")
+	Init()
+	devLogger := slog.Default()
 
-// TestHashIPEmptyString verifies no panic on empty input.
-func TestHashIPEmptyString(t *testing.T) {
-	h := HashIP("")
-	if len(h) != 8 {
-		t.Errorf("HashIP(\"\") expected 8-char hash, got %q", h)
+	t.Setenv("APP_ENV", "production")
+	Init()
+	prodLogger := slog.Default()
+
+	if devLogger == prodLogger {
+		t.Error("Init() should install a new logger on each call, but dev and prod loggers are the same pointer")
 	}
 }

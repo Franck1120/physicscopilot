@@ -22,7 +22,7 @@ type SessionRecord struct {
 
 // SessionRepo handles persistence for repair sessions.
 type SessionRepo struct {
-	pool *pgxpool.Pool
+	pool pgxPool
 }
 
 // NewSessionRepo creates a SessionRepo backed by the given pool.
