@@ -1,13 +1,12 @@
 version: "3.9"
 
-# ── PhysicsCopilot — local dev stack ──────────────────────────────────────────
-# Usage:
-#   cp .env.example .env       # fill in your secrets
-#   docker compose -f infra/docker-compose.yml up
+# ── PhysicsCopilot — Fly.io deploy stack ──────────────────────────────────────
+# Companion compose file for Fly.io deployments using Dockerfile.fly.
+# For local development use the root docker-compose.yml instead.
 #
-# Supabase local stack (optional): run `supabase start` first, then set
-#   SUPABASE_URL=http://localhost:54321 in your .env.
-# Simple Postgres (default): used by this compose file for future persistence.
+# Usage (Fly-like local test):
+#   cp .env.example .env       # fill in your secrets
+#   docker compose -f infra/docker-compose.fly.yml up
 #
 # CLIProxyAPI: must be running separately on the host at port 8085.
 #   The server reaches it via host.docker.internal:8085 when GEMINI_API_KEY is absent.
