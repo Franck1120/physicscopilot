@@ -1,0 +1,763 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "garden",
+  "total": 15,
+  "problems": [
+    {
+      "id": "tagliaerba_non_parte",
+      "name": "Tagliaerba che non si avvia",
+      "category": "tagliaerba",
+      "severity": "error",
+      "description": "Il tagliaerba a benzina non si avvia tirando lo starter o alla pressione del pulsante di avvio, anche dopo aver caricato completamente il serbatoio.",
+      "visual_symptoms": [
+        "Motorino starter che non oppone resistenza al tiro",
+        "Nessun tentativo di accensione durante l'avvio",
+        "Uscita di fumo blu dal carburatore durante i tentativi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Benzina vecchia o acqua nel serbatoio che impedisce la combustione",
+          "probability": 0.45,
+          "test": "Svuotare il serbatoio e verificare l'odore e il colore della benzina: quella vecchia è brunastra e ha odore acido"
+        },
+        {
+          "cause": "Candela dell'accensione sporca, bagnata o consumata",
+          "probability": 0.35,
+          "test": "Rimuovere la candela con chiave apposita: verificare che l'elettrodo non sia annerito, bagnato o il gap eroso"
+        },
+        {
+          "cause": "Filtro aria ostruito che impedisce l'afflusso di aria al carburatore",
+          "probability": 0.20,
+          "test": "Rimuovere il coperchio del filtro aria e verificare se il filtro è sporco o intasato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svuotare il serbatoio della benzina vecchia e riempire con benzina fresca (95 ottani, non E10 se il motore è vecchio)",
+              "verification": "Serbatoio pieno con benzina fresca, odore normale di carburante",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Rimuovere la candela, pulirla con carta vetrata fine se nera, o sostituirla se l'elettrodo è consumato",
+              "verification": "Candela pulita con gap corretto (0.6-0.8mm) o candela nuova installata",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Premere il primer (bulbo rosso) 3 volte per il carburatore e azionare lo starter",
+              "verification": "Motore si avvia entro 5 tirate dello starter",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tubo_irrigazione_perde",
+      "name": "Tubo irrigazione con perdita d'acqua",
+      "category": "irrigazione",
+      "severity": "warning",
+      "description": "Il tubo di irrigazione presenta una perdita d'acqua in uno o più punti, riducendo la pressione e sprecando acqua.",
+      "visual_symptoms": [
+        "Pozzanghera o terreno bagnato lungo il percorso del tubo",
+        "Pressione ridotta all'irrigatore o alla pistola",
+        "Fessura o foro visibile sulla superficie del tubo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Perforazione del tubo da utensile da giardino o da attrito con superfici taglienti",
+          "probability": 0.50,
+          "test": "Seguire il percorso del tubo cercando il punto da cui sprizza acqua con il rubinetto aperto"
+        },
+        {
+          "cause": "Connettore o raccordo allentato o con guarnizione deteriorata",
+          "probability": 0.35,
+          "test": "Verificare tutti i raccordi stringendoli a mano: la perdita è solitamente ai giunti"
+        },
+        {
+          "cause": "Tubo deteriorato per esposizione ai raggi UV o temperature estreme",
+          "probability": 0.15,
+          "test": "Ispezionare visivamente il tubo: presenza di crepe, sbiadimento o rigidità eccessiva"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere il rubinetto principale. Tagliare nettamente il tubo a 5cm dal punto di perdita su entrambi i lati con tagliatubi.",
+              "verification": "Sezione danneggiata rimossa, tagli netti e perpendicolari",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Inserire un raccordo di riparazione (giunto di giunzione) per collegare i due tronconi del tubo",
+              "verification": "Raccordo inserito saldamente, nessun gioco",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Aprire il rubinetto e verificare l'assenza di perdite al raccordo di riparazione",
+              "verification": "Nessuna perdita visibile, pressione normale ripristinata",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pompa_piscina_rumorosa",
+      "name": "Pompa piscina con rumore anomalo",
+      "category": "manutenzione",
+      "severity": "error",
+      "description": "La pompa di filtrazione della piscina emette rumori anomali durante il funzionamento come cigolii, vibrazioni o suoni di cavitazione.",
+      "visual_symptoms": [
+        "Rumore metallico o stridulo durante il funzionamento",
+        "Vibrazioni eccessive che si trasmettono al basamento",
+        "Bolle d'aria visibili nel vetro spia della pompa"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cavitazione causata da ostruzione nel preraccordo o filtro intasato",
+          "probability": 0.45,
+          "test": "Controllare il preraccordo (cestello prentrante): verificare se è pieno di foglie o detriti"
+        },
+        {
+          "cause": "Cuscinetti della pompa usurati per fine vita",
+          "probability": 0.35,
+          "test": "Sentire se il rumore è continuo e metallico anche senza flusso d'acqua: indica cuscinetti"
+        },
+        {
+          "cause": "Perdita d'aria sul lato aspirazione della pompa",
+          "probability": 0.20,
+          "test": "Controllare le guarnizioni del preraccordo e del tappo di ispezione con sapone liquido"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere la pompa. Aprire il preraccordo e pulire il cestello da foglie e detriti.",
+              "verification": "Cestello pulito, nessuna ostruzione visibile",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verificare e sostituire le guarnizioni del preraccordo se indurite o danneggiate. Applicare vaselina sulla guarnizione O-ring prima di richiudere.",
+              "verification": "Guarnizioni in buono stato, preraccordo chiuso senza perdite",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Riavviare la pompa: verificare la scomparsa del rumore dopo 2 minuti di funzionamento",
+              "verification": "Pompa funzionante silenziosamente, flusso d'acqua normale al filtro",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forbici_potatura_arrugginite",
+      "name": "Forbici da potatura arrugginite",
+      "category": "utensili",
+      "severity": "warning",
+      "description": "Le lame delle forbici da potatura presentano ruggine che ne compromette il taglio e rischia di contaminare le piante durante l'uso.",
+      "visual_symptoms": [
+        "Macchie marroni-arancioni sulle lame",
+        "Lame che non scivolano più fluidamente",
+        "Piccoli punti di corrosione visibili ad occhio nudo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Conservazione in ambiente umido senza protezione",
+          "probability": 0.55,
+          "test": "Verificare dove vengono conservate le forbici: cassetti umidi o all'aperto espongono al vapore"
+        },
+        {
+          "cause": "Mancata pulizia dopo l'utilizzo con resina e linfa delle piante",
+          "probability": 0.30,
+          "test": "Verificare se sulle lame ci sono residui organici oltre alla ruggine"
+        },
+        {
+          "cause": "Lame di qualità inferiore senza trattamento antiruggine",
+          "probability": 0.15,
+          "test": "Verificare il materiale delle lame: acciaio inox resiste meglio dell'acciaio al carbonio non trattato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire le forbici e strofinarle con un panno imbevuto di WD-40 o aceto bianco per sciogliere la ruggine superficiale",
+              "verification": "Ruggine superficiale rimossa, lame di colore uniforme",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Per ruggine ostinata, usare carta vetrata fine (grana 400) strofinando nel senso della lama",
+              "verification": "Lame pulite e lucide, senza punti di corrosione",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Applicare olio per utensili sulle lame e sul perno di giunzione. Conservare in luogo asciutto.",
+              "verification": "Lame oliate, forbici scorrono fluidamente",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "carriola_pneumatico_forato",
+      "name": "Carriola con pneumatico forato",
+      "category": "utensili",
+      "severity": "warning",
+      "description": "Il pneumatico della carriola è forato o sgonfio, rendendo difficile il trasporto di materiali pesanti.",
+      "visual_symptoms": [
+        "Carriola che si porta di lato durante lo spostamento",
+        "Pneumatico visibilmente sgonfio o a contatto con il cerchio",
+        "Corpo estraneo visibile nella gomma"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Chiodo, vite o sasso appuntito che ha perforato il battistrada",
+          "probability": 0.55,
+          "test": "Gonfiare il pneumatico e ascoltare il sibilo dell'aria che fuoriesce per localizzare il foro"
+        },
+        {
+          "cause": "Camera d'aria deteriorata per usura o UV",
+          "probability": 0.30,
+          "test": "Rimuovere la camera d'aria e immergere in acqua: le bolle indicano il punto di perdita"
+        },
+        {
+          "cause": "Valvola Schrader difettosa o allentata",
+          "probability": 0.15,
+          "test": "Spruzzare acqua saponata sulla valvola: se fa bolle, la valvola perde"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Smontare la ruota rimuovendo il dado centrale. Estrarre la camera d'aria.",
+              "verification": "Camera d'aria estratta dalla copertura",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Localizzare il foro immergendo la camera gonfia in acqua. Asciugare e applicare toppa con kit riparazione forature.",
+              "verification": "Toppa applicata, nessuna perdita di bolle dopo re-immersione",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Rimontare la camera, gonfiare alla pressione corretta (solitamente 2-3 bar) e rimontare la ruota",
+              "verification": "Carriola si sposta diritta con carico normale",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trapano_percussione_non_avanza",
+      "name": "Trapano a percussione che non avanza nel muro",
+      "category": "elettroutensili",
+      "severity": "warning",
+      "description": "Il trapano a percussione non riesce a forare nel cemento o nella pietra, scivolando sulla superficie senza avanzare.",
+      "visual_symptoms": [
+        "Polvere bianca che non esce dal foro",
+        "Punta che oscilla o scivola sulla superficie",
+        "Surriscaldamento della punta dopo pochi secondi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Punta SDS o HM consumata con carburo esaurito",
+          "probability": 0.50,
+          "test": "Esaminare la punta: se il carburo in testa è piatto o arrotondato, è usurata"
+        },
+        {
+          "cause": "Modalità percussione non attivata sul trapano",
+          "probability": 0.30,
+          "test": "Verificare che il selettore di funzione sia su 'percussione' (simbolo martello)"
+        },
+        {
+          "cause": "Velocità troppo elevata che non permette l'effetto percussione ottimale",
+          "probability": 0.20,
+          "test": "Ridurre la velocità al 60-70% e aumentare la pressione: l'avanzamento deve essere costante"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che il selettore sia su modalità percussione (icona martello con testa di punta)",
+              "verification": "Selettore in posizione percussione confermato",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Sostituire la punta con una nuova punta SDS-Plus o HM specifica per muratura del diametro richiesto",
+              "verification": "Punta nuova montata saldamente nel mandrino SDS",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Foraree a velocità media con pressione costante, raffreddando periodicamente la punta in acqua",
+              "verification": "Foro avanza regolarmente, polvere grigia-bianca fuoriesce",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sega_catena_bloccata",
+      "name": "Sega circolare con catena bloccata",
+      "category": "elettroutensili",
+      "severity": "error",
+      "description": "La catena della motosega o sega a catena si blocca durante il taglio del legno o non ruota liberamente a vuoto.",
+      "visual_symptoms": [
+        "Catena ferma nonostante il motore giri",
+        "Fumo bianco o odore di bruciato dal freno catena",
+        "Barra guida visibilmente deformata o schiacciata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Freno catena attivato accidentalmente per kickback",
+          "probability": 0.50,
+          "test": "Verificare la posizione del freno catena (leva anteriore): deve essere in posizione rilasciata verso il manubrio"
+        },
+        {
+          "cause": "Catena troppo tesa che genera attrito eccessivo sulla barra guida",
+          "probability": 0.35,
+          "test": "Tentare di sollevare la catena a metà della barra: deve alzarsi di 3-4mm con resistenza moderata"
+        },
+        {
+          "cause": "Ingranaggio della frizione usurato o rotto",
+          "probability": 0.15,
+          "test": "Con il motore spento, verificare manualmente se la catena può scorrere sulla barra guida"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Spegnere immediatamente il motore. Verificare che il freno catena sia rilasciato spingendo la leva anteriore verso il manubrio.",
+              "verification": "Leva freno in posizione rilasciata, catena si muove manualmente",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Regolare la tensione della catena allentando i dadi della barra e girando la vite di tensione fino a una freccia di 3-4mm",
+              "verification": "Tensione catena corretta, scorre fluida sulla barra",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Lubrificare abbondantemente la catena con olio specifico prima di riprendere il taglio",
+              "verification": "Catena lubrificata, funzionamento silenzioso a vuoto",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "motosega_catena_allentata",
+      "name": "Motosega con catena che si allenta durante l'uso",
+      "category": "elettroutensili",
+      "severity": "error",
+      "description": "La catena della motosega si allenta progressivamente durante il taglio, rischiando di staccarsi dalla barra guida.",
+      "visual_symptoms": [
+        "Catena visibilmente lassa e che pende sotto la barra",
+        "Vibrazioni anomale durante il taglio",
+        "Taglio impreciso o deviante rispetto alla linea"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Vite di tensione catena non serrata dopo l'ultima regolazione",
+          "probability": 0.50,
+          "test": "Verificare se i dadi della barra guida sono ben serrati dopo la regolazione della tensione"
+        },
+        {
+          "cause": "Catena allungata per usura o eccessivo surriscaldamento",
+          "probability": 0.35,
+          "test": "Misurare la distanza tra i pignoni della catena: se supera il 10% rispetto alla catena nuova, è allungata"
+        },
+        {
+          "cause": "Barra guida con scanalatura usurata che non mantiene la catena in tensione",
+          "probability": 0.15,
+          "test": "Verificare la scanalatura della barra guida: deve avere profondità uniforme su tutta la lunghezza"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Allentare i dadi della barra guida, girare la vite di tensione per tendere la catena, poi stringere i dadi",
+              "verification": "Catena solleva di 3-4mm a metà barra con resistenza moderata",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la catena continua ad allentarsi dopo regolazione, sostituirla con una nuova dello stesso passo",
+              "verification": "Catena nuova installata con tensione corretta",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "irrigatore_automatico_non_ruota",
+      "name": "Irrigatore automatico che non ruota",
+      "category": "irrigazione",
+      "severity": "warning",
+      "description": "L'irrigatore rotante a pressione non ruota durante il funzionamento, bagnando solo una zona fissa invece di distribuire l'acqua uniformemente.",
+      "visual_symptoms": [
+        "Zona secca a fianco dell'irrigatore nonostante il funzionamento",
+        "Testina dell'irrigatore bloccata in una posizione fissa",
+        "Perdita di acqua laterale dal corpo dell'irrigatore"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Testina ostruita da sabbia o calcare che blocca il meccanismo di rotazione",
+          "probability": 0.50,
+          "test": "Smontare la testina e verificare la presenza di granelli di sabbia o depositi bianchi di calcare"
+        },
+        {
+          "cause": "Pressione dell'acqua insufficiente per attivare la turbina interna",
+          "probability": 0.35,
+          "test": "Misurare la pressione della linea: l'irrigatore rotante richiede generalmente almeno 2 bar"
+        },
+        {
+          "cause": "Meccanismo di rotazione rotto per età o impatto fisico",
+          "probability": 0.15,
+          "test": "Con l'irrigatore in mano, soffiare nell'ugello: la testina deve ruotare liberamente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Smontare la testina svitando la parte superiore. Immergere in aceto bianco per 30 minuti per sciogliere il calcare.",
+              "verification": "Depositi di calcare dissolti, ugelli visibilmente puliti",
+              "time_seconds": 2400
+            },
+            {
+              "instruction": "Sciacquare abbondantemente con acqua corrente e soffiare negli ugelli per rimuovere residui",
+              "verification": "Acqua fluisce libera da tutti gli ugelli",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Rimontare la testina e testare il funzionamento con acqua a pressione normale",
+              "verification": "Testina ruota uniformemente coprendo l'area prevista",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "soffiatore_foglie_non_parte",
+      "name": "Soffiatore foglie che non si avvia",
+      "category": "elettroutensili",
+      "severity": "warning",
+      "description": "Il soffiatore foglie elettrico o a benzina non si avvia quando si preme il grilletto o si tira lo starter.",
+      "visual_symptoms": [
+        "Nessun rumore di avvio al comando di accensione",
+        "Motore che tossisce ma non si stabilizza",
+        "Odore di benzina senza combustione"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria scarica (per i modelli a batteria) o cavo di alimentazione scollegato",
+          "probability": 0.45,
+          "test": "Verificare il livello di carica della batteria o il collegamento del cavo di alimentazione"
+        },
+        {
+          "cause": "Filtro aria ostruito che impedisce la combustione",
+          "probability": 0.35,
+          "test": "Aprire il coperchio del filtro aria e verificare lo stato del filtro in spugna o carta"
+        },
+        {
+          "cause": "Valvola di sicurezza o interruttore di protezione termica attivato",
+          "probability": 0.20,
+          "test": "Verificare la presenza di un pulsante di reset nella parte inferiore o laterale del motore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Per modelli a batteria: caricare la batteria completamente (2-4 ore) e reinserirla nel tool",
+              "verification": "Indicatore di carica batteria verde, batteria inserita correttamente",
+              "time_seconds": 14400
+            },
+            {
+              "instruction": "Pulire o sostituire il filtro aria ostruito",
+              "verification": "Filtro pulito o nuovo installato",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Premere l'eventuale pulsante di reset termico e attendere 5 minuti prima di avviare nuovamente",
+              "verification": "Pulsante reset premuto, avvio tentato dopo raffreddamento",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tosaerba_scala",
+      "name": "Tosaerba che scala in modo irregolare il prato",
+      "category": "tagliaerba",
+      "severity": "warning",
+      "description": "Il tosaerba produce un taglio irregolare lasciando strisce di erba più alta o scalini visibili nel prato.",
+      "visual_symptoms": [
+        "Strisce alternate di erba alta e bassa dopo il passaggio",
+        "Scalini visibili dove il tosaerba si è sovrapposto",
+        "Una ruota che lascia una traccia più profonda delle altre"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lama storta o con bilanciamento asimmetrico dopo colpo con sasso",
+          "probability": 0.45,
+          "test": "Con il tosaerba spento e cavo scollegato, verificare che la lama non sia piegata o asimmetrica"
+        },
+        {
+          "cause": "Ruote con altezze differenti o una ruota difettosa",
+          "probability": 0.35,
+          "test": "Verificare che tutti e quattro i selettori di altezza di taglio siano impostati allo stesso livello"
+        },
+        {
+          "cause": "Piastra inferiore con depositi di erba compressa che alterano il taglio",
+          "probability": 0.20,
+          "test": "Ispezionare la piastra inferiore del tosaerba con il motore spento"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Scollegare la candela o il cavo di alimentazione. Inclinare il tosaerba e pulire la piastra inferiore con spatola e spazzola metallica.",
+              "verification": "Piastra pulita senza accumuli di erba compressa",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Verificare e uniformare l'altezza di taglio su tutte e quattro le ruote allo stesso livello",
+              "verification": "Tutte le ruote allo stesso livello, tosaerba parallelo al suolo",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se persiste, affilare la lama con lima piatta o sostituirla se piegata",
+              "verification": "Taglio uniforme su una passata di test",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trapano_senza_carica",
+      "name": "Trapano a batteria che non si carica",
+      "category": "elettroutensili",
+      "severity": "error",
+      "description": "La batteria del trapano cordless non si carica nonostante sia inserita nel caricabatterie, con la spia di carica che non si accende o rimane rossa fissa.",
+      "visual_symptoms": [
+        "Spia caricabatterie rossa fissa o non si accende",
+        "Batteria che rimane fredda durante la ricarica (dovrebbe scaldarsi leggermente)",
+        "Trapano che si spegne subito dopo l'avvio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria Li-Ion in protezione per scarica profonda (sotto i 2.5V per cella)",
+          "probability": 0.45,
+          "test": "Misurare la tensione della batteria con tester: se sotto il 20% del nominale, è in deep discharge"
+        },
+        {
+          "cause": "Contatti batteria-caricabatterie ossidati o sporchi",
+          "probability": 0.35,
+          "test": "Ispezionare visivamente i contatti dorati della batteria e del caricabatterie"
+        },
+        {
+          "cause": "Caricabatterie difettoso o incompatibile con la generazione della batteria",
+          "probability": 0.20,
+          "test": "Testare il caricabatterie con un'altra batteria compatibile"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire i contatti della batteria e del caricabatterie con un panno asciutto o alcool isopropilico",
+              "verification": "Contatti puliti e lucidi, nessuna ossidazione visibile",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Reinserire saldamente la batteria nel caricabatterie e attendere 30 minuti: se la spia cambia colore, la ricarica è avviata",
+              "verification": "Spia di ricarica verde o lampeggiante entro 30 minuti",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Se la batteria non riprende a caricare, contattare il servizio di assistenza del produttore per sostituzione in garanzia",
+              "verification": "Batteria sostitutiva funzionante",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tubo_con_kink",
+      "name": "Tubo irrigazione con piega (kink) persistente",
+      "category": "irrigazione",
+      "severity": "info",
+      "description": "Il tubo da giardino si piega su se stesso formando anse che bloccano il flusso dell'acqua, richiedendo continua supervisione durante l'irrigazione.",
+      "visual_symptoms": [
+        "Piega netta nel tubo che blocca il flusso",
+        "Flusso all'ugello che si interrompe durante l'uso",
+        "Tubo con deformazioni permanenti in più punti"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Tubo di qualità scadente con parete singola che non resiste alla torsione",
+          "probability": 0.50,
+          "test": "Piegare il tubo vuoto a 90 gradi: se rimane deformato, la qualità è insufficiente"
+        },
+        {
+          "cause": "Tubo conservato arrotolato con raggi troppo stretti che lo deformano",
+          "probability": 0.35,
+          "test": "Verificare il diametro del tamburo o dell'avvolgitubo: deve essere almeno 15 volte il diametro del tubo"
+        },
+        {
+          "cause": "Tubo vecchio e indurito per perdita di plastificanti per UV o freddo",
+          "probability": 0.15,
+          "test": "Piegare il tubo vuoto: se scricchiola o si frattura, i plastificanti sono esauriti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Lasciare il tubo al sole per 30 minuti per renderlo più morbido, poi raddrizzare manualmente le pieghe persistenti",
+              "verification": "Pieghe ridotte, tubo scorre senza ostruzione",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Conservare il tubo su avvolgitubo con diametro adeguato, senza stringere i nodi",
+              "verification": "Tubo arrotolato con anse uniformi, senza pieghe acute",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tagliaerba_vibra",
+      "name": "Tagliaerba con vibrazione anomala durante il taglio",
+      "category": "tagliaerba",
+      "severity": "error",
+      "description": "Il tagliaerba vibra in modo anomalo durante il funzionamento, con vibrazioni percepibili sull'impugnatura e rumore metallico.",
+      "visual_symptoms": [
+        "Vibrazioni forti percepibili sul manubrio durante l'uso",
+        "Rumore metallico irregolare durante il taglio",
+        "Tosaerba che oscilla visibilmente durante il funzionamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lama con bilanciamento compromesso dopo impatto con sasso o radice",
+          "probability": 0.55,
+          "test": "Con motore spento e candela scollegata, verificare visivamente se la lama è piegata o asimmetrica"
+        },
+        {
+          "cause": "Dado di fissaggio della lama allentato",
+          "probability": 0.30,
+          "test": "Con il tosaerba capovolto e motore spento, verificare che il dado centrale della lama sia ben serrato"
+        },
+        {
+          "cause": "Sasso o corpo estraneo bloccato nella piastra di taglio",
+          "probability": 0.15,
+          "test": "Esaminare la piastra inferiore: verificare presenza di sassi o detriti intrappolati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Scollegare la candela. Capovolgere il tosaerba e serrare il dado centrale della lama con chiave adeguata.",
+              "verification": "Dado serrato, lama non ha gioco",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Ispezionare la lama: se piegata, sostituirla con una lama originale di ricambio",
+              "verification": "Lama nuova o raddrizzata installata correttamente",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Riavviare il tosaerba e verificare l'assenza di vibrazioni anomale a regime",
+              "verification": "Funzionamento silenzioso, nessuna vibrazione percepibile sul manubrio",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "motore_decespugliatore_fuma",
+      "name": "Motore del decespugliatore che emette fumo",
+      "category": "manutenzione",
+      "severity": "error",
+      "description": "Il motore a 2 tempi del decespugliatore emette fumo bianco o blu durante il funzionamento, con possibile perdita di prestazioni.",
+      "visual_symptoms": [
+        "Fumo bianco denso dall'area motore o dallo scappamento",
+        "Odore di bruciato durante l'uso",
+        "Perdita di potenza progressiva"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Miscela benzina-olio con troppo olio (rapporto errato)",
+          "probability": 0.50,
+          "test": "Verificare il rapporto della miscela utilizzata: deve essere 1:50 (2% olio) o secondo il manuale"
+        },
+        {
+          "cause": "Filtro aria intasato che causa miscela ricca (troppo carburante)",
+          "probability": 0.35,
+          "test": "Rimuovere e ispezionare il filtro aria: se nero e compatto, è intasato"
+        },
+        {
+          "cause": "Anelli del pistone usurati con passaggio di olio nella camera di combustione",
+          "probability": 0.15,
+          "test": "Se il fumo è costante anche con miscela corretta e filtro pulito, il problema è interno al motore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Svuotare il serbatoio. Preparare una miscela corretta: 100ml di olio specifico 2T ogni 5 litri di benzina 95",
+              "verification": "Miscela preparata con rapporto 1:50, colore leggermente bluastro",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Pulire o sostituire il filtro aria. Pulire la candela dall'annerimento con carta vetrata fine.",
+              "verification": "Filtro pulito o sostituito, candela pulita",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Avviare il motore e verificare se il fumo si riduce dopo 2 minuti di funzionamento a regime",
+              "verification": "Fumo assente o minimo durante il funzionamento normale",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
