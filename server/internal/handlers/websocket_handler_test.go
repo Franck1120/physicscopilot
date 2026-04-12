@@ -737,6 +737,55 @@ func TestWSHandlerActiveConnectionsDecreasesOnDisconnect(t *testing.T) {
 
 // ── Handler state after multiple disconnects ──────────────────────────────────
 
+// TestCloseAllDecrementsActiveConnectionsCounter verifies that after CloseAll
+// the active connection counter eventually returns to zero. This is an
+// integration test that exercises the full Connect → CloseAll → Disconnect path.
+func TestCloseAllDecrementsActiveConnectionsCounter(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	const numClients = 2
+	conns := make([]*gorilla.Conn, numClients)
+	for i := range conns {
+		c, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+		if err != nil {
+			t.Fatalf("dial client %d: %v", i, err)
+		}
+		conns[i] = c
+	}
+
+	// Allow Handle goroutines to register and increment the counter.
+	time.Sleep(80 * time.Millisecond)
+	if got := wsHandler.ActiveConnections(); got != numClients {
+		t.Errorf("want %d active connections before CloseAll, got %d", numClients, got)
+	}
+
+	// CloseAll sends GoingAway close frames to all connections. Each client
+	// will read the frame and return an error, causing the Handle goroutine
+	// to exit and run its deferred cleanup.
+	wsHandler.CloseAll()
+
+	// Read the close frame on each client side so the Handle goroutine can
+	// detect the disconnect and decrement the counter.
+	for _, c := range conns {
+		c.SetReadDeadline(time.Now().Add(time.Second))
+		c.ReadMessage() //nolint:errcheck — close frame expected
+		c.Close()
+	}
+
+	// Allow the Handle goroutines' deferred cleanups to complete.
+	time.Sleep(200 * time.Millisecond)
+	if got := wsHandler.ActiveConnections(); got != 0 {
+		t.Errorf("want 0 active connections after CloseAll, got %d", got)
+	}
+}
+
 // TestWSHandlerConnsMapEmptyAfterAllClientsDisconnect verifies that the internal
 // connection map is empty after all clients disconnect, preventing resource leaks.
 func TestWSHandlerConnsMapEmptyAfterAllClientsDisconnect(t *testing.T) {
