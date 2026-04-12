@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/adaptor/v2"
@@ -167,9 +168,13 @@ func newFiberApp(
 	db handlers.DBPinger, // nil when DATABASE_URL not set
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:     "PhysicsCopilot Server v" + ver,
+		AppName: "PhysicsCopilot Server v" + ver,
 		// Reject request bodies larger than 1 MB to prevent memory exhaustion.
-		BodyLimit:   1 * 1024 * 1024,
+		BodyLimit: 1 * 1024 * 1024,
+		// IdleTimeout is the maximum amount of time to wait for the next request
+		// on a keep-alive connection. 60 s is a reasonable default that balances
+		// resource usage against client reconnect overhead.
+		IdleTimeout:  60 * time.Second,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
@@ -215,6 +220,13 @@ func newFiberApp(
 		c.Set("Content-Security-Policy", "default-src 'none'")
 		return c.Next()
 	})
+
+	// Compress REST responses with gzip (level: best speed to favour latency).
+	// WebSocket upgrade requests are excluded automatically — the compress
+	// middleware does not touch hijacked connections.
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
 
 	app.Use(middleware.StructuredLogger())
 

@@ -159,4 +159,20 @@ var (
 			Help: "Cumulative number of completed garbage collection cycles.",
 		},
 	)
+
+	// RagCacheHitsTotal counts KB query cache hits (identical query served from in-memory LRU).
+	RagCacheHitsTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "rag_cache_hits_total",
+			Help: "Total number of RAG KB query cache hits.",
+		},
+	)
+
+	// RagCacheMissesTotal counts KB query cache misses (query not found in LRU, forwarded to vector store).
+	RagCacheMissesTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "rag_cache_misses_total",
+			Help: "Total number of RAG KB query cache misses.",
+		},
+	)
 )

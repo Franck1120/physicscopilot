@@ -34,9 +34,13 @@ type StepInfo struct {
 	Total   int `json:"total"`
 }
 
-// frameHashEntry stores a frame hash alongside the time it was recorded.
+// frameHashEntry stores a frame fingerprint alongside the time it was recorded.
+// When hasPHash is true, pHash holds the perceptual hash and SHA-256 is a fallback
+// for comparison with entries that lack a pHash (non-JPEG frames).
 type frameHashEntry struct {
-	hash      string
+	sha256     string
+	pHash      uint64
+	hasPHash   bool
 	recordedAt time.Time
 }
 
@@ -68,15 +72,15 @@ func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGServ
 // avoid redundant API calls. An optional userText is recorded in the
 // conversation history before analysis.
 func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frameBase64, userText string) (*ProcessResult, error) {
-	// Deduplicate identical consecutive frames
-	hash := hashFrame(frameBase64)
-	if c.isDuplicateFrame(sessionID, hash) {
+	// Compute perceptual fingerprint (pHash when JPEG, SHA-256 otherwise).
+	sha256Hash, ph, hasPHash := computeFrameFingerprint(frameBase64)
+	if c.isDuplicateFrame(sessionID, sha256Hash, ph, hasPHash) {
 		return nil, nil
 	}
 
 	// Store hash optimistically to block concurrent duplicate frames (TOCTOU fix).
 	// If Gemini fails, the hash is cleared so the frame can be retried.
-	c.storeFrameHash(sessionID, hash)
+	c.storeFrameHash(sessionID, sha256Hash, ph, hasPHash)
 
 	// Record user message if provided
 	if userText != "" {
@@ -240,10 +244,25 @@ func hashFrame(frameBase64 string) string {
 	return fmt.Sprintf("%x", h)
 }
 
-// isDuplicateFrame checks whether the frame hash matches the last processed
-// frame for this session. Entries older than frameHashTTL are treated as
-// expired and the frame is allowed through. Thread-safe via mutex.
-func (c *ConversationService) isDuplicateFrame(sessionID, hash string) bool {
+// computeFrameFingerprint computes both a SHA-256 hash (fallback) and a
+// perceptual hash (preferred) for the given base64-encoded frame.
+// hasPHash is false when the frame is not a decodable JPEG.
+func computeFrameFingerprint(frameBase64 string) (sha256Hash string, ph uint64, hasPHash bool) {
+	sha256Hash = hashFrame(frameBase64)
+	ph, err := pHashFrame(frameBase64)
+	if err != nil {
+		return sha256Hash, 0, false
+	}
+	return sha256Hash, ph, true
+}
+
+// isDuplicateFrame returns true when the incoming frame is perceptually identical
+// to the last processed frame for this session.
+//
+// When both frames carry a perceptual hash, the comparison uses Hamming distance
+// (threshold: PHashDuplicateThreshold bits). Otherwise, it falls back to exact
+// SHA-256 comparison.
+func (c *ConversationService) isDuplicateFrame(sessionID, sha256Hash string, ph uint64, hasPHash bool) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry, ok := c.frameHashes[sessionID]
@@ -254,15 +273,22 @@ func (c *ConversationService) isDuplicateFrame(sessionID, hash string) bool {
 		delete(c.frameHashes, sessionID)
 		return false
 	}
-	return entry.hash == hash
+	if hasPHash && entry.hasPHash {
+		return hammingDistance(ph, entry.pHash) < PHashDuplicateThreshold
+	}
+	return sha256Hash == entry.sha256
 }
 
-// storeFrameHash records the latest frame hash for a session with a timestamp.
-// Thread-safe.
-func (c *ConversationService) storeFrameHash(sessionID, hash string) {
+// storeFrameHash records the latest frame fingerprint for a session.
+func (c *ConversationService) storeFrameHash(sessionID, sha256Hash string, ph uint64, hasPHash bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.frameHashes[sessionID] = frameHashEntry{hash: hash, recordedAt: time.Now()}
+	c.frameHashes[sessionID] = frameHashEntry{
+		sha256:     sha256Hash,
+		pHash:      ph,
+		hasPHash:   hasPHash,
+		recordedAt: time.Now(),
+	}
 }
 
 // clearFrameHash removes the stored frame hash for a session, allowing the

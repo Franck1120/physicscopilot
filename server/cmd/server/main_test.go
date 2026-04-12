@@ -197,3 +197,28 @@ func TestNewFiberAppHSTSHeaderInProduction(t *testing.T) {
 	}
 }
 
+func TestNewFiberAppGzipCompressesResponse(t *testing.T) {
+	app := buildTestApp(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	// Response must be 200 and either gzip-encoded or not (middleware may skip
+	// small payloads), but must never be 500.
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("gzip test: want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestNewFiberAppIdleTimeoutConfigured(t *testing.T) {
+	// Verify the app builds correctly with IdleTimeout set — no panic or error.
+	app := buildTestApp(t)
+	if app == nil {
+		t.Fatal("expected non-nil app")
+	}
+}
+

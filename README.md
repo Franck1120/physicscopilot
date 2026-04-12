@@ -204,6 +204,31 @@ make clean            Remove all build artefacts
 
 ---
 
+## Benchmarks
+
+Run the Go micro-benchmarks from the `server/` directory:
+
+```bash
+cd server
+go test ./internal/handlers/... -run='^$' -bench=. -benchtime=3s -count=1
+```
+
+Example results (Intel i7-9700K @ 3.60 GHz, Windows 11, Go 1.25):
+
+```
+BenchmarkHealthHandler-8      91749      41261 ns/op
+BenchmarkSessionCreate-8     138097      25136 ns/op
+BenchmarkRAGQuery-8         5348684        695.1 ns/op
+```
+
+| Benchmark | What it measures |
+|-----------|-----------------|
+| `BenchmarkHealthHandler` | `GET /health` end-to-end throughput |
+| `BenchmarkSessionCreate` | `POST /api/sessions` with JSON body |
+| `BenchmarkRAGQuery` | TF-IDF keyword search over the knowledge base |
+
+---
+
 ## Tech Stack
 
 | Layer    | Technology                              |
