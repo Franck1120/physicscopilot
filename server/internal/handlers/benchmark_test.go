@@ -150,6 +150,30 @@ func BenchmarkGetSessionSteps(b *testing.B) {
 	}
 }
 
+// BenchmarkGetStats measures the throughput of GET /api/stats.
+func BenchmarkGetStats(b *testing.B) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := NewWSHandler(convSvc, sessionSvc)
+	sh := NewStatsHandler(sessionSvc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/stats", sh.GetStats)
+	app.Get("/health", NewHealthHandler("bench", time.Now(), ws, nil))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
