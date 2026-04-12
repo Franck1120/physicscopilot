@@ -1,4 +1,4 @@
-.PHONY: dev dev-server dev-app test test-coverage build-server build-apk \
+.PHONY: dev dev-server dev-app test test-coverage coverage-report build-server build-apk \
         lint docker-up docker-down clean help
 
 # ── Development ───────────────────────────────────────────────────────────────
@@ -55,21 +55,28 @@ docker-down: ## Stop Supabase local stack
 
 # ── Coverage ─────────────────────────────────────────────────────────────────
 
+coverage-report: ## Run Go tests with race detector and generate HTML coverage report
+	cd server && go test -race -coverprofile=coverage.out ./... \
+		&& go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage HTML: $(PWD)/server/coverage.html"
+	@open coverage.html 2>/dev/null || xdg-open coverage.html 2>/dev/null || start coverage.html 2>/dev/null || true
+
 coverage: test-coverage ## Alias: run tests with HTML coverage report
 
 # ── Release ──────────────────────────────────────────────────────────────────
 
 APP_VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DATE  ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+GIT_COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 release: ## Build release binaries for linux/amd64 with version injection
 	mkdir -p bin
 	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 		go build \
-		-ldflags="-s -w -X main.version=$(APP_VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
+		-ldflags="-s -w -X main.version=$(APP_VERSION) -X 'main.buildDate=$(BUILD_DATE)' -X main.commitHash=$(GIT_COMMIT)" \
 		-o ../bin/server-linux-amd64 \
 		./cmd/server/
-	@echo "Release binary: bin/server-linux-amd64 (version=$(APP_VERSION) built=$(BUILD_DATE))"
+	@echo "Release binary: bin/server-linux-amd64 (version=$(APP_VERSION) built=$(BUILD_DATE) commit=$(GIT_COMMIT))"
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 
