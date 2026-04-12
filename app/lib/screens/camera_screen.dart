@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'dart:async';
 
 import 'package:camera/camera.dart';
@@ -20,7 +23,7 @@ import '../widgets/step_progress.dart';
 /// How long to wait for an AI response before surfacing a timeout error.
 const Duration _kAIResponseTimeout = Duration(seconds: 15);
 
-/// Full-screen camera view with AR overlay, voice I/O, step progress, and chat.
+/// CameraScreen - full-screen camera view with AR overlay, voice I/O, step progress, and chat.
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({super.key});
 
