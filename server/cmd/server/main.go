@@ -225,6 +225,7 @@ func newFiberApp(
 	})
 
 	app.Use(middleware.RequestIDMiddleware())
+	app.Use(middleware.APIVersion(ver))
 
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
