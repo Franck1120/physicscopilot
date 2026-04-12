@@ -153,21 +153,27 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
             ),
           ),
         ),
+        // Session and camera slide up from the bottom (modal feel).
         GoRoute(
           path: '/session',
-          pageBuilder: (_, state) => _fadePage(state, const SessionScreen()),
+          pageBuilder: (_, state) =>
+              _slidePage(state, const SessionScreen(), fromBottom: true),
         ),
         GoRoute(
           path: '/camera',
-          pageBuilder: (_, state) => _fadePage(state, const CameraScreen()),
+          pageBuilder: (_, state) =>
+              _slidePage(state, const CameraScreen(), fromBottom: true),
         ),
+        // Secondary screens slide in from the right.
         GoRoute(
           path: '/history',
-          pageBuilder: (_, state) => _fadePage(state, const HistoryScreen()),
+          pageBuilder: (_, state) =>
+              _slidePage(state, const HistoryScreen()),
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (_, state) => _fadePage(state, const SettingsScreen()),
+          pageBuilder: (_, state) =>
+              _slidePage(state, const SettingsScreen()),
         ),
       ],
     );
@@ -205,7 +211,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
     );
   }
 
-  /// Wraps a page in a cross-fade transition.
+  /// Cross-fade transition — used for root/primary screens.
   static CustomTransitionPage<void> _fadePage(
     GoRouterState state,
     Widget child,
@@ -218,6 +224,36 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
         child: child,
       ),
+    );
+  }
+
+  /// Slide transition — right-to-left for secondary screens, bottom-to-top
+  /// for full-screen overlays like session and camera.
+  static CustomTransitionPage<void> _slidePage(
+    GoRouterState state,
+    Widget child, {
+    bool fromBottom = false,
+  }) {
+    return CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 340),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
+      transitionsBuilder: (_, animation, __, child) {
+        final begin =
+            fromBottom ? const Offset(0.0, 1.0) : const Offset(1.0, 0.0);
+        final tween = Tween<Offset>(begin: begin, end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeOutCubic));
+        final reverseTween = Tween<Offset>(begin: begin, end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeInCubic));
+        final slide = animation.status == AnimationStatus.reverse
+            ? animation.drive(reverseTween)
+            : animation.drive(tween);
+        return SlideTransition(
+          position: slide,
+          child: child,
+        );
+      },
     );
   }
 
