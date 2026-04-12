@@ -18,6 +18,8 @@ import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'providers/settings_provider.dart';
+import 'screens/login_screen.dart';
+import 'services/auth_service.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -68,6 +70,7 @@ void main() async {
   ErrorWidget.builder = (FlutterErrorDetails details) =>
       _AppErrorWidget(message: details.exceptionAsString());
 
+  await AuthService.initialize();
   await NotificationService.initialize();
 
   final prefs = await SharedPreferences.getInstance();
@@ -106,6 +109,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   late final ProviderSubscription<bool> _onboardingSub;
   late final ProviderSubscription<EquipmentProfile?> _equipmentSub;
   StreamSubscription<Uri>? _deepLinkSub;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
@@ -121,6 +125,17 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
 
         if (location == '/splash') return null;
 
+        // Auth guard: redirect to /login when Supabase is configured and
+        // the user is not signed in. Allow /login itself to always render.
+        if (!AuthService.isAuthenticated && location != '/login') {
+          // Only block when Supabase is actually configured (i.e. not dev mode).
+          // Dev mode: SUPABASE_URL not set → isAuthenticated is always false
+          // but we skip the gate so developers can run without credentials.
+          const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+          if (supabaseUrl.isNotEmpty) return '/login';
+        }
+        if (location == '/login') return null;
+
         if (!onboardingDone) {
           return location == '/onboarding' ? null : '/onboarding';
         }
@@ -132,6 +147,10 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         return null;
       },
       routes: [
+        GoRoute(
+          path: '/login',
+          pageBuilder: (_, state) => _fadePage(state, const LoginScreen()),
+        ),
         GoRoute(
           path: '/splash',
           pageBuilder: (_, state) => _fadePage(state, const _SplashScreen()),
@@ -199,6 +218,9 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
       },
     );
 
+    // Refresh router when auth state changes (sign-in / sign-out).
+    _authSub = AuthService.authStateChanges.listen((_) => _router.refresh());
+
     // Handle deep links: physicscopilot://session/new → navigate to /session
     _deepLinkSub = AppLinks().uriLinkStream.listen(_handleDeepLink);
   }
@@ -219,6 +241,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _deepLinkSub?.cancel();
     _onboardingSub.close();
     _equipmentSub.close();
