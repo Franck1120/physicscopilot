@@ -17,9 +17,14 @@ class GuidancePanel extends ConsumerWidget {
     super.key,
     required this.textController,
     required this.onSendText,
+    this.cachedResponse,
+    this.isOffline = false,
   });
   final TextEditingController textController;
   final VoidCallback onSendText;
+  /// Last known AI response, shown as an offline fallback when [isOffline].
+  final String? cachedResponse;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +36,11 @@ class GuidancePanel extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Expanded(child: _ResponseArea(session: session)),
+          Expanded(child: _ResponseArea(
+            session: session,
+            cachedResponse: cachedResponse,
+            isOffline: isOffline,
+          )),
           _TextInputRow(controller: textController, onSend: onSendText),
         ],
       ),
@@ -42,8 +51,14 @@ class GuidancePanel extends ConsumerWidget {
 // ── Response area with animations ───────────────────────────────────────────
 
 class _ResponseArea extends StatelessWidget {
-  const _ResponseArea({required this.session});
+  const _ResponseArea({
+    required this.session,
+    this.cachedResponse,
+    this.isOffline = false,
+  });
   final SessionState session;
+  final String? cachedResponse;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +89,44 @@ class _ResponseArea extends StatelessWidget {
             ),
           ],
         ),
+      );
+    } else if (isOffline && cachedResponse != null) {
+      // Offline fallback: show last cached response when disconnected.
+      child = Column(
+        key: const ValueKey('offline'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            color: Colors.orangeAccent.withAlpha(25),
+            child: const Row(
+              children: [
+                Icon(Icons.cloud_off_outlined,
+                    color: Colors.orangeAccent, size: 14),
+                SizedBox(width: 8),
+                Text(
+                  'Modalità offline — ultima risposta disponibile',
+                  style: TextStyle(
+                    color: Colors.orangeAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                cachedResponse!,
+                style: const TextStyle(
+                    color: Colors.white70, fontSize: 14, height: 1.5),
+              ),
+            ),
+          ),
+        ],
       );
     } else if (session.responseText != null) {
       final steps = parseSteps(session.responseText!);
