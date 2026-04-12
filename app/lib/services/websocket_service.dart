@@ -43,7 +43,7 @@ class WebSocketService {
 
     try {
       _channel =
-          WebSocketChannel.connect(Uri.parse('$_baseUrl/ws'));
+          WebSocketChannel.connect(Uri.parse(_baseUrl));
       await _channel!.ready;
 
       _reconnectAttempts = 0;

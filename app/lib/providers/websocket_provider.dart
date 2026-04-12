@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config.dart';
 import '../services/websocket_service.dart';
-import '../utils/constants.dart';
 
 /// Singleton [WebSocketService]; connects on creation and disconnects on dispose.
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
-  final service = WebSocketService(AppConstants.wsBaseUrl);
+  final service = WebSocketService(AppConfig.backendUrl);
   service.connect();
   ref.onDispose(() => service.disconnect());
   return service;
