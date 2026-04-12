@@ -65,6 +65,7 @@ class WebSocketService {
       _channel = WebSocketChannel.connect(wsUri);
       await _channel!.ready;
 
+      // Reset back-off counter so future disconnections restart from the 1-second delay.
       _reconnectAttempts = 0;
       _emit(ConnectionStatus.connected);
 

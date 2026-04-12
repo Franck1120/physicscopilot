@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/camera_service.dart';
+import '../services/camera_service.dart' show CameraService, FrameQuality;
 
 /// Singleton [CameraService]; disposed with the provider scope.
 final cameraServiceProvider = Provider<CameraService>((ref) {
@@ -15,4 +15,9 @@ final cameraServiceProvider = Provider<CameraService>((ref) {
 final cameraInitProvider = FutureProvider<void>((ref) async {
   final service = ref.watch(cameraServiceProvider);
   await service.initialize();
+});
+
+/// Live stream of the current [FrameQuality] assessed by [CameraService].
+final frameQualityProvider = StreamProvider<FrameQuality>((ref) {
+  return ref.watch(cameraServiceProvider).quality;
 });
