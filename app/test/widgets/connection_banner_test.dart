@@ -5,14 +5,14 @@ import 'package:physicscopilot/services/websocket_service.dart'
     show ConnectionStatus;
 
 void main() {
-  Widget _wrap(Widget child) =>
+  Widget wrap(Widget child) =>
       MaterialApp(home: Scaffold(body: child));
 
   group('ConnectionBanner', () {
     testWidgets('connecting status shows connecting message',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const ConnectionBanner(status: ConnectionStatus.connecting)),
+        wrap(const ConnectionBanner(status: ConnectionStatus.connecting)),
       );
       await tester.pumpAndSettle();
 
@@ -22,7 +22,7 @@ void main() {
     testWidgets('disconnected status shows unreachable message',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const ConnectionBanner(status: ConnectionStatus.disconnected)),
+        wrap(const ConnectionBanner(status: ConnectionStatus.disconnected)),
       );
       await tester.pumpAndSettle();
 
@@ -35,7 +35,7 @@ void main() {
     testWidgets('connecting status has Semantics with liveRegion true',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const ConnectionBanner(status: ConnectionStatus.connecting)),
+        wrap(const ConnectionBanner(status: ConnectionStatus.connecting)),
       );
       await tester.pumpAndSettle();
 
@@ -49,7 +49,7 @@ void main() {
         (WidgetTester tester) async {
       for (final status in ConnectionStatus.values) {
         await tester.pumpWidget(
-          _wrap(ConnectionBanner(status: status)),
+          wrap(ConnectionBanner(status: status)),
         );
         await tester.pumpAndSettle();
         // No exception = pass

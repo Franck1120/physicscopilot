@@ -8,13 +8,13 @@ import 'package:physicscopilot/widgets/rate_limit_countdown.dart';
 
 void main() {
   group('RateLimitCountdown', () {
-    Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+    Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
     testWidgets(
         'when remainingSeconds is 0 returns SizedBox.shrink — no text visible',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(const RateLimitCountdown(remaining: Duration.zero)),
+        wrap(const RateLimitCountdown(remaining: Duration.zero)),
       );
       await tester.pump();
 
@@ -25,7 +25,7 @@ void main() {
     testWidgets('when remainingSeconds is 30, shows text containing "30"',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(
+        wrap(
           const RateLimitCountdown(remaining: Duration(seconds: 30)),
         ),
       );
@@ -43,7 +43,7 @@ void main() {
         'when remainingSeconds is 30, label starts with "Attendi"',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(
+        wrap(
           const RateLimitCountdown(remaining: Duration(seconds: 30)),
         ),
       );
@@ -56,7 +56,7 @@ void main() {
         'when remainingSeconds is 90, shows minutes+seconds format containing "1m"',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(
+        wrap(
           const RateLimitCountdown(remaining: Duration(seconds: 90)),
         ),
       );
@@ -74,7 +74,7 @@ void main() {
       var called = false;
 
       await tester.pumpWidget(
-        _wrap(
+        wrap(
           RateLimitCountdown(
             remaining: const Duration(seconds: 30),
             onExpired: () => called = true,

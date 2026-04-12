@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:physicscopilot/widgets/step_progress.dart';
 
 void main() {
-  Widget _wrap(Widget child) =>
+  Widget wrap(Widget child) =>
       MaterialApp(home: Scaffold(body: child));
 
   // Helper that builds three generic steps.
-  List<StepInfo> _threeSteps() => const [
+  List<StepInfo> threeSteps() => const [
         StepInfo(description: 'Primo passo'),
         StepInfo(description: 'Secondo passo'),
         StepInfo(description: 'Terzo passo'),
@@ -17,7 +17,7 @@ void main() {
     testWidgets('empty steps list renders SizedBox.shrink — nothing visible',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const StepProgress(steps: [], currentStep: 0)),
+        wrap(const StepProgress(steps: [], currentStep: 0)),
       );
       await tester.pumpAndSettle();
 
@@ -29,7 +29,7 @@ void main() {
     testWidgets('three steps with currentStep=0 shows "Step 1 of 3"',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(StepProgress(steps: _threeSteps(), currentStep: 0)),
+        wrap(StepProgress(steps: threeSteps(), currentStep: 0)),
       );
       await tester.pumpAndSettle();
 
@@ -39,7 +39,7 @@ void main() {
     testWidgets('three steps with currentStep=2 shows "Step 3 of 3"',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(StepProgress(steps: _threeSteps(), currentStep: 2)),
+        wrap(StepProgress(steps: threeSteps(), currentStep: 2)),
       );
       await tester.pumpAndSettle();
 
@@ -49,7 +49,7 @@ void main() {
     testWidgets('shows description of the current step',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(StepProgress(steps: _threeSteps(), currentStep: 1)),
+        wrap(StepProgress(steps: threeSteps(), currentStep: 1)),
       );
       await tester.pumpAndSettle();
 
@@ -60,14 +60,14 @@ void main() {
         (WidgetTester tester) async {
       // Below lower bound
       await tester.pumpWidget(
-        _wrap(StepProgress(steps: _threeSteps(), currentStep: -5)),
+        wrap(StepProgress(steps: threeSteps(), currentStep: -5)),
       );
       await tester.pumpAndSettle();
       expect(find.text('Step 1 of 3'), findsOneWidget);
 
       // Above upper bound
       await tester.pumpWidget(
-        _wrap(StepProgress(steps: _threeSteps(), currentStep: 100)),
+        wrap(StepProgress(steps: threeSteps(), currentStep: 100)),
       );
       await tester.pumpAndSettle();
       expect(find.text('Step 3 of 3'), findsOneWidget);
@@ -82,7 +82,7 @@ void main() {
         ),
       ];
       await tester.pumpWidget(
-        _wrap(const StepProgress(steps: steps, currentStep: 0)),
+        wrap(const StepProgress(steps: steps, currentStep: 0)),
       );
       await tester.pumpAndSettle();
 
@@ -98,7 +98,7 @@ void main() {
         ),
       ];
       await tester.pumpWidget(
-        _wrap(const StepProgress(steps: steps, currentStep: 0)),
+        wrap(const StepProgress(steps: steps, currentStep: 0)),
       );
       await tester.pumpAndSettle();
 
