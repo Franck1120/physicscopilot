@@ -1,0 +1,773 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "photography",
+  "total": 15,
+  "problems": [
+    {
+      "id": "obiettivo_non_mette_a_fuoco",
+      "name": "Obiettivo che non riesce a mettere a fuoco",
+      "category": "obiettivo",
+      "severity": "error",
+      "description": "L'obiettivo oscilla continuamente tra avanti e indietro senza bloccarsi sul soggetto, o mostra il messaggio 'Impossibile mettere a fuoco' nel mirino.",
+      "visual_symptoms": [
+        "Immagine nell'anteprima che va e viene sfocata senza stabilizzarsi",
+        "Indicatore di messa a fuoco che lampeggia rosso nel mirino",
+        "Suono di motore AF che lavora senza concludersi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Scarsa illuminazione che non permette all'AF di trovare contrasto",
+          "probability": 0.45,
+          "test": "Puntare un punto ad alto contrasto (es. bordo netto) in buona luce: se il fuoco si blocca, il problema è la luce scarsa"
+        },
+        {
+          "cause": "Obiettivo con motore AF difettoso o contatti sporchi",
+          "probability": 0.35,
+          "test": "Pulire i contatti obiettivo-corpo con cotone asciutto e rimontare l'obiettivo"
+        },
+        {
+          "cause": "Modalità AF impostata su area errata o in conflitto con soggetto",
+          "probability": 0.20,
+          "test": "Cambiare la modalità AF su punto singolo centrale e puntare al soggetto principale"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere l'obiettivo e pulire i contatti dorati sia sull'obiettivo che sul corpo macchina con un cotone asciutto",
+              "verification": "Contatti puliti e brillanti, nessuna ossidazione visibile",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Impostare l'AF su punto singolo al centro e puntare a un soggetto con contrasto netto in buona luce",
+              "verification": "Il punto AF diventa verde e la messa a fuoco si blocca sul soggetto",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se il problema persiste, calibrare la micro-regolazione AF in Impostazioni fotocamera",
+              "verification": "Test con mira AF: linee orizzontali a fuoco e nitide",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flash_non_si_attiva",
+      "name": "Flash che non si attiva durante lo scatto",
+      "category": "flash",
+      "severity": "warning",
+      "description": "Il flash incorporato o esterno non si attiva durante lo scatto, producendo foto sottoesposte in condizioni di scarsa luce.",
+      "visual_symptoms": [
+        "Nessun lampeggio al momento dello scatto",
+        "Indicatore flash pronto assente nel mirino",
+        "Foto sottoesposte senza l'apporto luminoso del flash"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Flash disabilitato manualmente nelle impostazioni della fotocamera",
+          "probability": 0.45,
+          "test": "Verificare le impostazioni flash: cercare l'icona fulmine barrato che indica flash disabilitato"
+        },
+        {
+          "cause": "Condensatore del flash scarico o non carico",
+          "probability": 0.35,
+          "test": "Attendere 5 secondi tra uno scatto e l'altro: il condensatore richiede tempo per ricaricarsi"
+        },
+        {
+          "cause": "Contatti slitta flash sporchi o connessione difettosa",
+          "probability": 0.20,
+          "test": "Rimuovere il flash esterno, pulire i contatti della slitta e reinserirlo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare le impostazioni flash in modalità M, Av o Tv: premere il tasto flash per portarlo in posizione 'attivo'",
+              "verification": "Icona flash attiva nel mirino o display",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Pulire la slitta flash con cotone asciutto. Riposizionare il flash esterno fino al click di blocco.",
+              "verification": "Indicatore 'flash pronto' visibile prima dello scatto",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Eseguire uno scatto di test: verificare il lampeggio del flash",
+              "verification": "Flash si attiva correttamente, foto correttamente esposta",
+              "time_seconds": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scheda_sd_non_riconosciuta",
+      "name": "Scheda SD non riconosciuta dalla fotocamera",
+      "category": "storage",
+      "severity": "error",
+      "description": "La fotocamera mostra il messaggio 'Nessuna scheda' o 'Errore scheda' quando si accende, anche con una scheda SD inserita correttamente.",
+      "visual_symptoms": [
+        "Messaggio 'Nessuna scheda SD' sul display della fotocamera",
+        "Impossibilità di scattare foto",
+        "Icona scheda con punto esclamativo nel menu"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Scheda SD mal inserita o contatti sporchi",
+          "probability": 0.45,
+          "test": "Estrarre la scheda, controllare i contatti dorati e reinserirla fino al click"
+        },
+        {
+          "cause": "Scheda SD formattata con filesystem incompatibile (es. exFAT su fotocamera vecchia)",
+          "probability": 0.35,
+          "test": "Verificare il filesystem della scheda dal PC: alcuni modelli richiedono FAT32 per schede fino a 32GB"
+        },
+        {
+          "cause": "Scheda SD difettosa o con settori danneggiati",
+          "probability": 0.20,
+          "test": "Testare la scheda in un altro dispositivo (PC o altra fotocamera)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere la fotocamera, estrarre la scheda SD, pulire i contatti con una gomma morbida e reinserire",
+              "verification": "Scheda inserita con click, fotocamera accesa riconosce la scheda",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se non riconosciuta, formattare la scheda in FAT32 dal PC (per schede fino a 32GB) o direttamente dalla fotocamera",
+              "verification": "Formattazione completata, fotocamera mostra spazio disponibile",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la scheda non è riconosciuta neanche dal PC, sostituirla con una nuova di marca certificata (SanDisk, Lexar, Kingston)",
+              "verification": "Nuova scheda riconosciuta, foto scattabili",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "batteria_non_si_carica",
+      "name": "Batteria fotocamera che non si carica",
+      "category": "alimentazione",
+      "severity": "error",
+      "description": "La batteria della fotocamera non raggiunge la carica completa anche dopo ore di ricarica, o il caricabatterie non si attiva.",
+      "visual_symptoms": [
+        "Indicatore carica batteria che non raggiunge il 100%",
+        "Caricabatterie con spia rossa fissa o spenta",
+        "Fotocamera che si spegne improvvisamente con percentuale ancora alta"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria con celle degradate per cicli di ricarica esauriti",
+          "probability": 0.50,
+          "test": "Verificare l'età della batteria: le batterie Li-Ion durano circa 500-800 cicli completi di ricarica"
+        },
+        {
+          "cause": "Contatti batteria-caricabatterie sporchi o ossidati",
+          "probability": 0.30,
+          "test": "Ispezionare i contatti dorati sulla batteria e nel vano del caricabatterie"
+        },
+        {
+          "cause": "Caricabatterie generico non compatibile con la specifica chimica della batteria",
+          "probability": 0.20,
+          "test": "Provare con il caricabatterie originale del produttore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire i contatti della batteria e del caricabatterie con alcool isopropilico su un cotton fioc",
+              "verification": "Contatti puliti e brillanti",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Usare esclusivamente il caricabatterie originale o certificato dal produttore della fotocamera",
+              "verification": "Spia caricabatterie arancione o rossa (in carica) entro 1 minuto",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Se la batteria non raggiunge il 100% o si scarica in meno di 200 scatti, acquistare una batteria originale sostitutiva",
+              "verification": "Nuova batteria raggiunge 100% e dura il numero di scatti indicato",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "display_puntini",
+      "name": "Display fotocamera con puntini o pixel morti",
+      "category": "sensore",
+      "severity": "warning",
+      "description": "Il display LCD/EVF della fotocamera mostra puntini fissi (bianchi, neri o colorati) che non scompaiono indipendentemente dal soggetto fotografato.",
+      "visual_symptoms": [
+        "Punti fissi bianchi, neri o colorati sul display in qualsiasi condizione",
+        "Pixel morti che appaiono anche con display completamente nero",
+        "Area del display con zone spente permanentemente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pixel morti sul pannello LCD/OLED del display per difetto o urto",
+          "probability": 0.55,
+          "test": "Fotografare uno sfondo uniforme: se i puntini appaiono solo nel display e non nelle foto, sono sul display"
+        },
+        {
+          "cause": "Pixel del sensore di acquisizione con difetto permanente",
+          "probability": 0.35,
+          "test": "Scattare una foto a un muro grigio uniforme ad ISO 100: i puntini nelle foto indicano pixel difettosi sul sensore"
+        },
+        {
+          "cause": "Umidità condensata sotto il vetro del display",
+          "probability": 0.10,
+          "test": "Verificare se i puntini cambiano o aumentano con variazioni di temperatura/umidità"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Scattare una foto di test a un foglio bianco: se i puntini non appaiono nella foto, il problema è solo nel display LCD",
+              "verification": "Foto scattata e verificata al PC: nessun puntino nelle immagini",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Per pixel difettosi sul sensore: eseguire la mappatura pixel morti dal menu fotocamera (solitamente in Impostazioni > Strumenti > Mappatura pixel)",
+              "verification": "Mappatura completata, pixel difettosi corretti via firmware",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se il display LCD ha pixel morti e influenzano la composizione, contattare il servizio di assistenza per la sostituzione del display",
+              "verification": "Display sostituito, nessun pixel morto visibile",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "otturatore_bloccato",
+      "name": "Otturatore bloccato o che non scatta",
+      "category": "sensore",
+      "severity": "error",
+      "description": "La fotocamera non scatta quando si preme il pulsante di scatto, producendo solo un click meccanico senza apertura dell'otturatore o nessun suono.",
+      "visual_symptoms": [
+        "Pulsante di scatto che non risponde o risponde a metà",
+        "Messaggio di errore 'Errore otturatore' nel display",
+        "Blocco completo della fotocamera dopo lo scatto"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Blocco di sicurezza attivo (carta SD assente, batteria scarica, limite di esposizioni raggiunto)",
+          "probability": 0.45,
+          "test": "Verificare che ci sia una scheda SD inserita, batteria carica e che non si stia scattando in modalità non permessa"
+        },
+        {
+          "cause": "Otturatore meccanico con viti o lamelle bloccate per olio o impatto",
+          "probability": 0.35,
+          "test": "In modalità Live View, verificare se l'otturatore si apre correttamente: se l'immagine appare, le lamelle non sono bloccate"
+        },
+        {
+          "cause": "Otturatore a fine vita (superato il numero di cicli garantiti)",
+          "probability": 0.20,
+          "test": "Verificare il conteggio degli scatti in un software EXIF (es. opanda) e confrontare con il rating dell'otturatore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che la scheda SD sia inserita, la batteria sia carica e che non sia attivo alcun blocco in Impostazioni",
+              "verification": "Scheda SD presente, batteria >30%, nessun messaggio di errore",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Spegnere e riaccendere la fotocamera. Tentare uno scatto in modalità Automatica",
+              "verification": "Scatto eseguito correttamente con suono di apertura/chiusura dell'otturatore",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Se l'otturatore rimane bloccato, inviare la fotocamera al centro di assistenza autorizzato per la sostituzione dell'otturatore",
+              "verification": "Otturatore sostituito, conteggio azzerato o documentato",
+              "time_seconds": 604800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rumore_digitale_eccessivo",
+      "name": "Rumore digitale eccessivo nelle foto",
+      "category": "sensore",
+      "severity": "warning",
+      "description": "Le fotografie presentano un granulato digitale marcato (rumore) che degrada la qualità dell'immagine, visibile soprattutto nelle zone di ombra.",
+      "visual_symptoms": [
+        "Granulato colorato visibile nelle zone di colore uniforme",
+        "Perdita di dettaglio nelle ombre",
+        "Colori con puntinatura verde, rossa e blu nelle aree scure"
+      ],
+      "probable_causes": [
+        {
+          "cause": "ISO troppo elevato rispetto alla capacità del sensore",
+          "probability": 0.55,
+          "test": "Verificare il valore ISO negli EXIF della foto: valori sopra 3200-6400 generano rumore marcato sulla maggior parte delle fotocamere"
+        },
+        {
+          "cause": "Esposizione errata con foto sottoesposta schiarita in post-produzione",
+          "probability": 0.35,
+          "test": "Verificare l'istogramma della foto: se è completamente spostato a sinistra, la foto era sottoesposta"
+        },
+        {
+          "cause": "Sensore surriscaldato dopo lungo utilizzo o in ambienti caldi",
+          "probability": 0.10,
+          "test": "Verificare se il problema si accentua dopo 30+ minuti di video o foto in serie rapida"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Abbassare l'ISO al valore minimo nativo del sensore (di solito ISO 100-400) e compensare con apertura o tempi più lenti",
+              "verification": "ISO ridotto, foto di test con granulato drasticamente ridotto",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Attivare la riduzione del rumore nelle impostazioni della fotocamera (Alta o Standard) per gli scatti JPEG",
+              "verification": "Impostazione riduzione rumore attiva, foto di test più pulita",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Per scatti RAW, applicare la riduzione del rumore in Lightroom o Darktable: luminanza 30-50, colore 25",
+              "verification": "Immagine senza granulato evidente pur mantenendo i dettagli",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colori_distorti",
+      "name": "Colori delle foto innaturali o distorti",
+      "category": "sensore",
+      "severity": "warning",
+      "description": "Le fotografie presentano una dominante di colore (es. tutto arancione, tutto blu) che rende l'immagine innaturale rispetto alla scena reale.",
+      "visual_symptoms": [
+        "Foto con dominante arancione o giallastra in interni",
+        "Pelle umana con tono innaturalmente roseo o verdastro",
+        "Bianchi che appaiono colorati invece di neutri"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Bilanciamento del bianco impostato su valore fisso errato rispetto alla luce ambientale",
+          "probability": 0.60,
+          "test": "Verificare l'impostazione del bilanciamento del bianco: 'Automatico' dovrebbe gestire la maggior parte delle situazioni"
+        },
+        {
+          "cause": "Profilo colore della fotocamera impostato su valori estremi",
+          "probability": 0.25,
+          "test": "Verificare le impostazioni dell'immagine (Picture Style/Creative Style): verificare saturazione e toni"
+        },
+        {
+          "cause": "Problema al sensore di bilanciamento del bianco automatico",
+          "probability": 0.15,
+          "test": "Confrontare la foto con quella di un'altra fotocamera nella stessa luce"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Impostare il bilanciamento del bianco su 'Automatico (AWB)' per condizioni variabili, o sul preset corrispondente alla luce (Luce del giorno, Nuvola, Tungsteno, Fluorescente)",
+              "verification": "WB impostato correttamente, bianchi neutri nella preview",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Per correzione precisa: scattare una foto a un foglio bianco e usarla come riferimento di bilanciamento bianco personalizzato",
+              "verification": "WB personalizzato acquisito, foglio bianco appare neutro nelle foto successive",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Per scatti RAW, correggere la temperatura colore in Lightroom spostando il cursore fino a ottenere bianchi neutri",
+              "verification": "Bianchi neutri e pelle con tono naturale",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "immagini_mosse",
+      "name": "Foto mosse per mosso della fotocamera",
+      "category": "obiettivo",
+      "severity": "warning",
+      "description": "Le fotografie risultano mosse con effetto di scia o sfocatura da movimento, anche quando il soggetto è fermo.",
+      "visual_symptoms": [
+        "Scia o doppio contorno su bordi del soggetto fermo",
+        "Sfocatura uniforme orientata nella direzione del movimento della mano",
+        "Testo nelle foto illeggibile per effetto scia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Tempo di esposizione troppo lungo per la lunghezza focale usata",
+          "probability": 0.55,
+          "test": "Verificare il tempo di esposizione negli EXIF: deve essere almeno 1/(focale) secondi (es. 1/50s con 50mm)"
+        },
+        {
+          "cause": "Stabilizzatore ottico (IS/VR/OSS) disabilitato o difettoso",
+          "probability": 0.30,
+          "test": "Verificare che il selettore IS/VR/OSS sull'obiettivo sia in posizione ON e funzionante"
+        },
+        {
+          "cause": "Tecnica di ripresa errata (respiro trattenuto, postura instabile)",
+          "probability": 0.15,
+          "test": "Appoggiare la fotocamera su un piano stabile e ripetere lo scatto: se la foto è nitida, il problema è la tecnica"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aumentare l'ISO o allargare il diaframma per poter usare un tempo di scatto più rapido",
+              "verification": "Tempo di scatto almeno doppio rispetto a 1/(focale) secondi",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Abilitare lo stabilizzatore (IS/VR/OSS) sull'obiettivo o nel corpo macchina",
+              "verification": "Selettore stabilizzatore in posizione ON o Mode 1",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Adottare postura corretta: gomiti contro il corpo, respiro trattenuto al momento dello scatto, rilasciare gradualmente il pulsante",
+              "verification": "Foto di test nitide a mano libera con tempi fino a 1/30s",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mirino_evf_sfarfalla",
+      "name": "Mirino elettronico (EVF) con sfarfallio",
+      "category": "sensore",
+      "severity": "warning",
+      "description": "Il mirino elettronico presenta un sfarfallio visibile durante la composizione dell'immagine, particolarmente fastidioso in condizioni di luce artificiale.",
+      "visual_symptoms": [
+        "Sfarfallio ritmico nell'immagine del mirino",
+        "Bande orizzontali che scorrono nell'EVF",
+        "Colori che pulsano in sincronia con la frequenza della luce"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Discordanza tra frequenza di refresh dell'EVF e frequenza della luce artificiale",
+          "probability": 0.55,
+          "test": "Uscire all'aperto o accendere una luce a incandescenza: se lo sfarfallio scompare, è il flickering della luce"
+        },
+        {
+          "cause": "Frequenza di refresh EVF non ottimizzata nelle impostazioni",
+          "probability": 0.30,
+          "test": "Verificare nelle impostazioni se è disponibile la funzione Anti-flickering o selezione frequenza 50/60Hz"
+        },
+        {
+          "cause": "Connessione interna dell'EVF difettosa o display EVF in degradazione",
+          "probability": 0.15,
+          "test": "Verificare se lo sfarfallio appare anche nel display posteriore LCD: se no, il problema è specifico dell'EVF"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Abilitare la funzione Anti-flickering nelle impostazioni della fotocamera (spesso in Menu Scatto > Riduzione flickering)",
+              "verification": "Funzione Anti-flickering attivata",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Impostare la frequenza EVF sulla frequenza della rete locale: 50Hz in Europa, 60Hz negli USA",
+              "verification": "Frequenza EVF impostata correttamente, sfarfallio ridotto o eliminato",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se lo sfarfallio persiste anche con luce solare, contattare il servizio di assistenza per diagnosi EVF",
+              "verification": "EVF funzionante senza sfarfallio in qualsiasi condizione di luce",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stabilizzatore_rumore",
+      "name": "Stabilizzatore ottico che produce rumore",
+      "category": "obiettivo",
+      "severity": "info",
+      "description": "Lo stabilizzatore ottico dell'obiettivo emette un rumore anomalo (ronzio, clack) durante il funzionamento, anche quando non si sta scattando.",
+      "visual_symptoms": [
+        "Ronzio o clack udibile dall'obiettivo con AF/IS attivi",
+        "Immagine nell'EVF che salta improvvisamente durante la composizione",
+        "Vibrazione percepibile nell'obiettivo durante l'half-press"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Stabilizzatore attivo in modalità errata (es. Mode 2 su treppiede invece che Mode 1 o Off)",
+          "probability": 0.45,
+          "test": "Verificare la modalità IS: Mode 1 è per uso normale, Mode 2 per pan orizzontale, Off per treppiede"
+        },
+        {
+          "cause": "Gruppo lenti dello stabilizzatore con elemento meccanico usurato",
+          "probability": 0.35,
+          "test": "Agitare delicatamente l'obiettivo spento: se si sente un rumore di elemento libero, c'è un problema meccanico"
+        },
+        {
+          "cause": "Interferenza tra stabilizzatore dell'obiettivo e IBIS del corpo macchina",
+          "probability": 0.20,
+          "test": "Disabilitare lo stabilizzatore del corpo macchina (IBIS) e usare solo quello dell'obiettivo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Impostare il selettore IS/VR/OSS su Mode 1 (stabilizzazione normale) per la maggior parte degli scatti a mano libera",
+              "verification": "Selettore su Mode 1, rumore ridotto",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Se si usa treppiede, disabilitare completamente lo stabilizzatore dell'obiettivo (posizione OFF)",
+              "verification": "Stabilizzatore disabilitato, nessun rumore o vibrazione",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Se il rumore persiste con IS disabilitato, portare l'obiettivo in assistenza per controllo del meccanismo IS",
+              "verification": "Obiettivo ispezionato, meccanismo IS funzionante silenziosamente",
+              "time_seconds": 604800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "usb_non_trasferisce",
+      "name": "Collegamento USB non trasferisce le foto",
+      "category": "storage",
+      "severity": "warning",
+      "description": "Quando la fotocamera viene collegata al PC tramite cavo USB, il computer non riconosce il dispositivo o non riesce a trasferire le foto.",
+      "visual_symptoms": [
+        "PC che non rileva la fotocamera dopo il collegamento USB",
+        "Messaggi di errore 'Dispositivo USB non riconosciuto'",
+        "Fotocamera che non mostra il menu di selezione modalità USB"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Modalità USB della fotocamera impostata su 'Ricarica' invece di 'Trasferimento dati'",
+          "probability": 0.50,
+          "test": "Verificare nelle impostazioni della fotocamera quale modalità USB è selezionata"
+        },
+        {
+          "cause": "Cavo USB di scarsa qualità o con soli pin di alimentazione (senza pin dati)",
+          "probability": 0.30,
+          "test": "Provare con un cavo USB differente, possibilmente quello originale della fotocamera"
+        },
+        {
+          "cause": "Driver della fotocamera non installati sul PC",
+          "probability": 0.20,
+          "test": "Verificare in Gestione Dispositivi del PC se appare un dispositivo sconosciuto quando si collega la fotocamera"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Sul menu della fotocamera, impostare la modalità USB su 'Trasferimento file' o 'MTP' (non 'Ricarica')",
+              "verification": "Modalità USB corretta selezionata, PC rileva la fotocamera",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Provare con un cavo USB diverso (possibilmente quello originale incluso nella confezione)",
+              "verification": "Fotocamera riconosciuta dal PC, cartella foto accessibile",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "In alternativa, rimuovere la scheda SD e inserirla in un lettore di schede SD per il trasferimento",
+              "verification": "Scheda SD riconosciuta come unità rimovibile, foto accessibili",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obiettivo_non_si_monta",
+      "name": "Obiettivo che non si monta correttamente sul corpo",
+      "category": "obiettivo",
+      "severity": "error",
+      "description": "L'obiettivo non si innesta correttamente sull'attacco del corpo macchina, o una volta montato non viene riconosciuto elettronicamente.",
+      "visual_symptoms": [
+        "Resistenza durante il montaggio dell'obiettivo",
+        "Messaggio 'Nessun obiettivo montato' con obiettivo inserito",
+        "Obiettivo che ruota liberamente senza bloccarsi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Incompatibilità tra attacco obiettivo e corpo (es. EF su EF-S, F su Z senza adattatore)",
+          "probability": 0.40,
+          "test": "Verificare che l'attacco dell'obiettivo corrisponda al sistema della fotocamera (Canon EF/RF, Nikon F/Z, Sony E/FE)"
+        },
+        {
+          "cause": "Contatti elettronici sporchi o ossidati che impediscono il riconoscimento",
+          "probability": 0.35,
+          "test": "Pulire i contatti dorati sul fondello dell'obiettivo e sull'attacco del corpo con cotone asciutto"
+        },
+        {
+          "cause": "Pin di blocco danneggiato o molla del blocco debole",
+          "probability": 0.25,
+          "test": "Verificare il pin di sblocco sul corpo: deve sporgere quando non premuto e rientrare facilmente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Allineare il segno rosso (o bianco) dell'obiettivo con quello del corpo, inserire e ruotare fino al click",
+              "verification": "Click di blocco percepibile, obiettivo non si smuove tirando",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Pulire tutti i contatti elettronici su obiettivo e corpo con cotone asciutto",
+              "verification": "Contatti brillanti, fotocamera riconosce l'obiettivo all'accensione",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Se il problema è la compatibilità, acquistare l'adattatore corretto per il sistema (es. EF-EOS R per Canon mirrorless)",
+              "verification": "Adattatore installato, obiettivo riconosciuto e AF funzionante",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sensore_con_polvere",
+      "name": "Sensore con macchie di polvere nelle foto",
+      "category": "sensore",
+      "severity": "warning",
+      "description": "Le fotografie presentano macchie scure e sfumate in posizioni fisse, visibili soprattutto con diaframmi chiusi su sfondi uniformi.",
+      "visual_symptoms": [
+        "Macchie scure e sfumate visibili in posizione fissa in tutte le foto",
+        "Macchie più evidenti chiudendo il diaframma (f/11, f/16, f/22)",
+        "Posizione delle macchie identica anche cambiando obiettivo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Granelli di polvere depositati sul filtro anti-aliasing o sensore",
+          "probability": 0.70,
+          "test": "Scattare foto a cielo uniforme con f/16: se le macchie appaiono, è polvere sul sensore"
+        },
+        {
+          "cause": "Olio spray del meccanismo otturatore depositato sul sensore (comune su modelli nuovi)",
+          "probability": 0.20,
+          "test": "Se le macchie sono visibili anche ad aperture ampie e hanno bordi netti, potrebbe essere olio"
+        },
+        {
+          "cause": "Pixel difettosi sul sensore di immagine",
+          "probability": 0.10,
+          "test": "Utilizzare uno strumento come Sensor Tester per distinguere polvere da pixel difettosi"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Usare la funzione di pulizia automatica del sensore della fotocamera (vibrazione): Menu > Impostazioni > Pulizia sensore",
+              "verification": "Ciclo di pulizia completato, riscattare la foto di test: macchie ridotte",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "In ambiente privo di polvere, rimuovere l'obiettivo, bloccare lo specchio in su (Pulizia manuale), utilizzare un air blower per soffiare aria sul sensore senza toccarlo",
+              "verification": "Nessun granello visibile sul sensore, foto di test senza macchie",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la polvere non si rimuove con il blower, portare la fotocamera in assistenza per pulizia umida professionale del sensore",
+              "verification": "Foto di test senza macchie visibili a f/16",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diaframma_bloccato",
+      "name": "Diaframma dell'obiettivo bloccato",
+      "category": "obiettivo",
+      "severity": "error",
+      "description": "Le lamelle del diaframma rimangono bloccate in posizione aperta o chiusa, impedendo il controllo della profondità di campo e dell'esposizione.",
+      "visual_symptoms": [
+        "Esposizione errata non corretta variando il valore f/",
+        "Preview della profondità di campo che non cambia",
+        "Lamelle del diaframma visibili nel barilotto non perfettamente simmetriche"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lamelle del diaframma sporche di olio evaporato che le fa incollare",
+          "probability": 0.55,
+          "test": "Aprire il diaframma al massimo (f/1.8 o f/2.8) e guardare nell'obiettivo: le lamelle devono essere completamente retratte"
+        },
+        {
+          "cause": "Meccanismo di controllo diaframma del corpo macchina difettoso",
+          "probability": 0.30,
+          "test": "Testare lo stesso obiettivo su un altro corpo: se il diaframma funziona, il problema è nel corpo"
+        },
+        {
+          "cause": "Lamelle del diaframma piegate per urto o caduta dell'obiettivo",
+          "probability": 0.15,
+          "test": "Osservare la forma del diaframma chiuso: deve essere circolare uniforme, non distorta"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Verificare se il problema è nel corpo o nell'obiettivo testando con un obiettivo diverso o lo stesso obiettivo su un altro corpo",
+              "verification": "Problema isolato: obiettivo o corpo macchina",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Per diaframma incollato da olio, portare l'obiettivo presso un tecnico ottico specializzato per pulizia delle lamelle con solvente",
+              "verification": "Preventivo tecnico ricevuto per pulizia diaframma",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Dopo pulizia, testare l'obiettivo a tutti i valori f/ (f/1.8, f/4, f/8, f/16) verificando la corretta variazione di esposizione",
+              "verification": "Ogni valore f/ produce la variazione di esposizione attesa, profondità di campo variabile",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

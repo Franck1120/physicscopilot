@@ -1,0 +1,989 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "smartphone",
+  "total": 20,
+  "problems": [
+    {
+      "id": "schermo_rotto",
+      "name": "Schermo rotto o incrinato",
+      "category": "display",
+      "severity": "error",
+      "description": "Il display dello smartphone presenta crepe, fratture o zone completamente nere a seguito di una caduta o pressione eccessiva.",
+      "visual_symptoms": [
+        "Crepe visibili sulla superficie del vetro",
+        "Zona nera o macchie scure sul display",
+        "Linee colorate o artefatti visivi sul pannello",
+        "Touch non responsivo in alcune aree"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Caduta del dispositivo su superfici dure",
+          "probability": 0.65,
+          "test": "Ispezionare visivamente gli angoli e i bordi per segni di impatto"
+        },
+        {
+          "cause": "Pressione eccessiva sul display (es. seduto in tasca)",
+          "probability": 0.25,
+          "test": "Verificare se il vetro è integro ma il pannello interno è danneggiato"
+        },
+        {
+          "cause": "Difetto produttivo dello strato OLED/LCD",
+          "probability": 0.10,
+          "test": "Controllare se il danno è apparso senza impatti fisici evidenti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Fare backup completo dei dati prima di qualsiasi intervento",
+              "verification": "Backup completato e verificato su cloud o PC",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Portare il dispositivo presso un centro autorizzato o tecnico specializzato per la sostituzione del display",
+              "verification": "Ricevere preventivo scritto con modello display (originale o compatibile)",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Dopo la sostituzione, testare touch, luminosità e colori su tutto lo schermo",
+              "verification": "Nessuna zona morta, colori uniformi, touch responsivo",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "batteria_scarica_veloce",
+      "name": "Batteria si scarica velocemente",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Il dispositivo perde carica molto più rapidamente del normale, non arrivando a fine giornata con un utilizzo standard.",
+      "visual_symptoms": [
+        "Percentuale batteria che cala visibilmente in pochi minuti",
+        "Dispositivo caldo anche in standby",
+        "Notifica batteria scarica già al mattino"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria degradata per cicli di ricarica esauriti",
+          "probability": 0.50,
+          "test": "Verificare la salute della batteria in Impostazioni > Batteria (iOS) o con app Battery Guru (Android)"
+        },
+        {
+          "cause": "App in background che consumano energia in modo anomalo",
+          "probability": 0.35,
+          "test": "Controllare le statistiche di utilizzo batteria per app in Impostazioni > Batteria"
+        },
+        {
+          "cause": "Luminosità elevata o funzionalità sempre attive (GPS, Bluetooth, Wi-Fi)",
+          "probability": 0.15,
+          "test": "Abbassare luminosità al 50% e disattivare GPS/Bluetooth per un giorno e confrontare il consumo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Abilitare la modalità risparmio energetico e ridurre la luminosità dello schermo al 40-50%",
+              "verification": "Icona risparmio energetico attiva nella barra di stato",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Aprire Impostazioni > Batteria e identificare le app con consumo anomalo. Forzare la chiusura o disinstallare le app più consumatrici",
+              "verification": "Nessuna app supera il 20% di utilizzo con uso minimo",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la salute batteria è sotto l'80%, prenotare sostituzione batteria presso centro autorizzato",
+              "verification": "Dopo sostituzione, salute batteria al 100%",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "app_che_crashano",
+      "name": "App che si chiudono improvvisamente",
+      "category": "software",
+      "severity": "warning",
+      "description": "Le applicazioni si chiudono senza preavviso durante l'uso, tornando alla schermata home o mostrando un messaggio di errore.",
+      "visual_symptoms": [
+        "App che scompare dallo schermo improvvisamente",
+        "Messaggio di errore 'App si è arrestata'",
+        "Schermata nera prima del crash"
+      ],
+      "probable_causes": [
+        {
+          "cause": "App non aggiornata o incompatibile con la versione OS attuale",
+          "probability": 0.45,
+          "test": "Aprire il Play Store o App Store e verificare se sono disponibili aggiornamenti per l'app problematica"
+        },
+        {
+          "cause": "Memoria RAM insufficiente o dati cache corrotti",
+          "probability": 0.40,
+          "test": "Cancellare la cache dell'app in Impostazioni > App > [App] > Archiviazione > Cancella cache"
+        },
+        {
+          "cause": "Corruzione dei dati dell'app o del sistema operativo",
+          "probability": 0.15,
+          "test": "Provare a disinstallare e reinstallare l'app per escludere dati corrotti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire il gestore app, cercare l'app problematica e cancellare cache e dati",
+              "verification": "Cache azzerata, l'app richiede di effettuare nuovamente il login",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Aggiornare l'app all'ultima versione disponibile dallo store ufficiale",
+              "verification": "App aggiornata all'ultima versione",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Riavviare il dispositivo e testare l'app per 5 minuti",
+              "verification": "App funziona senza crash per almeno 5 minuti di utilizzo",
+              "time_seconds": 360
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "microfono_non_funziona",
+      "name": "Microfono non funziona durante le chiamate",
+      "category": "hardware",
+      "severity": "error",
+      "description": "L'interlocutore non riesce a sentire la voce durante le chiamate telefoniche o le videoconferenze.",
+      "visual_symptoms": [
+        "Interlocutore che segnala assenza di audio",
+        "Icona microfono attiva ma nessun input audio nelle app di registrazione",
+        "Visualizzatore livelli audio fermo a zero"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Microfono fisicamente ostruito da sporco o pellicola protettiva",
+          "probability": 0.40,
+          "test": "Ispezionare i fori del microfono (solitamente nella parte bassa del dispositivo) con una luce"
+        },
+        {
+          "cause": "App che non ha i permessi per accedere al microfono",
+          "probability": 0.35,
+          "test": "Verificare in Impostazioni > Privacy > Microfono che l'app abbia il permesso attivo"
+        },
+        {
+          "cause": "Microfono hardware danneggiato da liquidi o impatto",
+          "probability": 0.25,
+          "test": "Testare il microfono con l'app nativa di registrazione vocale: se non registra nulla, è guasto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire delicatamente i fori del microfono con uno stuzzicadenti o spazzola morbida asciutta. Non soffiare con la bocca.",
+              "verification": "Fori visibilmente puliti, nessun residuo",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Verificare e abilitare i permessi microfono per l'app problematica in Impostazioni > Privacy > Microfono",
+              "verification": "Permesso microfono attivato per l'app",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Testare con l'app di registrazione nativa: registrare 10 secondi e riascoltare",
+              "verification": "Audio registrato chiaramente",
+              "time_seconds": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "altoparlante_distorce",
+      "name": "Altoparlante distorce l'audio",
+      "category": "audio",
+      "severity": "warning",
+      "description": "L'audio riprodotto dall'altoparlante del dispositivo risulta distorto, gracchiante o con qualità degradata soprattutto ad alti volumi.",
+      "visual_symptoms": [
+        "Audio gracchiante o vibrante ad alto volume",
+        "Riduzione della qualità sonora progressiva",
+        "Suono metallico o soffocato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Altoparlante ostruito da sporco, pelucchi o liquidi",
+          "probability": 0.50,
+          "test": "Ispezionare la griglia dell'altoparlante con luce: verificare presenza di detriti o residui"
+        },
+        {
+          "cause": "Membrana dell'altoparlante danneggiata da caduta o liquidi",
+          "probability": 0.35,
+          "test": "Riprodurre un tono di test a 1kHz: se distorce anche a basso volume, la membrana è danneggiata"
+        },
+        {
+          "cause": "Volume sistema troppo alto che causa clipping digitale",
+          "probability": 0.15,
+          "test": "Ridurre il volume al 70% e verificare se la distorsione scompare"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire la griglia dell'altoparlante con una spazzola morbida asciutta. Per rimuovere pelucchi profondi usare un nastro adesivo delicato.",
+              "verification": "Griglia pulita, nessun residuo visibile",
+              "time_seconds": 240
+            },
+            {
+              "instruction": "Ridurre il volume al 60-70% del massimo e riprodurre musica per 2 minuti",
+              "verification": "Audio chiaro senza distorsioni al 70% del volume",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fotocamera_sfocata",
+      "name": "Fotocamera produce foto sfocate",
+      "category": "hardware",
+      "severity": "warning",
+      "description": "Le foto scattate risultano sfocate o con autofocus non funzionante, indipendentemente dalla distanza dal soggetto.",
+      "visual_symptoms": [
+        "Foto costantemente sfocate anche con luce adeguata",
+        "Autofocus che oscilla senza bloccarsi",
+        "Aloni o macchie sulle immagini"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lente sporca di impronte digitali o polvere",
+          "probability": 0.55,
+          "test": "Esaminare la lente con luce: verificare impronte, polvere o residui sulla superficie esterna"
+        },
+        {
+          "cause": "Modulo fotocamera danneggiato o OIS difettoso",
+          "probability": 0.30,
+          "test": "Aprire l'app fotocamera e osservare se l'anteprima tremola eccessivamente anche da fermo"
+        },
+        {
+          "cause": "Software fotocamera con bug o impostazioni non corrette",
+          "probability": 0.15,
+          "test": "Resettare le impostazioni fotocamera ai valori predefiniti e riprovare"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire delicatamente la lente con un panno in microfibra pulito, con movimenti circolari dal centro verso l'esterno",
+              "verification": "Lente visibilmente pulita, senza aloni",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Aprire l'app fotocamera, toccare lo schermo sul soggetto per forzare il ricalibrazione dell'autofocus",
+              "verification": "Il quadrato di messa a fuoco si blocca sul soggetto e la foto risulta nitida",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Se il problema persiste, cancellare la cache dell'app fotocamera e riavviare il dispositivo",
+              "verification": "App fotocamera riavviata, test con foto in buona luce",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi_disconnette",
+      "name": "Wi-Fi si disconnette frequentemente",
+      "category": "connettività",
+      "severity": "warning",
+      "description": "Il dispositivo si disconnette dalla rete Wi-Fi in modo intermittente o non riesce a mantenere una connessione stabile.",
+      "visual_symptoms": [
+        "Icona Wi-Fi che scompare e riappare dalla barra di stato",
+        "App che mostrano errore di connessione",
+        "Velocità internet molto variabile"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Risparmio energetico che disattiva il Wi-Fi in standby",
+          "probability": 0.40,
+          "test": "Verificare in Impostazioni > Wi-Fi > Avanzate se è attiva l'opzione 'Mantieni Wi-Fi attivo in sospensione'"
+        },
+        {
+          "cause": "Router con firmware obsoleto o canale congestionato",
+          "probability": 0.35,
+          "test": "Testare con un altro dispositivo sulla stessa rete: se anche quello si disconnette, il problema è il router"
+        },
+        {
+          "cause": "Profilo di rete corrotto nel dispositivo",
+          "probability": 0.25,
+          "test": "Dimenticare la rete Wi-Fi e riconnettersi ex novo inserendo nuovamente la password"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Impostazioni > Wi-Fi, tenere premuto sulla rete problematica e selezionare 'Dimentica rete'",
+              "verification": "Rete rimossa dall'elenco reti salvate",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Riconnettersi alla rete inserendo nuovamente la password",
+              "verification": "Connesso alla rete con segnale pieno",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Disabilitare il risparmio energetico Wi-Fi in Impostazioni > Wi-Fi > Avanzate",
+              "verification": "Opzione disabilitata, testare la stabilità per 30 minuti",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bluetooth_non_trovato",
+      "name": "Bluetooth non trova dispositivi vicini",
+      "category": "connettività",
+      "severity": "warning",
+      "description": "Il dispositivo non rileva altri dispositivi Bluetooth nelle vicinanze durante la scansione, o si abbina ma poi si disconnette.",
+      "visual_symptoms": [
+        "Lista dispositivi Bluetooth sempre vuota durante la scansione",
+        "Dispositivo Bluetooth abbinato ma non connesso",
+        "Icona Bluetooth nella barra di stato assente o con punto esclamativo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Bluetooth disabilitato o in stato bloccato dopo aggiornamento OS",
+          "probability": 0.45,
+          "test": "Disattivare e riattivare il Bluetooth dal Centro di Controllo, aspettando 10 secondi"
+        },
+        {
+          "cause": "Dispositivo target non in modalità pairing o già abbinato ad altro telefono",
+          "probability": 0.35,
+          "test": "Portare il dispositivo target in modalità pairing (solitamente tenendo premuto il tasto per 5 secondi)"
+        },
+        {
+          "cause": "Interferenze radio o modulo Bluetooth hardware difettoso",
+          "probability": 0.20,
+          "test": "Attivare la modalità aereo per 30 secondi e poi riattivare solo il Bluetooth"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Attivare la modalità aereo, attendere 30 secondi, poi disattivarla e riattivare il Bluetooth",
+              "verification": "Bluetooth riattivato, avviare nuova scansione",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Eliminare tutti gli abbinamenti salvati in Impostazioni > Bluetooth e riprovare il pairing da zero",
+              "verification": "Nessun dispositivo nella lista abbinati, pairing effettuato con successo",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "surriscaldamento",
+      "name": "Smartphone si surriscalda",
+      "category": "hardware",
+      "severity": "error",
+      "description": "Il dispositivo raggiunge temperature elevate durante l'uso normale o anche in standby, causando rallentamenti o spegnimenti automatici.",
+      "visual_symptoms": [
+        "Notifica 'Temperatura dispositivo elevata' sullo schermo",
+        "Dorso del telefono caldo al tatto",
+        "Prestazioni ridotte o schermo che si oscura automaticamente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "App in background con utilizzo CPU elevato o loop infinito",
+          "probability": 0.45,
+          "test": "Aprire il monitor delle risorse (CPU usage) e identificare processi con utilizzo >30% in standby"
+        },
+        {
+          "cause": "Ricarica wireless o con caricabatterie non certificato",
+          "probability": 0.30,
+          "test": "Scollegare il caricabatterie: se il telefono si raffredda rapidamente, il problema è la ricarica"
+        },
+        {
+          "cause": "Batteria gonfia o deteriorata che genera calore",
+          "probability": 0.25,
+          "test": "Ispezionare il dorso: se il back cover è leggermente sollevato, la batteria potrebbe essere gonfia"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Chiudere tutte le app in background tramite il tasto recenti e riavviare il dispositivo",
+              "verification": "Temperatura scende sotto i 40°C dopo 10 minuti di stand-by",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Sostituire il caricabatterie con uno certificato dal produttore o con certificazione USB-IF",
+              "verification": "Durante la ricarica il telefono non supera i 45°C",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storage_pieno",
+      "name": "Memoria interna piena",
+      "category": "software",
+      "severity": "warning",
+      "description": "Il dispositivo segnala memoria esaurita impedendo l'installazione di app, lo scatto di foto o il download di file.",
+      "visual_symptoms": [
+        "Notifica 'Spazio di archiviazione quasi esaurito'",
+        "Impossibile scattare foto o scaricare file",
+        "App che non si aggiornano"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Accumulo di foto, video e media non necessari",
+          "probability": 0.50,
+          "test": "Aprire Impostazioni > Archiviazione e verificare quanto spazio occupano foto e video"
+        },
+        {
+          "cause": "Cache delle app accumulata nel tempo",
+          "probability": 0.30,
+          "test": "Verificare in Impostazioni > Archiviazione > Dati cache la dimensione totale"
+        },
+        {
+          "cause": "App inutilizzate con dati voluminiosi",
+          "probability": 0.20,
+          "test": "Ordinare le app per dimensione in Impostazioni > App e identificare le più pesanti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire la Galleria e spostare foto e video su Google Foto o iCloud, poi eliminarli dal dispositivo",
+              "verification": "Almeno 2GB liberati dopo il trasferimento",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "In Impostazioni > Archiviazione, cancellare tutti i file cache delle app",
+              "verification": "Cache eliminata, spazio libero aumentato",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Disinstallare le app inutilizzate da più di 30 giorni",
+              "verification": "Almeno 500MB liberati dalle app rimosse",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "touch_non_risponde",
+      "name": "Touchscreen non risponde ai tocchi",
+      "category": "display",
+      "severity": "error",
+      "description": "Il display non registra i tocchi in alcune zone o in tutta la superficie, rendendo il dispositivo inutilizzabile.",
+      "visual_symptoms": [
+        "Tocchi ignorati in zone specifiche dello schermo",
+        "Cursore che si muove da solo (ghost touch)",
+        "Tastiera virtuale che non risponde"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pellicola protettiva incompatibile o mal applicata",
+          "probability": 0.40,
+          "test": "Rimuovere la pellicola protettiva e testare il touch direttamente sul vetro"
+        },
+        {
+          "cause": "Umidità o liquidi che interferiscono con il digitizer",
+          "probability": 0.35,
+          "test": "Asciugare accuratamente il dispositivo e attendere 30 minuti prima di testare"
+        },
+        {
+          "cause": "Connettore display allentato dopo caduta",
+          "probability": 0.25,
+          "test": "Verificare se il problema è iniziato dopo una caduta; richiede apertura del dispositivo"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere completamente la pellicola protettiva attuale",
+              "verification": "Vetro esposto senza pellicola",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Pulire il display con panno in microfibra asciutto e testare il tocco in tutte le zone",
+              "verification": "Touch responsivo in tutta la superficie",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se il problema persiste, riavviare in modalità sicura per escludere app di terze parti",
+              "verification": "In modalità sicura il touch funziona correttamente",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chiamate_cadute",
+      "name": "Chiamate che cadono frequentemente",
+      "category": "connettività",
+      "severity": "error",
+      "description": "Le telefonate si interrompono improvvisamente durante la conversazione senza che nessuno dei due interlocutori abbia riagganciato.",
+      "visual_symptoms": [
+        "Schermata di fine chiamata improvvisa",
+        "Indicatore segnale che oscilla tra 0 e 2 barre",
+        "Messaggio 'Chiamata persa' subito dopo l'inizio"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Segnale cellulare debole nella zona di utilizzo",
+          "probability": 0.50,
+          "test": "Verificare il numero di barre di segnale e spostarsi verso una finestra o l'esterno"
+        },
+        {
+          "cause": "SIM card mal inserita o ossidazione dei contatti",
+          "probability": 0.30,
+          "test": "Rimuovere e reinserire la SIM, pulendo i contatti dorati con una gomma da cancellare"
+        },
+        {
+          "cause": "Problema di rete dell'operatore telefonico",
+          "probability": 0.20,
+          "test": "Verificare lo stato della rete sul sito dell'operatore o con un'altra SIM dello stesso operatore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Rimuovere la SIM card, pulire i contatti dorati con una gomma e reinserire correttamente",
+              "verification": "Indicatore rete mostra il gestore corretto",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Attivare la modalità aereo per 1 minuto e poi disattivarla per forzare il re-aggancio alla cella",
+              "verification": "Segnale stabile con almeno 3 barre",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gps_impreciso",
+      "name": "GPS con posizione imprecisa",
+      "category": "software",
+      "severity": "warning",
+      "description": "Il dispositivo mostra una posizione GPS errata o con cerchio di incertezza molto ampio, rendendo inaffidabile la navigazione.",
+      "visual_symptoms": [
+        "Punto sulla mappa spostato di centinaia di metri dalla posizione reale",
+        "Cerchio di accuratezza GPS molto ampio",
+        "Posizione che salta frequentemente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Modalità posizione impostata su 'Solo rete' invece di 'Alta precisione'",
+          "probability": 0.50,
+          "test": "Verificare in Impostazioni > Posizione > Modalità che sia selezionata l'Alta precisione"
+        },
+        {
+          "cause": "Dati GPS AGPS scaduti o corrotti",
+          "probability": 0.30,
+          "test": "Installare un'app di test GPS (es. GPS Status) e verificare quanti satelliti sono agganciati"
+        },
+        {
+          "cause": "Interferenze metalliche o utilizzo in ambienti chiusi",
+          "probability": 0.20,
+          "test": "Uscire all'aperto in zona aperta e attendere 2 minuti per l'acquisizione GPS"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Impostazioni > Posizione e impostare la modalità su 'Alta precisione' (GPS + Wi-Fi + rete)",
+              "verification": "Modalità impostata su Alta precisione",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Con app GPS Status, selezionare 'Aggiorna dati AGPS' per scaricare dati di assistenza aggiornati",
+              "verification": "Dati AGPS aggiornati, il telefono aggancia almeno 8 satelliti all'aperto",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "display_riga_verticale",
+      "name": "Riga verticale sul display",
+      "category": "display",
+      "severity": "error",
+      "description": "Sul display appare una o più righe verticali di colore fisso (verde, rosa, bianco) che persistono indipendentemente dal contenuto visualizzato.",
+      "visual_symptoms": [
+        "Linea verticale di colore solido che attraversa tutto il display",
+        "Riga che non scompare neanche con il display nero",
+        "Possibile allargamento della riga nel tempo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Connettore del pannello display allentato o danneggiato",
+          "probability": 0.45,
+          "test": "Premere delicatamente sulla cornice intorno al display: se la riga cambia, è il connettore"
+        },
+        {
+          "cause": "Pannello OLED/LCD con colonne di pixel danneggiate",
+          "probability": 0.45,
+          "test": "Riavviare il dispositivo: se la riga appare anche durante la schermata di avvio, il pannello è danneggiato"
+        },
+        {
+          "cause": "Danno da impatto fisico sul bordo del display",
+          "probability": 0.10,
+          "test": "Verificare se il problema è iniziato dopo una caduta o pressione laterale"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Eseguire un backup completo del dispositivo prima di qualsiasi intervento tecnico",
+              "verification": "Backup completato su cloud",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Portare il dispositivo presso un centro tecnico per la diagnosi e sostituzione del pannello display",
+              "verification": "Preventivo ricevuto per sostituzione display",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "porta_usb_non_carica",
+      "name": "Porta USB non carica il dispositivo",
+      "category": "hardware",
+      "severity": "error",
+      "description": "Il dispositivo non si carica quando collegato al caricabatterie tramite cavo USB, nonostante il cavo e l'alimentatore siano funzionanti.",
+      "visual_symptoms": [
+        "Nessuna icona di ricarica sullo schermo quando collegato",
+        "Percentuale batteria che non sale",
+        "Il cavo si inserisce con difficoltà o è instabile"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Porta USB sporca di pelucchi o residui nella presa",
+          "probability": 0.50,
+          "test": "Illuminare la porta con una torcia: verificare presenza di pelucchi o corpi estranei"
+        },
+        {
+          "cause": "Cavo USB danneggiato o caricabatterie difettoso",
+          "probability": 0.30,
+          "test": "Provare con un altro cavo e caricabatterie certificato"
+        },
+        {
+          "cause": "Porta USB fisicamente danneggiata (pin piegati o ossidati)",
+          "probability": 0.20,
+          "test": "Ispezionare visivamente i pin interni della porta con luce e lente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare uno stuzzicadenti di legno per rimuovere delicatamente i pelucchi dalla porta USB. Non usare metalli.",
+              "verification": "Porta visivamente pulita, cavo si inserisce saldamente",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Testare con un cavo certificato diverso e un altro alimentatore",
+              "verification": "Il dispositivo mostra l'icona di ricarica",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se il problema persiste, portare il dispositivo in assistenza per la sostituzione della porta USB",
+              "verification": "Porta sostituita, ricarica funzionante",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "face_id_non_funziona",
+      "name": "Face ID non riconosce il viso",
+      "category": "software",
+      "severity": "warning",
+      "description": "Il sistema di riconoscimento facciale non autentica l'utente, richiedendo continuamente l'inserimento del PIN.",
+      "visual_symptoms": [
+        "Icona Face ID con punto esclamativo",
+        "Messaggio 'Face ID non disponibile'",
+        "Autenticazione fallita anche in condizioni di luce ottimale"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Viso coperto da mascherina, occhiali nuovi o cambiamento estetico",
+          "probability": 0.40,
+          "test": "Tentare l'autenticazione in condizioni identiche al setup iniziale (senza accessori)"
+        },
+        {
+          "cause": "Sensori TrueDepth (telecamera frontale/IR) sporchi",
+          "probability": 0.35,
+          "test": "Pulire l'area sensori con panno morbido e riprovare"
+        },
+        {
+          "cause": "Modello di riconoscimento facciale obsoleto",
+          "probability": 0.25,
+          "test": "Verificare se la modifica del viso è significativa: barbecue, cambio capelli drastico, invecchiamento"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire il notch/area sensori frontali con panno in microfibra asciutto",
+              "verification": "Area sensori visibilmente pulita",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Aprire Impostazioni > Face ID e codice > Aggiungi aspetto alternativo e registrare nuovamente il viso",
+              "verification": "Nuovo aspetto registrato con successo",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notifiche_ritardate",
+      "name": "Notifiche che arrivano in ritardo",
+      "category": "software",
+      "severity": "warning",
+      "description": "Le notifiche di messaggi, email o app social arrivano con ritardi di minuti o ore rispetto all'evento effettivo.",
+      "visual_symptoms": [
+        "Messaggi WhatsApp notificati con 10-30 minuti di ritardo",
+        "Badge app non aggiornati in tempo reale",
+        "Notifiche che arrivano a blocchi quando si sblocca il telefono"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Risparmio energetico aggressivo che blocca le connessioni in background",
+          "probability": 0.55,
+          "test": "Disabilitare il risparmio energetico e verificare se le notifiche arrivano in tempo reale"
+        },
+        {
+          "cause": "App ottimizzata della batteria che impedisce l'aggiornamento in background",
+          "probability": 0.30,
+          "test": "In Impostazioni > Battery > Ottimizzazione batteria, verificare se l'app è in lista"
+        },
+        {
+          "cause": "Connessione dati instabile che ritarda il push delle notifiche",
+          "probability": 0.15,
+          "test": "Testare la velocità di connessione con Speedtest e verificare la stabilità"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Aprire Impostazioni > Batteria > Ottimizzazione batteria, cercare l'app problematica e impostarla su 'Non ottimizzare'",
+              "verification": "App esclusa dall'ottimizzazione batteria",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Verificare che l'app abbia i permessi per l'attività in background in Impostazioni > App > [App] > Batteria",
+              "verification": "Attività in background consentita",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Disinstallare e reinstallare l'app per ripristinare le impostazioni di push notification",
+              "verification": "Notifiche arrivano entro 30 secondi dall'evento",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vibrazione_assente",
+      "name": "Vibrazione del dispositivo assente",
+      "category": "hardware",
+      "severity": "info",
+      "description": "Il dispositivo non vibra per le notifiche o le chiamate in arrivo, nonostante la vibrazione sia abilitata nelle impostazioni.",
+      "visual_symptoms": [
+        "Nessuna vibrazione percepibile durante le chiamate",
+        "Assenza di feedback aptico sulla tastiera",
+        "Icona vibrazione nelle impostazioni attiva ma non funzionante"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Vibrazione disabilitata in Impostazioni o tramite switch fisico",
+          "probability": 0.45,
+          "test": "Verificare in Impostazioni > Suoni e feedback aptico che la vibrazione sia attiva"
+        },
+        {
+          "cause": "Modalità Non disturbare attiva che blocca la vibrazione",
+          "probability": 0.35,
+          "test": "Verificare se l'icona luna/Non disturbare è attiva nella barra di stato"
+        },
+        {
+          "cause": "Motore di vibrazione (ERM/LRA) fisicamente danneggiato",
+          "probability": 0.20,
+          "test": "Testare la vibrazione in Impostazioni > Suoni > Test vibrazione: se non si percepisce nulla, il motore è guasto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare e disabilitare la modalità Non disturbare dal Centro di controllo",
+              "verification": "Icona Non disturbare non presente nella barra di stato",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Aprire Impostazioni > Suoni > Vibrazione e abilitare la vibrazione per chiamate e notifiche",
+              "verification": "Vibrazione attivata, testare con una chiamata di prova",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sim_non_riconosciuta",
+      "name": "SIM card non riconosciuta",
+      "category": "connettività",
+      "severity": "error",
+      "description": "Il dispositivo non rileva la SIM card inserita, mostrando 'Nessuna SIM' o 'SIM non valida' nella barra di stato.",
+      "visual_symptoms": [
+        "Icona SIM con X o barra nella barra di stato",
+        "Messaggio 'SIM non trovata' all'avvio",
+        "Nessun segnale di rete disponibile"
+      ],
+      "probable_causes": [
+        {
+          "cause": "SIM card mal inserita o vassoi SIM non bloccato correttamente",
+          "probability": 0.45,
+          "test": "Estrarre il vassoio SIM con l'apposito ago, rimuovere e reinserire correttamente la SIM"
+        },
+        {
+          "cause": "Contatti SIM ossidati o sporchi",
+          "probability": 0.35,
+          "test": "Ispezionare i contatti dorati della SIM: verificare ossidazione o impronte digitali"
+        },
+        {
+          "cause": "SIM card danneggiata o scaduta",
+          "probability": 0.20,
+          "test": "Provare la stessa SIM in un altro dispositivo per escludere danni alla scheda"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare l'ago SIM per aprire il vassoio, rimuovere la SIM e pulire i contatti dorati con una gomma morbida",
+              "verification": "Contatti visivamente puliti e lucidi",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Reinserire la SIM nel vassoio con l'orientamento corretto e chiudere saldamente il vassoio",
+              "verification": "Vassoio inserito completamente, dispositivo rileva la SIM al riavvio",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se la SIM non viene riconosciuta nemmeno in altri dispositivi, recarsi in negozio per sostituzione SIM",
+              "verification": "Nuova SIM con stesso numero riconosciuta correttamente",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aggiornamento_fallito",
+      "name": "Aggiornamento sistema operativo fallito",
+      "category": "software",
+      "severity": "error",
+      "description": "L'aggiornamento del sistema operativo si interrompe con un messaggio di errore, lasciando il dispositivo in uno stato instabile.",
+      "visual_symptoms": [
+        "Barra di avanzamento aggiornamento bloccata",
+        "Messaggio 'Aggiornamento non riuscito'",
+        "Dispositivo che riavvia in loop dopo l'aggiornamento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Spazio di archiviazione insufficiente per completare l'aggiornamento",
+          "probability": 0.45,
+          "test": "Verificare lo spazio libero: un aggiornamento OS richiede in genere il doppio della sua dimensione"
+        },
+        {
+          "cause": "Connessione Wi-Fi instabile durante il download",
+          "probability": 0.35,
+          "test": "Verificare la stabilità della connessione Wi-Fi con un test di velocità"
+        },
+        {
+          "cause": "File di aggiornamento corrotto nel download parziale",
+          "probability": 0.20,
+          "test": "Eliminare il file di aggiornamento scaricato e riprovare il download"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Liberare almeno 5GB di spazio eliminando foto, app e file non necessari",
+              "verification": "Almeno 5GB di spazio libero disponibile",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Collegare il dispositivo al caricabatterie, connettersi a una rete Wi-Fi stabile e avviare nuovamente l'aggiornamento",
+              "verification": "Download in corso con indicatore di avanzamento che procede",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Se l'aggiornamento continua a fallire, usare iTunes/Finder (iOS) o la modalità download (Android) per aggiornare via PC",
+              "verification": "Dispositivo aggiornato con successo all'ultima versione OS",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

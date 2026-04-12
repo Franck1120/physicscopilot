@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +11,7 @@ const _kServerUrlKey = 'server_url_override';
 const _kVoiceEnabledKey = 'voice_enabled';
 const _kLanguageKey = 'language';
 const _kThemeModeKey = 'theme_mode'; // 'dark' | 'light'
+const _kSelectedDomainKey = 'selected_domain';
 
 /// Supported response languages (BCP-47 code to display name).
 const Map<String, String> kSupportedLanguages = {
@@ -26,12 +30,16 @@ class AppSettings {
   final String language;
   /// App-wide theme mode (dark by default).
   final ThemeMode themeMode;
+  /// The domain selected by the user (e.g. 'printer', 'automotive').
+  /// `null` means no domain has been chosen yet.
+  final String? selectedDomain;
 
   const AppSettings({
     this.serverUrlOverride,
     this.voiceEnabled = true,
     this.language = 'it',
     this.themeMode = ThemeMode.dark,
+    this.selectedDomain,
   });
 
   AppSettings copyWith({
@@ -39,6 +47,7 @@ class AppSettings {
     bool? voiceEnabled,
     String? language,
     ThemeMode? themeMode,
+    String? Function()? selectedDomain,
   }) =>
       AppSettings(
         serverUrlOverride: serverUrlOverride != null
@@ -47,6 +56,9 @@ class AppSettings {
         voiceEnabled: voiceEnabled ?? this.voiceEnabled,
         language: language ?? this.language,
         themeMode: themeMode ?? this.themeMode,
+        selectedDomain: selectedDomain != null
+            ? selectedDomain()
+            : this.selectedDomain,
       );
 }
 
@@ -60,6 +72,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           themeMode: _prefs.getString(_kThemeModeKey) == 'light'
               ? ThemeMode.light
               : ThemeMode.dark,
+          selectedDomain: _prefs.getString(_kSelectedDomainKey),
         ));
 
   final SharedPreferences _prefs;
@@ -93,6 +106,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _prefs.setString(
         _kThemeModeKey, mode == ThemeMode.light ? 'light' : 'dark');
     state = state.copyWith(themeMode: mode);
+  }
+
+  /// Persists the selected [domain] id. Pass `null` to clear.
+  Future<void> setDomain(String? domain) async {
+    if (domain == null || domain.isEmpty) {
+      await _prefs.remove(_kSelectedDomainKey);
+      state = state.copyWith(selectedDomain: () => null);
+    } else {
+      await _prefs.setString(_kSelectedDomainKey, domain);
+      state = state.copyWith(selectedDomain: () => domain);
+    }
   }
 }
 

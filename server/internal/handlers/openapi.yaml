@@ -23,6 +23,8 @@ tags:
     description: Health and observability endpoints
   - name: Sessions
     description: Session lifecycle management
+  - name: Knowledge Base
+    description: Knowledge-base domain queries
 
 components:
   securitySchemes:
@@ -35,6 +37,14 @@ components:
       type: http
       scheme: basic
       description: HTTP Basic Auth for /metrics (username "admin", password from METRICS_PASSWORD).
+
+  responses:
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
   schemas:
     Device:
@@ -328,3 +338,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /api/feedback:
+    post:
+      summary: Submit step feedback
+      description: |
+        Records positive or negative feedback for a specific repair step within a session.
+        When no database is configured the feedback is only logged server-side.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id, step_number, rating]
+              properties:
+                session_id:
+                  type: string
+                  example: "a1b2c3d4e5f6"
+                step_number:
+                  type: integer
+                  minimum: 0
+                  example: 1
+                rating:
+                  type: string
+                  enum: [positive, negative]
+                  example: "positive"
+                comment:
+                  type: string
+                  maxLength: 1000
+                  example: "The temperature fix worked perfectly."
+      responses:
+        '202':
+          description: Feedback accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/domains:
+    get:
+      summary: List available knowledge-base domains
+      description: Returns the list of problem domains currently loaded in the knowledge base (e.g. "hvac", "printer", "smartphone").
+      tags: [Knowledge Base]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of domain identifiers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  domains:
+                    type: array
+                    items:
+                      type: string
+                    example: ["hvac", "printer", "smartphone", "appliances"]
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
