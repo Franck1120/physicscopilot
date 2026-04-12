@@ -9,6 +9,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+---
+
+## [0.18.0] - 2026-04-12
+
+### Added
 - Wave 3: CI workflows (`flutter.yml`, `security.yml`), Dependabot config, CODEOWNERS, PR template
 - Wave 3: `scripts/setup.sh` and `scripts/test.sh` for dev onboarding
 - Wave 3: `.editorconfig`, `.golangci.yml`, `.gitattributes` for consistent tooling
