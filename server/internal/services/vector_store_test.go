@@ -177,6 +177,56 @@ func TestMemoryVectorStoreIndexReplacesPreviousCorpus(t *testing.T) {
 	}
 }
 
+// ── MemoryVectorStore — topK larger than results ────────────────────────────
+
+func TestMemoryVectorStoreTopKLargerThanHits(t *testing.T) {
+	docs := []KBEntry{
+		{ID: "clog", Name: "Clogged Nozzle", Description: "nozzle blocked"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(docs)
+
+	// topK=100, but only 1 doc matches
+	results := store.Search("clogged nozzle", 100)
+	if len(results) != 1 {
+		t.Errorf("expected 1 result (topK > hits), got %d", len(results))
+	}
+}
+
+// ── MemoryVectorStore — concurrent access ───────────────────────────────────
+
+func TestMemoryVectorStoreConcurrentSearchDuringIndex(t *testing.T) {
+	store := NewMemoryVectorStore()
+	docs := []KBEntry{
+		{ID: "a", Name: "Alpha Failure", Description: "device error"},
+		{ID: "b", Name: "Beta Failure", Description: "device error"},
+	}
+	store.Index(docs)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 50; i++ {
+			store.Search("device failure", 5)
+		}
+	}()
+
+	// Re-index while searching
+	for i := 0; i < 10; i++ {
+		store.Index(docs)
+	}
+	<-done
+}
+
+// ── computeDocTF — empty entry ──────────────────────────────────────────────
+
+func TestComputeDocTFEmptyEntry(t *testing.T) {
+	tf := computeDocTF(KBEntry{})
+	if len(tf) != 0 {
+		t.Errorf("expected empty TF map for empty entry, got %d entries", len(tf))
+	}
+}
+
 // ── VectorStore interface compliance ─────────────────────────────────────────
 
 // TestVectorStoreInterfaceCompliance verifies that MemoryVectorStore

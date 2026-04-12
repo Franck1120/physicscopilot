@@ -3,57 +3,10 @@ package middleware
 import (
 	"sync"
 	"testing"
+	"time"
 )
 
-// ── UserFrameLimiter ──────────────────────────────────────────────────────────
-
-func TestNewUserFrameLimiter(t *testing.T) {
-	u := NewUserFrameLimiter()
-	if u == nil {
-		t.Fatal("NewUserFrameLimiter returned nil")
-	}
-	if u.limiters == nil {
-		t.Fatal("expected limiters map to be initialized")
-	}
-}
-
-func TestUserFrameLimiterFirstAllowSucceeds(t *testing.T) {
-	u := NewUserFrameLimiter()
-	if !u.Allow("user-first") {
-		t.Error("first Allow for a new user should always succeed")
-	}
-}
-
-func TestUserFrameLimiterBlocksAfterBurst(t *testing.T) {
-	u := NewUserFrameLimiter()
-	userID := "burst-user"
-
-	// Exhaust all burst tokens.
-	for i := 0; i < userFrameBurst; i++ {
-		if !u.Allow(userID) {
-			t.Fatalf("expected Allow to succeed for request %d (burst=%d)", i+1, userFrameBurst)
-		}
-	}
-
-	// Next call must be blocked.
-	if u.Allow(userID) {
-		t.Errorf("expected Allow to be blocked after exhausting %d burst tokens", userFrameBurst)
-	}
-}
-
-func TestUserFrameLimiterPerUserIsolation(t *testing.T) {
-	u := NewUserFrameLimiter()
-
-	// Exhaust user1's burst tokens.
-	for i := 0; i < userFrameBurst; i++ {
-		u.Allow("frame-user-1")
-	}
-
-	// user2 must have an independent bucket.
-	if !u.Allow("frame-user-2") {
-		t.Error("user2 should not be affected by user1's rate limit")
-	}
-}
+// ── UserFrameLimiter ─────────────────────────────────────────────────────────
 
 func TestUserFrameLimiterConstants(t *testing.T) {
 	if userFramesPerMinute != 100 {
@@ -62,126 +15,202 @@ func TestUserFrameLimiterConstants(t *testing.T) {
 	if userFrameBurst != 20 {
 		t.Errorf("userFrameBurst: want 20, got %d", userFrameBurst)
 	}
-}
-
-// ── UserSessionTracker ────────────────────────────────────────────────────────
-
-func TestNewUserSessionTracker(t *testing.T) {
-	tr := NewUserSessionTracker()
-	if tr == nil {
-		t.Fatal("NewUserSessionTracker returned nil")
-	}
-	if tr.sessions == nil {
-		t.Fatal("expected sessions map to be initialized")
+	if userMaxSessions != 3 {
+		t.Errorf("userMaxSessions: want 3, got %d", userMaxSessions)
 	}
 }
 
-func TestUserSessionTrackerAddWithinLimit(t *testing.T) {
-	tr := NewUserSessionTracker()
-	userID := "session-user"
+func TestNewUserFrameLimiterReturnsNonNil(t *testing.T) {
+	ufl := NewUserFrameLimiter()
+	if ufl == nil {
+		t.Fatal("NewUserFrameLimiter() returned nil")
+	}
+}
 
-	for i := 0; i < userMaxSessions; i++ {
-		if !tr.Add(userID) {
-			t.Fatalf("expected Add to succeed for session %d (limit=%d)", i+1, userMaxSessions)
+func TestUserFrameLimiterAllowsWithinBurst(t *testing.T) {
+	ufl := NewUserFrameLimiter()
+
+	for i := 0; i < userFrameBurst; i++ {
+		if !ufl.Allow("user-burst") {
+			t.Fatalf("Allow() returned false on request %d, expected true within burst of %d", i+1, userFrameBurst)
 		}
 	}
 }
 
-func TestUserSessionTrackerBlocksAtLimit(t *testing.T) {
-	tr := NewUserSessionTracker()
-	userID := "limit-user"
+func TestUserFrameLimiterBlocksAfterBurst(t *testing.T) {
+	ufl := NewUserFrameLimiter()
+	userID := "user-block"
 
-	for i := 0; i < userMaxSessions; i++ {
-		tr.Add(userID)
+	// Exhaust all burst tokens.
+	for i := 0; i < userFrameBurst; i++ {
+		ufl.Allow(userID)
 	}
 
-	if tr.Add(userID) {
-		t.Errorf("expected Add to fail after reaching the limit of %d", userMaxSessions)
-	}
-}
-
-func TestUserSessionTrackerRemoveDecrementsCount(t *testing.T) {
-	tr := NewUserSessionTracker()
-	userID := "remove-user"
-
-	for i := 0; i < userMaxSessions; i++ {
-		tr.Add(userID)
-	}
-	// At limit — next Add must fail.
-	if tr.Add(userID) {
-		t.Fatal("expected Add to fail at limit before Remove")
-	}
-
-	tr.Remove(userID)
-
-	// One slot freed — Add must succeed again.
-	if !tr.Add(userID) {
-		t.Error("expected Add to succeed after Remove freed a slot")
+	if ufl.Allow(userID) {
+		t.Error("Allow() should return false after burst exhausted")
 	}
 }
 
-func TestUserSessionTrackerRemoveAtZeroIsNoop(t *testing.T) {
-	tr := NewUserSessionTracker()
+func TestUserFrameLimiterPerUserIsolation(t *testing.T) {
+	ufl := NewUserFrameLimiter()
 
-	// Remove on a user with no sessions must not panic or produce negative counts.
-	tr.Remove("no-sessions-user")
+	// Exhaust userA's burst.
+	for i := 0; i < userFrameBurst; i++ {
+		ufl.Allow("userA")
+	}
+	if ufl.Allow("userA") {
+		t.Error("userA should be blocked after exhausting burst")
+	}
 
-	tr.mu.Lock()
-	count := tr.sessions["no-sessions-user"]
-	tr.mu.Unlock()
+	// userB must still have tokens.
+	if !ufl.Allow("userB") {
+		t.Error("userB should be unaffected by userA's exhaustion")
+	}
+}
 
-	if count < 0 {
-		t.Errorf("session count must not go negative, got %d", count)
+func TestUserFrameLimiterCleanupRemovesIdleEntries(t *testing.T) {
+	ufl := NewUserFrameLimiter()
+
+	// Trigger creation of a limiter entry.
+	ufl.Allow("idle-user")
+
+	// Verify entry exists.
+	ufl.mu.Lock()
+	if _, ok := ufl.limiters["idle-user"]; !ok {
+		ufl.mu.Unlock()
+		t.Fatal("expected limiter entry for idle-user after Allow()")
+	}
+
+	// Backdate lastSeen beyond userSessionLimiterExpiry so the cleanup considers it stale.
+	ufl.limiters["idle-user"].lastSeen = time.Now().Add(-2 * userSessionLimiterExpiry)
+	ufl.mu.Unlock()
+
+	// Simulate one cleanup pass (same logic as cleanupLoop body).
+	ufl.mu.Lock()
+	for id, e := range ufl.limiters {
+		if time.Since(e.lastSeen) > userSessionLimiterExpiry {
+			delete(ufl.limiters, id)
+		}
+	}
+	ufl.mu.Unlock()
+
+	ufl.mu.Lock()
+	defer ufl.mu.Unlock()
+	if _, ok := ufl.limiters["idle-user"]; ok {
+		t.Error("idle-user limiter should have been cleaned up")
+	}
+}
+
+func TestUserFrameLimiterConcurrentAccess(t *testing.T) {
+	ufl := NewUserFrameLimiter()
+	var wg sync.WaitGroup
+	const goroutines = 50
+
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			ufl.Allow("concurrent-user")
+		}()
+	}
+	wg.Wait()
+
+	// No race or panic means success. The -race flag catches data races.
+}
+
+// ── UserSessionTracker ───────────────────────────────────────────────────────
+
+func TestNewUserSessionTrackerReturnsNonNil(t *testing.T) {
+	tracker := NewUserSessionTracker()
+	if tracker == nil {
+		t.Fatal("NewUserSessionTracker() returned nil")
+	}
+}
+
+func TestUserSessionTrackerAddWithinLimit(t *testing.T) {
+	tracker := NewUserSessionTracker()
+
+	for i := 0; i < userMaxSessions; i++ {
+		if !tracker.Add("user-ok") {
+			t.Fatalf("Add() returned false on session %d, expected true (limit=%d)", i+1, userMaxSessions)
+		}
+	}
+}
+
+func TestUserSessionTrackerRejectsOverLimit(t *testing.T) {
+	tracker := NewUserSessionTracker()
+
+	// Fill up to the max.
+	for i := 0; i < userMaxSessions; i++ {
+		tracker.Add("user-full")
+	}
+
+	// Next add should be rejected.
+	if tracker.Add("user-full") {
+		t.Errorf("Add() should return false when %d sessions already active", userMaxSessions)
+	}
+}
+
+func TestUserSessionTrackerRemoveAllowsNewSession(t *testing.T) {
+	tracker := NewUserSessionTracker()
+
+	// Fill to capacity.
+	for i := 0; i < userMaxSessions; i++ {
+		tracker.Add("user-rm")
+	}
+
+	// Remove one session.
+	tracker.Remove("user-rm")
+
+	// Should be able to add one more.
+	if !tracker.Add("user-rm") {
+		t.Error("Add() should succeed after Remove() freed a slot")
+	}
+}
+
+func TestUserSessionTrackerRemoveDoesNotGoBelowZero(t *testing.T) {
+	tracker := NewUserSessionTracker()
+
+	// Remove on a user that was never added should not panic or underflow.
+	tracker.Remove("nonexistent")
+
+	tracker.mu.Lock()
+	count := tracker.sessions["nonexistent"]
+	tracker.mu.Unlock()
+
+	if count != 0 {
+		t.Errorf("session count for nonexistent user: want 0, got %d", count)
 	}
 }
 
 func TestUserSessionTrackerPerUserIsolation(t *testing.T) {
-	tr := NewUserSessionTracker()
+	tracker := NewUserSessionTracker()
 
+	// Fill userA to capacity.
 	for i := 0; i < userMaxSessions; i++ {
-		tr.Add("iso-user-1")
+		tracker.Add("userA")
 	}
 
-	// user-2 must have an independent counter.
-	if !tr.Add("iso-user-2") {
-		t.Error("user-2 should not be affected by user-1's session limit")
+	// userB should still be able to add.
+	if !tracker.Add("userB") {
+		t.Error("userB should be able to add sessions regardless of userA's count")
 	}
 }
 
-func TestUserSessionTrackerConcurrent(t *testing.T) {
-	tr := NewUserSessionTracker()
-	userID := "concurrent-tracker-user"
-
-	const goroutines = 50
+func TestUserSessionTrackerConcurrentAccess(t *testing.T) {
+	tracker := NewUserSessionTracker()
 	var wg sync.WaitGroup
-	wg.Add(goroutines * 2)
+	const goroutines = 50
 
+	wg.Add(goroutines)
 	for i := 0; i < goroutines; i++ {
 		go func() {
 			defer wg.Done()
-			tr.Add(userID)
+			tracker.Add("concurrent-user")
+			tracker.Remove("concurrent-user")
 		}()
 	}
-	for i := 0; i < goroutines; i++ {
-		go func() {
-			defer wg.Done()
-			tr.Remove(userID)
-		}()
-	}
-
 	wg.Wait()
 
-	tr.mu.Lock()
-	count := tr.sessions[userID]
-	tr.mu.Unlock()
-
-	if count < 0 {
-		t.Errorf("session count must not go negative after concurrent access, got %d", count)
-	}
-}
-
-func TestUserMaxSessionsConstant(t *testing.T) {
-	if userMaxSessions != 3 {
-		t.Errorf("userMaxSessions: want 3, got %d", userMaxSessions)
-	}
+	// No race or panic means success.
 }

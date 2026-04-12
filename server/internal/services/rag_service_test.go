@@ -167,71 +167,115 @@ func TestQueryKBCacheHitReturnsSameResults(t *testing.T) {
 	}
 }
 
-// ── LRU cache internals ───────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// ragLRU cache — TTL expiry
+// ---------------------------------------------------------------------------
 
-func TestRAGLRUCacheEvictionAtCapacity(t *testing.T) {
-	cache := newRAGLRU(2, 5*time.Minute) // capacity = 2
+func TestRAGLRUGetExpiredEntryReturnsMiss(t *testing.T) {
+	cache := newRAGLRU(10, 50*time.Millisecond)
+	cache.set("test query", 3, []KBEntry{{ID: "a"}})
 
-	entry1 := []KBEntry{{ID: "e1", Name: "Entry 1"}}
-	entry2 := []KBEntry{{ID: "e2", Name: "Entry 2"}}
-	entry3 := []KBEntry{{ID: "e3", Name: "Entry 3"}}
-
-	cache.set("query1", 1, entry1)
-	cache.set("query2", 1, entry2)
-
-	// Access query1 to make it recently used.
-	cache.get("query1", 1)
-
-	// Inserting a third entry should evict the LRU entry (query2).
-	cache.set("query3", 1, entry3)
-
-	if _, ok := cache.get("query1", 1); !ok {
-		t.Error("query1 should still be in cache (recently accessed)")
+	// Immediately should be a hit
+	if results, ok := cache.get("test query", 3); !ok || len(results) != 1 {
+		t.Error("expected cache hit immediately after set")
 	}
-	if _, ok := cache.get("query3", 1); !ok {
-		t.Error("query3 should be in cache (just inserted)")
+
+	// Wait for TTL to expire
+	time.Sleep(80 * time.Millisecond)
+
+	results, ok := cache.get("test query", 3)
+	if ok {
+		t.Error("expected cache miss after TTL expiry")
 	}
-	if _, ok := cache.get("query2", 1); ok {
-		t.Error("query2 should have been evicted as the LRU entry")
+	if results != nil {
+		t.Errorf("expected nil results after TTL expiry, got %v", results)
 	}
 }
 
-func TestRAGLRUCacheTTLExpiry(t *testing.T) {
-	ttl := 10 * time.Millisecond
-	cache := newRAGLRU(10, ttl)
+// ---------------------------------------------------------------------------
+// ragLRU cache — eviction at capacity
+// ---------------------------------------------------------------------------
 
-	entry := []KBEntry{{ID: "ttl-entry", Name: "TTL Entry"}}
-	cache.set("ttl-query", 1, entry)
+func TestRAGLRUEvictsOldestAtCapacity(t *testing.T) {
+	cache := newRAGLRU(2, 5*time.Minute)
 
-	// Entry should be present immediately.
-	if _, ok := cache.get("ttl-query", 1); !ok {
-		t.Fatal("entry should be present immediately after set")
+	cache.set("query-A", 3, []KBEntry{{ID: "a"}})
+	cache.set("query-B", 3, []KBEntry{{ID: "b"}})
+
+	// Both should be hits
+	if _, ok := cache.get("query-A", 3); !ok {
+		t.Error("expected cache hit for query-A before eviction")
+	}
+	if _, ok := cache.get("query-B", 3); !ok {
+		t.Error("expected cache hit for query-B before eviction")
 	}
 
-	// Wait for TTL to expire.
-	time.Sleep(ttl + 5*time.Millisecond)
+	// Adding a third entry should evict the LRU (query-A was accessed after query-B
+	// in the get calls above, so query-B accessed last, query-A second-to-last...
+	// actually both were accessed, so the LRU is whichever was accessed least recently)
+	// Let's make it deterministic: access query-B to make it MRU, then add query-C
+	cache.get("query-B", 3)
+	cache.set("query-C", 3, []KBEntry{{ID: "c"}})
 
-	// Entry should now be expired.
-	if _, ok := cache.get("ttl-query", 1); ok {
-		t.Error("entry should have been evicted after TTL expiry")
+	// query-A should be evicted (LRU)
+	if _, ok := cache.get("query-A", 3); ok {
+		t.Error("expected query-A to be evicted (LRU)")
+	}
+	// query-B and query-C should still be present
+	if _, ok := cache.get("query-B", 3); !ok {
+		t.Error("expected cache hit for query-B after eviction of A")
+	}
+	if _, ok := cache.get("query-C", 3); !ok {
+		t.Error("expected cache hit for query-C")
 	}
 }
 
-func TestRAGLRUCacheUpdateExistingEntry(t *testing.T) {
+// ---------------------------------------------------------------------------
+// ragLRU cache — update existing entry
+// ---------------------------------------------------------------------------
+
+func TestRAGLRUUpdateExistingEntry(t *testing.T) {
 	cache := newRAGLRU(10, 5*time.Minute)
 
-	first := []KBEntry{{ID: "first"}}
-	second := []KBEntry{{ID: "second"}, {ID: "third"}}
+	cache.set("query-X", 3, []KBEntry{{ID: "old"}})
+	cache.set("query-X", 3, []KBEntry{{ID: "new"}})
 
-	cache.set("same-query", 1, first)
-	cache.set("same-query", 1, second) // update
-
-	results, ok := cache.get("same-query", 1)
+	results, ok := cache.get("query-X", 3)
 	if !ok {
-		t.Fatal("entry should be in cache after update")
+		t.Fatal("expected cache hit after update")
 	}
-	if len(results) != 2 {
-		t.Errorf("expected updated results (len 2), got %d", len(results))
+	if len(results) != 1 || results[0].ID != "new" {
+		t.Errorf("expected updated entry with ID 'new', got %v", results)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// FormatForPrompt — detailed format checks
+// ---------------------------------------------------------------------------
+
+func TestFormatForPromptMultipleEntries(t *testing.T) {
+	svc := &RAGService{}
+	entries := []KBEntry{
+		{Name: "Clogged Nozzle", Description: "Nozzle blocked", VisualSymptoms: []string{"under extrusion", "gaps"}},
+		{Name: "Warping", Description: "Corners lift up"},
+	}
+	out := svc.FormatForPrompt(entries)
+
+	if !strings.HasPrefix(out, "RELEVANT KNOWN ISSUES:\n") {
+		t.Errorf("expected header prefix, got: %q", out)
+	}
+	if !strings.Contains(out, "- Clogged Nozzle: Nozzle blocked Symptoms: under extrusion; gaps") {
+		t.Errorf("expected first entry with symptoms, got: %q", out)
+	}
+	if !strings.Contains(out, "- Warping: Corners lift up\n") {
+		t.Errorf("expected second entry without symptoms, got: %q", out)
+	}
+}
+
+func TestFormatForPromptEmptySliceReturnsEmpty(t *testing.T) {
+	svc := &RAGService{}
+	if out := svc.FormatForPrompt([]KBEntry{}); out != "" {
+		t.Errorf("expected empty string for empty slice, got %q", out)
 	}
 }
 

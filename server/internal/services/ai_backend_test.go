@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -98,28 +99,42 @@ func TestNewAIBackendUnknownReturnsError(t *testing.T) {
 	}
 }
 
-// ── Stub AnalyzeFrame implementations ────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Stub AnalyzeFrame calls return "not yet implemented" errors
+// ---------------------------------------------------------------------------
 
 func TestOpenAIBackendAnalyzeFrameNotImplemented(t *testing.T) {
+	t.Setenv("AI_BACKEND", "openai")
 	t.Setenv("OPENAI_API_KEY", "sk-test")
-	b, err := NewOpenAIBackend()
+
+	backend, err := NewAIBackend()
 	if err != nil {
-		t.Fatalf("NewOpenAIBackend: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-	_, err = b.AnalyzeFrame(context.Background(), "", "", "")
+
+	_, err = backend.AnalyzeFrame(context.Background(), "frame", "ctx", "it")
 	if err == nil {
-		t.Fatal("expected error from unimplemented OpenAI AnalyzeFrame")
+		t.Fatal("expected error from OpenAI stub")
+	}
+	if !strings.Contains(err.Error(), "not yet implemented") {
+		t.Errorf("expected 'not yet implemented' in error, got: %v", err)
 	}
 }
 
 func TestClaudeBackendAnalyzeFrameNotImplemented(t *testing.T) {
+	t.Setenv("AI_BACKEND", "claude")
 	t.Setenv("ANTHROPIC_API_KEY", "sk-ant-test")
-	b, err := NewClaudeBackend()
+
+	backend, err := NewAIBackend()
 	if err != nil {
-		t.Fatalf("NewClaudeBackend: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-	_, err = b.AnalyzeFrame(context.Background(), "", "", "")
+
+	_, err = backend.AnalyzeFrame(context.Background(), "frame", "ctx", "it")
 	if err == nil {
-		t.Fatal("expected error from unimplemented Claude AnalyzeFrame")
+		t.Fatal("expected error from Claude stub")
+	}
+	if !strings.Contains(err.Error(), "not yet implemented") {
+		t.Errorf("expected 'not yet implemented' in error, got: %v", err)
 	}
 }

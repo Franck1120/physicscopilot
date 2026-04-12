@@ -861,3 +861,223 @@ func TestAnalyzeFrameCircuitBreakerTripsOnErrors(t *testing.T) {
 		t.Errorf("expected %d upstream calls, got %d", 3*maxRetries, n)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// parseProxyResponse
+// ---------------------------------------------------------------------------
+
+func TestParseProxyResponseSuccess(t *testing.T) {
+	body := []byte(`{"choices":[{"message":{"content":"{\"analysis\":\"ok\",\"problem\":null,\"instruction\":\"continue\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"}}]}`)
+	resp, err := parseProxyResponse(body)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "ok" {
+		t.Errorf("expected analysis 'ok', got %q", resp.Analysis)
+	}
+	if resp.Instruction != "continue" {
+		t.Errorf("expected instruction 'continue', got %q", resp.Instruction)
+	}
+}
+
+func TestParseProxyResponseBrokenEnvelope(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`not json`))
+	if err == nil {
+		t.Fatal("expected error for broken JSON")
+	}
+	if !strings.Contains(err.Error(), "parse proxy response envelope") {
+		t.Errorf("error should mention envelope parse, got: %v", err)
+	}
+}
+
+func TestParseProxyResponseNoChoices(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[]}`))
+	if err == nil {
+		t.Fatal("expected error for no choices")
+	}
+	if !strings.Contains(err.Error(), "no choices") {
+		t.Errorf("error should mention no choices, got: %v", err)
+	}
+}
+
+func TestParseProxyResponseEmptyText(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[{"message":{"content":""}}]}`))
+	if err == nil {
+		t.Fatal("expected error for empty text")
+	}
+	if !strings.Contains(err.Error(), "text is empty") {
+		t.Errorf("error should mention empty text, got: %v", err)
+	}
+}
+
+func TestParseProxyResponseInvalidStructuredJSON(t *testing.T) {
+	_, err := parseProxyResponse([]byte(`{"choices":[{"message":{"content":"not json"}}]}`))
+	if err == nil {
+		t.Fatal("expected error for invalid structured JSON")
+	}
+	if !strings.Contains(err.Error(), "parse proxy structured response") {
+		t.Errorf("error should mention structured response, got: %v", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// analyzeFrameViaProxy (full integration with test server)
+// ---------------------------------------------------------------------------
+
+func TestAnalyzeFrameViaProxySuccess(t *testing.T) {
+	structuredResponse := `{"analysis":"proxy ok","problem":null,"instruction":"proxy continue","overlay":{"boxes":[],"arrows":[]}}`
+	proxyEnvelope := `{"choices":[{"message":{"content":` + "`" + structuredResponse + "`" + `}}]}`
+	// Build the correct JSON envelope
+	proxyEnvelope = `{"choices":[{"message":{"content":"` + strings.ReplaceAll(structuredResponse, `"`, `\"`) + `"}}]}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(proxyEnvelope))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		useProxy:   true,
+		proxyURL:   server.URL,
+		httpClient: server.Client(),
+	}
+
+	resp, err := svc.analyzeFrameViaProxy(context.Background(), "base64img", "user context", "it")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "proxy ok" {
+		t.Errorf("expected 'proxy ok', got %q", resp.Analysis)
+	}
+}
+
+func TestAnalyzeFrameViaProxyHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte(`{"error":"gateway error"}`))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		useProxy:   true,
+		proxyURL:   server.URL,
+		httpClient: server.Client(),
+	}
+
+	_, err := svc.analyzeFrameViaProxy(context.Background(), "", "text", "it")
+	if err == nil {
+		t.Fatal("expected error for HTTP 502")
+	}
+	if !strings.Contains(err.Error(), "502") {
+		t.Errorf("error should contain status 502, got: %v", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// AnalyzeFrame via proxy path (useProxy=true)
+// ---------------------------------------------------------------------------
+
+func TestAnalyzeFrameViaProxyRoute(t *testing.T) {
+	structuredJSON := `{"analysis":"via proxy","problem":null,"instruction":"ok","overlay":{"boxes":[],"arrows":[]}}`
+	escapedJSON := strings.ReplaceAll(structuredJSON, `"`, `\"`)
+	proxyResp := `{"choices":[{"message":{"content":"` + escapedJSON + `"}}]}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(proxyResp))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		useProxy:   true,
+		proxyURL:   server.URL,
+		httpClient: server.Client(),
+	}
+
+	resp, err := svc.AnalyzeFrame(context.Background(), "", "some context", "en")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "via proxy" {
+		t.Errorf("expected 'via proxy', got %q", resp.Analysis)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// buildProxyRequestBody with image
+// ---------------------------------------------------------------------------
+
+func TestBuildProxyRequestBodyWithImage(t *testing.T) {
+	svc := &GeminiService{useProxy: true, proxyURL: "http://example.com"}
+	body, err := svc.buildProxyRequestBody("base64img", "check this", "en")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(body.Messages) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(body.Messages))
+	}
+	// User message should contain multipart content (text + image_url)
+	var parts []openAIContentPart
+	if err := json.Unmarshal(body.Messages[1].Content, &parts); err != nil {
+		t.Fatalf("expected multipart content array, got: %v", err)
+	}
+	if len(parts) != 2 {
+		t.Fatalf("expected 2 parts (text + image), got %d", len(parts))
+	}
+	if parts[0].Type != "text" {
+		t.Errorf("expected first part type 'text', got %q", parts[0].Type)
+	}
+	if parts[1].Type != "image_url" {
+		t.Errorf("expected second part type 'image_url', got %q", parts[1].Type)
+	}
+}
+
+func TestBuildProxyRequestBodyEmptyContext(t *testing.T) {
+	svc := &GeminiService{useProxy: true, proxyURL: "http://example.com"}
+	body, err := svc.buildProxyRequestBody("", "", "it")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Empty conversationContext should use default text
+	var text string
+	if err := json.Unmarshal(body.Messages[1].Content, &text); err != nil {
+		t.Fatalf("expected string content for text-only, got: %v", err)
+	}
+	if text != "Analyze the current state and identify any issues" {
+		t.Errorf("expected default text, got %q", text)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// geminiRPM env var parsing
+// ---------------------------------------------------------------------------
+
+func TestGeminiRPMDefault(t *testing.T) {
+	t.Setenv("GEMINI_RPM", "")
+	if rpm := geminiRPM(); rpm != defaultGeminiRPM {
+		t.Errorf("expected default %d, got %d", defaultGeminiRPM, rpm)
+	}
+}
+
+func TestGeminiRPMCustomValue(t *testing.T) {
+	t.Setenv("GEMINI_RPM", "100")
+	if rpm := geminiRPM(); rpm != 100 {
+		t.Errorf("expected 100, got %d", rpm)
+	}
+}
+
+func TestGeminiRPMInvalidFallsBackToDefault(t *testing.T) {
+	t.Setenv("GEMINI_RPM", "not-a-number")
+	if rpm := geminiRPM(); rpm != defaultGeminiRPM {
+		t.Errorf("expected fallback to default %d, got %d", defaultGeminiRPM, rpm)
+	}
+}
+
+func TestGeminiRPMZeroFallsBackToDefault(t *testing.T) {
+	t.Setenv("GEMINI_RPM", "0")
+	if rpm := geminiRPM(); rpm != defaultGeminiRPM {
+		t.Errorf("expected fallback to default %d for zero, got %d", defaultGeminiRPM, rpm)
+	}
+}
