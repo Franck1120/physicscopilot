@@ -17,10 +17,23 @@ const (
 	defaultMinConns = 5
 )
 
-// NewPool creates a PostgreSQL connection pool. It reads DATABASE_URL from the
-// environment. If DATABASE_URL is not set, an error is returned.
-// Pool size is controlled via DB_POOL_MAX_CONNS (default 50) and
-// DB_POOL_MIN_CONNS (default 5).
+// NewPool creates and validates a pgxpool.Pool for PostgreSQL.
+//
+// The DSN is read from DATABASE_URL; an error is returned immediately if the
+// variable is absent or empty so that the caller can decide whether to abort
+// or continue without a database (the server supports running without
+// persistence when DATABASE_URL is unset).
+//
+// Pool sizing is controlled by two environment variables:
+//   - DB_POOL_MAX_CONNS: maximum number of open connections (default 50).
+//   - DB_POOL_MIN_CONNS: minimum number of idle connections (default 5).
+//
+// After the pool is created, a Ping is performed to verify reachability.
+// If the Ping fails, the pool is closed and the error is returned so that
+// callers are not handed a broken pool.
+//
+// For horizontal deployments with many instances, reduce DB_POOL_MAX_CONNS
+// to stay within Postgres's max_connections limit. See docs/SCALING.md.
 func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -47,8 +60,10 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// envInt32 reads an environment variable as int32. Returns fallback when the
-// variable is unset or not a positive integer.
+// envInt32 reads key from the environment and parses it as a positive int32.
+// Returns fallback when the variable is absent, empty, unparseable, or
+// non-positive. Used to configure pool sizes from environment variables
+// without panicking on malformed input.
 func envInt32(key string, fallback int32) int32 {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 32); err == nil && n > 0 {
