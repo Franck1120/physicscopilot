@@ -1,0 +1,1003 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "hvac",
+  "total": 20,
+  "problems": [
+    {
+      "id": "caldaia_non_accende",
+      "name": "Caldaia non si accende",
+      "category": "caldaia",
+      "severity": "error",
+      "description": "La caldaia non risponde ai comandi di accensione e non produce calore o acqua calda. Il display potrebbe mostrare un codice di errore.",
+      "visual_symptoms": [
+        "Display spento o con codice errore",
+        "Nessuna fiamma visibile attraverso lo spioncino",
+        "Radiatori freddi nonostante il termostato attivo"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pressione dell'impianto troppo bassa (sotto 1 bar)",
+          "probability": 0.35,
+          "test": "Controllare il manometro sulla caldaia: la pressione deve essere tra 1 e 1.5 bar"
+        },
+        {
+          "cause": "Interruzione dell'alimentazione elettrica o interruttore scattato",
+          "probability": 0.25,
+          "test": "Verificare che il quadro elettrico non abbia interruttori scattati dedicati alla caldaia"
+        },
+        {
+          "cause": "Gas non erogato o rubinetto del gas chiuso",
+          "probability": 0.25,
+          "test": "Controllare che il contatore del gas sia aperto e che altri elettrodomestici a gas funzionino"
+        },
+        {
+          "cause": "Sonda NTC o sensore difettoso",
+          "probability": 0.15,
+          "test": "Se il display mostra un codice errore specifico, consultare il manuale per il significato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare la pressione dell'impianto sul manometro della caldaia. Se inferiore a 1 bar, rabboccare aprendo la valvola di carico (solitamente sotto la caldaia) fino a raggiungere 1.2-1.5 bar",
+              "verification": "Il manometro indica tra 1.2 e 1.5 bar",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Controllare il quadro elettrico e ripristinare eventuale interruttore scattato. Verificare che l'interruttore dedicato alla caldaia sia in posizione ON",
+              "verification": "Tutti gli interruttori sono in posizione normale e la caldaia ha alimentazione",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Resettare la caldaia premendo il tasto reset per 3-5 secondi come indicato nel manuale",
+              "verification": "La caldaia tenta un nuovo ciclo di accensione",
+              "time_seconds": 30
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Contattare un tecnico autorizzato per diagnosi di sonde NTC, scheda elettronica o problemi all'elettrodo di accensione",
+              "verification": "Il tecnico identifica il componente guasto e lo sostituisce",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "radiatore_freddo_meta",
+      "name": "Radiatore freddo a metà",
+      "category": "riscaldamento",
+      "severity": "warning",
+      "description": "Il radiatore è caldo nella parte inferiore ma freddo in quella superiore, o viceversa, indicando la presenza di aria nell'impianto.",
+      "visual_symptoms": [
+        "Radiatore caldo in basso e freddo in alto",
+        "Gorgoglio o rumore di acqua nel radiatore",
+        "Riscaldamento non uniforme della stanza"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Aria intrappolata nel radiatore",
+          "probability": 0.70,
+          "test": "Toccare la parte superiore del radiatore: se è fredda mentre quella inferiore è calda, c'è aria"
+        },
+        {
+          "cause": "Valvola termostatica parzialmente chiusa o bloccata",
+          "probability": 0.20,
+          "test": "Verificare che la valvola termostatica sia completamente aperta e non bloccata"
+        },
+        {
+          "cause": "Circolazione insufficiente nell'impianto",
+          "probability": 0.10,
+          "test": "Verificare se anche altri radiatori hanno problemi simili"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il riscaldamento e attendere che il radiatore si raffreddi leggermente. Individuare la valvola di sfiato aria (maschietto ottagonale in alto al radiatore)",
+              "verification": "Radiatore identificato e sistema spento",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Posizionare uno straccio sotto la valvola di sfiato. Con una chiave per sfiato (a forma di quadro) aprire lentamente la valvola in senso antiorario finché non esce aria con un sibilo, poi chiudere quando inizia a uscire acqua",
+              "verification": "Esce acqua continua dalla valvola, non più aria",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Ricontrollare la pressione della caldaia e rabboccare se scesa sotto 1 bar dopo lo sfiato",
+              "verification": "Pressione tra 1.2 e 1.5 bar, radiatore uniformemente caldo",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perdita_gas_caldaia",
+      "name": "Perdita gas caldaia",
+      "category": "caldaia",
+      "severity": "error",
+      "description": "Presenza di odore di gas nelle vicinanze della caldaia, potenzialmente pericolosa per l'incolumità degli occupanti.",
+      "visual_symptoms": [
+        "Odore caratteristico di gas (uova marce)",
+        "Rilevatore di gas che suona",
+        "Possibile fischio o sibilo dalla caldaia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Giunzione o raccordo del gas allentato o deteriorato",
+          "probability": 0.45,
+          "test": "Applicare acqua e sapone sui raccordi: se si formano bolle c'è una perdita"
+        },
+        {
+          "cause": "Valvola del gas difettosa",
+          "probability": 0.35,
+          "test": "Ispezionare visivamente la valvola del gas sulla caldaia per segni di corrosione o danni"
+        },
+        {
+          "cause": "Tubazione del gas danneggiata o corrosa",
+          "probability": 0.20,
+          "test": "Verificare le tubazioni del gas visibili per segni di corrosione, graffi o danni meccanici"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "EMERGENZA: Chiudere immediatamente il rubinetto principale del gas. Non accendere interruttori della luce o dispositivi elettrici. Aprire finestre e porte per ventilare",
+              "verification": "Odore di gas diminuisce con la ventilazione",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Evacuare l'edificio e chiamare il pronto intervento gas (numero sul contatore del gas o 112) e i Vigili del Fuoco se l'odore è forte",
+              "verification": "Tutti gli occupanti sono in sicurezza fuori dall'edificio",
+              "time_seconds": 120
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Dopo l'intervento di emergenza, chiamare un tecnico abilitato per individuare e riparare la perdita. Non riaccendere il gas fino alla riparazione certificata",
+              "verification": "Il tecnico certifica la riparazione e l'impianto è sicuro",
+              "time_seconds": 7200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spia_pilota_spenta",
+      "name": "Spia pilota spenta",
+      "category": "caldaia",
+      "severity": "error",
+      "description": "La fiamma pilota della caldaia si è spenta e non si riesce a riaccenderla, impedendo il funzionamento del riscaldamento.",
+      "visual_symptoms": [
+        "Nessuna fiamma visibile attraverso lo spioncino della caldaia",
+        "Caldaia non produce calore nonostante la richiesta",
+        "Indicatore luminoso pilota spento"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Corrente d'aria o soffio di vento che ha spento la fiamma",
+          "probability": 0.40,
+          "test": "Verificare se ci sono correnti d'aria nella zona della caldaia"
+        },
+        {
+          "cause": "Termocoppia difettosa o sporca",
+          "probability": 0.35,
+          "test": "Se la fiamma si accende ma si spegne appena si rilascia il pulsante, la termocoppia non rileva la fiamma"
+        },
+        {
+          "cause": "Pressione del gas insufficiente",
+          "probability": 0.25,
+          "test": "Verificare che altri apparecchi a gas funzionino regolarmente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Individuare le istruzioni per la riaccensione del pilota sul pannello della caldaia o nel manuale. Portare il selettore su 'PILOT' o 'ACCENSIONE'",
+              "verification": "Selettore nella posizione corretta",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Premere e tenere premuto il pulsante di reset/accensione, attivare l'accenditore piezoelettrico e mantenere premuto per 30-60 secondi dopo che la fiamma si accende per riscaldare la termocoppia",
+              "verification": "La fiamma pilota rimane accesa dopo aver rilasciato il pulsante",
+              "time_seconds": 90
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Se il pilota non rimane acceso, spegnere il gas, attendere 5 minuti e pulire delicatamente la termocoppia con carta abrasiva fine per rimuovere eventuali ossidazioni",
+              "verification": "Termocoppia pulita e lucida nella zona di contatto",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Riprovare l'accensione del pilota. Se il problema persiste, far sostituire la termocoppia da un tecnico",
+              "verification": "Fiamma pilota stabile dopo l'accensione",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pressione_caldaia_bassa",
+      "name": "Pressione caldaia bassa",
+      "category": "caldaia",
+      "severity": "warning",
+      "description": "Il manometro della caldaia indica una pressione inferiore a 1 bar, causando blocchi di sicurezza o riscaldamento inefficiente.",
+      "visual_symptoms": [
+        "Manometro sotto 1 bar",
+        "Codice errore sul display (spesso E118 o simili)",
+        "Caldaia che si blocca frequentemente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Perdita d'acqua nell'impianto (radiatori, tubi o valvole)",
+          "probability": 0.40,
+          "test": "Ispezionare visivamente i radiatori e le tubature visibili per macchie umide o gocce"
+        },
+        {
+          "cause": "Sfiato aria eseguito di recente senza rabbocco",
+          "probability": 0.35,
+          "test": "Verificare se di recente sono stati sfiatati i radiatori"
+        },
+        {
+          "cause": "Vaso di espansione difettoso o scarico",
+          "probability": 0.25,
+          "test": "Se la pressione scende rapidamente ogni volta che si rabbocca, il vaso di espansione potrebbe essere guasto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Localizzare la valvola di carico dell'impianto (solitamente un tubo flessibile sotto la caldaia con una valvola a farfalla o a manopola)",
+              "verification": "Valvola di carico identificata",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Aprire lentamente la valvola di carico e osservare il manometro salire. Chiudere la valvola quando la pressione raggiunge 1.2-1.5 bar",
+              "verification": "Manometro indica tra 1.2 e 1.5 bar",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Monitorare la pressione nelle ore successive. Se scende nuovamente, c'è una perdita nell'impianto da ricercare",
+              "verification": "Pressione stabile nel tempo",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "valvola_termostatica_bloccata",
+      "name": "Valvola termostatica bloccata",
+      "category": "riscaldamento",
+      "severity": "warning",
+      "description": "La valvola termostatica del radiatore non si apre o non si chiude correttamente, lasciando il radiatore sempre freddo o sempre caldo.",
+      "visual_symptoms": [
+        "Radiatore sempre freddo anche con valvola aperta",
+        "Radiatore sempre caldo anche con valvola chiusa",
+        "Testina termostatica che non scatta o non si muove"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Perno della valvola bloccato per inattività estiva",
+          "probability": 0.55,
+          "test": "Rimuovere la testina termostatica e verificare se il perno metallico è bloccato (non si muove premendolo)"
+        },
+        {
+          "cause": "Testina termostatica guasta o con liquido esaurito",
+          "probability": 0.30,
+          "test": "Sostituire temporaneamente la testina con un'altra funzionante per verificare se il problema è nella testina"
+        },
+        {
+          "cause": "Corpo valvola incrostato o danneggiato",
+          "probability": 0.15,
+          "test": "Se il perno è libero ma l'acqua non passa, il corpo valvola potrebbe essere danneggiato"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Svitare la testina termostatica dal corpo valvola (di solito basta svitare a mano in senso antiorario). Identificare il perno metallico nel centro del corpo valvola",
+              "verification": "Testina rimossa e perno visibile",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Premere il perno con un cacciavite o una penna. Se è bloccato, sbloccare delicatamente muovendolo su e giù con le dita o con pinze. Usare spray lubrificante WD-40 se necessario",
+              "verification": "Il perno si muove liberamente di 2-3 mm",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Rimontare la testina termostatica e regolare la temperatura desiderata. Verificare che il radiatore scaldi o si raffreddi in risposta alla regolazione",
+              "verification": "Il radiatore risponde correttamente alle variazioni della testina termostatica",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "termostato_non_risponde",
+      "name": "Termostato non risponde",
+      "category": "controllo",
+      "severity": "warning",
+      "description": "Il termostato ambiente non invia segnali alla caldaia o non rileva correttamente la temperatura della stanza.",
+      "visual_symptoms": [
+        "Schermo del termostato spento o con valori errati",
+        "Caldaia non si avvia anche con termostato impostato alto",
+        "Temperature in casa non corrispondono a quelle impostate"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batterie scariche nel termostato",
+          "probability": 0.45,
+          "test": "Verificare l'indicatore di batteria sul display del termostato"
+        },
+        {
+          "cause": "Collegamento wireless perso (termostati smart)",
+          "probability": 0.30,
+          "test": "Verificare se l'app o il display mostra un'icona di connessione assente"
+        },
+        {
+          "cause": "Termostato posizionato in modo errato (vicino a fonti di calore o correnti d'aria)",
+          "probability": 0.25,
+          "test": "Verificare se il termostato è esposto a luce solare diretta, correnti d'aria o vicino a lampade"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Sostituire le batterie del termostato con batterie nuove dello stesso tipo",
+              "verification": "Il display si accende e mostra la temperatura correttamente",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Riconfigurare la connessione wireless seguendo le istruzioni del manuale (solitamente tasto pairing sul termostato e sulla centralina)",
+              "verification": "L'icona di connessione è presente e il termostato comunica con la caldaia",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "condizionatore_non_raffredda",
+      "name": "Condizionatore non raffredda",
+      "category": "climatizzazione",
+      "severity": "error",
+      "description": "Il climatizzatore è acceso in modalità raffreddamento ma non abbassa la temperatura della stanza in modo soddisfacente.",
+      "visual_symptoms": [
+        "Aria uscente dall'unità interna non è fredda",
+        "Temperatura stanza non diminuisce nonostante il condizionatore acceso",
+        "Unità interna funziona ma con scarsa efficienza"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Filtri dell'aria intasati",
+          "probability": 0.40,
+          "test": "Rimuovere il coperchio frontale e ispezionare i filtri: se sono ricoperti di polvere, è il problema"
+        },
+        {
+          "cause": "Gas refrigerante insufficiente (freon scarico)",
+          "probability": 0.30,
+          "test": "Verificare se l'unità esterna è coperta di ghiaccio o se il tubo del freon è molto freddo al tatto"
+        },
+        {
+          "cause": "Temperatura esterna troppo elevata per la capacità dell'unità",
+          "probability": 0.20,
+          "test": "Verificare se la stanza è molto grande rispetto alla potenza del climatizzatore (BTU)"
+        },
+        {
+          "cause": "Unità esterna ostruita o con scarso flusso d'aria",
+          "probability": 0.10,
+          "test": "Ispezionare l'unità esterna per ostruzioni di vegetazione, sporco o detriti"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il climatizzatore e aprire il coperchio frontale dell'unità interna. Rimuovere i filtri e lavarli con acqua tiepida e sapone neutro",
+              "verification": "I filtri sono puliti, privi di polvere e asciutti",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Asciugare i filtri completamente prima di reinserirli. Rimontare il coperchio e riaccendere il climatizzatore",
+              "verification": "Il flusso d'aria è aumentato e la temperatura dell'aria uscente è più fredda",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Ispezionare e pulire le alette dell'evaporatore dell'unità interna con un pennello morbido o spray apposito per climatizzatori",
+              "verification": "Le alette sono pulite e prive di sporco",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Se il problema persiste, contattare un tecnico per verificare la carica del gas refrigerante",
+              "verification": "Il tecnico certifica la corretta pressione del gas refrigerante",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "condizionatore_perde_acqua",
+      "name": "Condizionatore perde acqua",
+      "category": "climatizzazione",
+      "severity": "warning",
+      "description": "L'unità interna del climatizzatore perde acqua all'interno, creando gocce o rivoli sul soffitto o sulla parete.",
+      "visual_symptoms": [
+        "Gocce d'acqua dall'unità interna",
+        "Macchie umide su soffitto o parete sotto l'unità",
+        "Rumore di acqua che scorre dentro l'unità"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Tubo di scarico della condensa ostruito",
+          "probability": 0.55,
+          "test": "Verificare se il tubo di drenaggio esterno gocciola normalmente durante il funzionamento"
+        },
+        {
+          "cause": "Vasca di raccolta condensa sporca o inclinata",
+          "probability": 0.30,
+          "test": "Aprire il pannello frontale e verificare la vasca di raccolta: deve essere inclinata verso il tubo di scarico"
+        },
+        {
+          "cause": "Filtri intasati che causano gelo sull'evaporatore",
+          "probability": 0.15,
+          "test": "Verificare se l'evaporatore è ricoperto di ghiaccio che poi si scioglie in eccesso"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere il climatizzatore. Localizzare il tubo di scarico della condensa (solitamente un tubo sottile che esce dal retro o dal lato dell'unità verso l'esterno)",
+              "verification": "Tubo di scarico identificato",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Soffiare aria compressa nel tubo di scarico o utilizzare un aspirapolvere per sbloccare eventuali ostruzioni. Versare un po' di acqua nella vasca di raccolta per verificare che defluisca liberamente",
+              "verification": "L'acqua defluisce liberamente dal tubo di scarico all'esterno",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "freon_scarico",
+      "name": "Freon scarico (gas refrigerante insufficiente)",
+      "category": "climatizzazione",
+      "severity": "error",
+      "description": "Il gas refrigerante del climatizzatore è sotto il livello corretto, causando scarso raffreddamento e possibile formazione di ghiaccio.",
+      "visual_symptoms": [
+        "Unità esterna o tubi ricoperti di ghiaccio",
+        "Aria uscente dall'unità interna tiepida anche in modalità freddo",
+        "Unità funziona continuamente senza raggiungere la temperatura impostata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Perdita nel circuito del gas refrigerante",
+          "probability": 0.60,
+          "test": "Solo un tecnico può verificare la pressione del circuito con appositi strumenti"
+        },
+        {
+          "cause": "Gas refrigerante non caricato correttamente all'installazione",
+          "probability": 0.40,
+          "test": "Verificare se il problema è presente fin dall'installazione o è comparso gradualmente"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Contattare un tecnico certificato F-Gas per la verifica e la ricarica del gas refrigerante. Non tentare interventi fai-da-te: il gas refrigerante è regolamentato dalla normativa F-Gas",
+              "verification": "Il tecnico verifica la pressione e ricarica il gas al livello corretto",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Chiedere al tecnico di individuare e riparare eventuali perdite prima della ricarica, altrimenti il problema si ripresenterà",
+              "verification": "Il circuito è privo di perdite e la pressione si mantiene stabile",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ventilatore_split_non_parte",
+      "name": "Ventilatore split non parte",
+      "category": "climatizzazione",
+      "severity": "error",
+      "description": "Il ventilatore dell'unità interna del climatizzatore non si avvia nonostante l'unità sia accesa e funzionante.",
+      "visual_symptoms": [
+        "Unità interna accesa ma senza flusso d'aria",
+        "LED di funzionamento attivi ma silenzio assoluto",
+        "Temperatura non cambia nonostante il compressore funzioni"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Condensatore del motore del ventilatore guasto",
+          "probability": 0.45,
+          "test": "Aprire il pannello e verificare se il motore del ventilatore è bloccato o se fa un ronzio senza girare"
+        },
+        {
+          "cause": "Motore del ventilatore bruciato",
+          "probability": 0.35,
+          "test": "Verificare se odore di bruciato è presente e se il motore è caldo al tatto"
+        },
+        {
+          "cause": "Scheda elettronica difettosa",
+          "probability": 0.20,
+          "test": "Se il motore è ok ma non riceve il segnale, la scheda potrebbe essere guasta"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Spegnere il climatizzatore e disconnettere l'alimentazione. Aprire il pannello frontale e poi il coperchio dell'elettronica per accedere al motore del ventilatore",
+              "verification": "Accesso al motore del ventilatore",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Verificare il condensatore del motore (cilindretto elettrico vicino al motore). Se gonfio o con tracce di bruciatura, sostituirlo con uno di pari capacità (in microfarad)",
+              "verification": "Condensatore sostituito con uno funzionante",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "filtri_aria_intasati",
+      "name": "Filtri aria intasati",
+      "category": "manutenzione",
+      "severity": "warning",
+      "description": "I filtri dell'aria del climatizzatore o del sistema di ventilazione sono ostruiti da polvere, riducendo l'efficienza e la qualità dell'aria.",
+      "visual_symptoms": [
+        "Riduzione del flusso d'aria dall'unità",
+        "Odori sgradevoli dall'impianto",
+        "Consumo energetico aumentato"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pulizia non eseguita da più di 3 mesi",
+          "probability": 0.65,
+          "test": "Aprire il pannello frontale e ispezionare visivamente i filtri"
+        },
+        {
+          "cause": "Ambiente particolarmente polveroso o presenza di animali domestici",
+          "probability": 0.35,
+          "test": "Verificare se ci sono animali in casa o se l'ambiente è particolarmente polveroso"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Spegnere l'unità. Aprire il pannello frontale sollevando verso l'alto e verso di sé. Estrarre i filtri facendoli scorrere verso il basso",
+              "verification": "Filtri rimossi dall'unità",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Lavare i filtri sotto acqua corrente tiepida. Se molto sporchi, usare un po' di sapone neutro e un pennello morbido. Sciacquare abbondantemente",
+              "verification": "Filtri puliti e privi di polvere",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Lasciare asciugare completamente i filtri all'aria prima di reinserirli. Reinserire i filtri e chiudere il pannello. Riaccendere l'unità",
+              "verification": "Flusso d'aria aumentato e odori assenti",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rumore_tubatura",
+      "name": "Rumore nelle tubature",
+      "category": "impianto",
+      "severity": "info",
+      "description": "Le tubature dell'impianto di riscaldamento producono rumori di colpi, scricchiolii o gorgoglii durante il funzionamento.",
+      "visual_symptoms": [
+        "Colpi o ticchettii nelle pareti durante il riscaldamento",
+        "Gorgoglio nelle tubature",
+        "Rumore di acqua che scorre in modo intermittente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Aria nell'impianto idraulico",
+          "probability": 0.45,
+          "test": "I gorgoglii indicano quasi sempre la presenza di aria nell'impianto"
+        },
+        {
+          "cause": "Dilatazione termica delle tubature",
+          "probability": 0.35,
+          "test": "I colpi e ticchettii che compaiono all'accensione e si riducono a regime sono normali dilatazioni termiche"
+        },
+        {
+          "cause": "Velocità di circolazione troppo alta",
+          "probability": 0.20,
+          "test": "Verificare se il rumore è un sibilo continuo nelle tubature, indicante flusso troppo veloce"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Sfiatare tutti i radiatori dell'impianto per eliminare l'aria intrappolata. Iniziare dai radiatori al piano più basso e procedere verso l'alto",
+              "verification": "Da tutti i punti di sfiato esce acqua continua senza aria",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Rabboccare la pressione dell'impianto se scesa durante lo sfiato. Avviare il riscaldamento e verificare la riduzione dei rumori",
+              "verification": "Rumori significativamente ridotti o assenti",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acqua_calda_assente",
+      "name": "Acqua calda sanitaria assente",
+      "category": "caldaia",
+      "severity": "error",
+      "description": "La caldaia non produce acqua calda per uso sanitario (doccia, lavandino), pur funzionando per il riscaldamento.",
+      "visual_symptoms": [
+        "Acqua fredda dal rubinetto anche dopo lunghi tempi di attesa",
+        "Caldaia che accende il bruciatore ma non scalda l'acqua sanitaria",
+        "Caduta improvvisa della temperatura dell'acqua durante la doccia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Resistenza o sonda NTC dell'acqua sanitaria guasta",
+          "probability": 0.40,
+          "test": "Se la caldaia scalda per il riscaldamento ma non per il sanitario, la sonda ACS è probabilmente guasta"
+        },
+        {
+          "cause": "Valvola deviatrice (tre vie) bloccata in posizione riscaldamento",
+          "probability": 0.35,
+          "test": "Se la caldaia funziona per riscaldamento ma non per acqua calda sanitaria, la valvola tre vie potrebbe essere bloccata"
+        },
+        {
+          "cause": "Scambiatore di calore ostruito dal calcare",
+          "probability": 0.25,
+          "test": "Se l'acqua calda è presente ma con portata ridotta, potrebbe esserci calcare nello scambiatore"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Resettare la caldaia e verificare se compaiono codici di errore specifici per l'acqua sanitaria",
+              "verification": "Eventuali codici errore identificati",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Contattare un tecnico per verifica e sostituzione della valvola tre vie o della sonda NTC sanitaria",
+              "verification": "Il tecnico individua e sostituisce il componente guasto",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "riscaldamento_pavimento_freddo",
+      "name": "Riscaldamento a pavimento freddo",
+      "category": "riscaldamento",
+      "severity": "warning",
+      "description": "Il sistema di riscaldamento a pavimento radiante non scalda adeguatamente una o più zone.",
+      "visual_symptoms": [
+        "Pavimento freddo in una o più zone nonostante il sistema acceso",
+        "Differenza di temperatura tra diverse aree del pavimento",
+        "Collettore con alcune zone alla stessa temperatura del ritorno"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Valvola zona bloccata o non aperta al collettore",
+          "probability": 0.45,
+          "test": "Verificare al collettore che tutte le valvole delle zone siano aperte e che i tubi di mandata siano caldi"
+        },
+        {
+          "cause": "Aria nel circuito del pavimento radiante",
+          "probability": 0.35,
+          "test": "Se il circuito fa gorgoglii, c'è aria intrappolata"
+        },
+        {
+          "cause": "Temperatura di mandata troppo bassa",
+          "probability": 0.20,
+          "test": "Verificare che la temperatura di mandata sia almeno 35-45°C per il pavimento radiante"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Localizzare il collettore del riscaldamento a pavimento (solitamente in un armadio o vano tecnico). Verificare che tutte le valvole delle zone siano aperte e che ci sia flusso in tutti i circuiti",
+              "verification": "Tutte le zone mostrano flusso d'acqua e temperatura di mandata corretta",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Sfiatare il circuito del pavimento dal punto di sfiato sul collettore. Aprire il rubinetto di sfiato finché non esce acqua continua senza bolle",
+              "verification": "Nessuna bolla d'aria nel circuito",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "solare_termico_inefficiente",
+      "name": "Impianto solare termico inefficiente",
+      "category": "solare",
+      "severity": "warning",
+      "description": "Il pannello solare termico non scalda l'acqua come previsto anche nelle giornate di sole.",
+      "visual_symptoms": [
+        "Temperatura serbatoio solare bassa anche dopo una giornata soleggiata",
+        "Pompa di circolazione che non si avvia",
+        "Centralina solare che non mostra differenziale di temperatura"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pompa di circolazione solare guasta o bloccata",
+          "probability": 0.40,
+          "test": "Verificare se la pompa è in funzione quando la centralina solare lo richiede (temperatura collettore > serbatoio)"
+        },
+        {
+          "cause": "Fluido solare esaurito o con bassa pressione",
+          "probability": 0.35,
+          "test": "Controllare la pressione del circuito solare: dovrebbe essere tra 1.5 e 3 bar a freddo"
+        },
+        {
+          "cause": "Pannelli solari sporchi o ombreggiati",
+          "probability": 0.25,
+          "test": "Ispezionare i pannelli per sporco, foglie, ombreggiamento da edifici o alberi"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare la pressione del circuito solare termico (manometro sul collettore solare). Rabboccare con fluido antigelo solare se necessario, o contattare il tecnico",
+              "verification": "Pressione nel range corretto (1.5-3 bar)",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Pulire i pannelli solari con acqua e spugna morbida per rimuovere polvere, sporco o alghe",
+              "verification": "Pannelli puliti e privi di ostruzioni",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pompa_calore_non_parte",
+      "name": "Pompa di calore non parte",
+      "category": "pompa_calore",
+      "severity": "error",
+      "description": "La pompa di calore non si avvia in modalità riscaldamento o raffreddamento.",
+      "visual_symptoms": [
+        "Nessun rumore dall'unità esterna",
+        "LED di errore accesi",
+        "Temperatura interna non raggiunge il setpoint"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Protezione anti-gelo attiva (temperatura esterna troppo bassa)",
+          "probability": 0.35,
+          "test": "Verificare la temperatura esterna: le pompe di calore aria-aria hanno limiti di funzionamento (solitamente non sotto -15°C)"
+        },
+        {
+          "cause": "Segnale di difetto o blocco di sicurezza attivo",
+          "probability": 0.35,
+          "test": "Verificare il display o la centralina per codici di errore"
+        },
+        {
+          "cause": "Compressore guasto",
+          "probability": 0.30,
+          "test": "Se l'unità esterna non produce alcun rumore e non ci sono errori, il compressore potrebbe essere guasto"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Resettare la pompa di calore spegnendo l'alimentazione per 30 secondi e riaccendendo. Verificare eventuali codici errore",
+              "verification": "La pompa di calore tenta un nuovo ciclo di avvio",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Se la temperatura esterna è molto bassa, attendere il riscaldamento o verificare le specifiche tecniche dell'unità per il range operativo",
+              "verification": "La pompa si avvia quando le condizioni ambientali rientrano nel range operativo",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "valvola_sicurezza_scarica",
+      "name": "Valvola di sicurezza che scarica",
+      "category": "caldaia",
+      "severity": "warning",
+      "description": "La valvola di sicurezza della caldaia perde acqua o si apre frequentemente, scaricando acqua.",
+      "visual_symptoms": [
+        "Gocce d'acqua dal tubo di scarico della valvola di sicurezza",
+        "Pressione dell'impianto che cala frequentemente",
+        "Macchie umide vicino alla caldaia"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pressione dell'impianto troppo alta (sopra 3 bar)",
+          "probability": 0.40,
+          "test": "Verificare il manometro: se supera 2.5-3 bar, la valvola si apre correttamente per sicurezza"
+        },
+        {
+          "cause": "Vaso di espansione scarico o guasto",
+          "probability": 0.40,
+          "test": "Premere la valvola Schrader sul vaso di espansione: se esce acqua anziché aria, la membrana è rotta"
+        },
+        {
+          "cause": "Valvola di sicurezza usurata che non chiude bene",
+          "probability": 0.20,
+          "test": "Se la pressione è normale ma la valvola perde comunque, la valvola stessa è guasta"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Verificare la pressione precaica del vaso di espansione: spegnere la caldaia, scaricare l'impianto fino a 0 bar, poi misurare la pressione del vaso con un manometro sulla valvola Schrader (dovrebbe essere 1-1.2 bar)",
+              "verification": "Pressione del vaso nella norma o rigonfiata con pompa ad aria",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Se il vaso ha la membrana rotta (esce acqua dalla valvola Schrader), far sostituire il vaso di espansione da un tecnico",
+              "verification": "Nuovo vaso installato e pressione impianto stabile",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "degassatore_rumoroso",
+      "name": "Degassatore rumoroso",
+      "category": "impianto",
+      "severity": "info",
+      "description": "Il degassatore automatico dell'impianto produce rumori di gorgoglio o clic continui.",
+      "visual_symptoms": [
+        "Clic o gorgoglii continui dal degassatore",
+        "Perdita d'acqua dal capillo del degassatore",
+        "Aria nell'impianto che non viene eliminata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Degassatore otturato o con galleggiante bloccato",
+          "probability": 0.55,
+          "test": "Aprire e chiudere il capillo del degassatore manualmente per verificare che il meccanismo sia libero"
+        },
+        {
+          "cause": "Eccessiva presenza di aria nell'impianto",
+          "probability": 0.45,
+          "test": "Verificare se l'impianto è stato riempito correttamente dopo manutenzione o rabbocco"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Localizzare il degassatore automatico (solitamente in prossimità della caldaia o sui collettori). Aprire il capillo (vite o tappo a baionetta in cima) di mezzo giro",
+              "verification": "Capillo aperto e funzionante",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Attendere che l'aria venga espulsa. Se il degassatore perde acqua continuamente, chiuderlo e farlo pulire o sostituire da un tecnico",
+              "verification": "Rumori ridotti e impianto senza aria",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "errore_e01_caldaia",
+      "name": "Errore E01 caldaia",
+      "category": "caldaia",
+      "severity": "error",
+      "description": "La caldaia mostra il codice errore E01 (o simile), indicando tipicamente un problema di accensione o mancato rilevamento fiamma.",
+      "visual_symptoms": [
+        "Display mostra E01 o codice di errore accensione",
+        "Caldaia tenta di accendersi ma si blocca dopo pochi secondi",
+        "LED rosso di errore lampeggiante"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Elettrodo di accensione sporco o posizionato male",
+          "probability": 0.40,
+          "test": "Un tecnico può verificare la posizione e lo stato dell'elettrodo"
+        },
+        {
+          "cause": "Pressione del gas insufficiente o rubinetto gas chiuso",
+          "probability": 0.35,
+          "test": "Verificare che il rubinetto del gas sulla caldaia sia aperto e che altri apparecchi a gas funzionino"
+        },
+        {
+          "cause": "Sonda ionizzazione fiamma difettosa",
+          "probability": 0.25,
+          "test": "Se la fiamma si accende ma la caldaia segnala errore subito, la sonda ionizzazione potrebbe non rilevare la fiamma"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che il rubinetto del gas sia aperto. Premere il pulsante di reset sulla caldaia per cancellare l'errore e tentare un nuovo ciclo di accensione",
+              "verification": "La caldaia tenta l'accensione senza ripresentare immediatamente l'errore",
+              "time_seconds": 60
+            }
+          ]
+        },
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Se l'errore persiste dopo 2-3 reset, non continuare a resettare per evitare danni. Contattare il tecnico autorizzato per pulizia o sostituzione dell'elettrodo di accensione e della sonda ionizzazione",
+              "verification": "Il tecnico identifica e risolve il problema, la caldaia funziona senza errori",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
