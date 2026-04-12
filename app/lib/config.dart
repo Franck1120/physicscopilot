@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 /// Runtime configuration — override at build time with `--dart-define`.
 ///
 /// Dev (default):     `flutter run`
