@@ -1,3 +1,7 @@
+// Package middleware provides reusable Fiber middleware components for the
+// PhysicsCopilot server: structured request logging, per-IP and per-user
+// rate limiting, HTTP Basic Auth for the metrics endpoint, and user-level
+// session and frame limits.
 package middleware
 
 import (
