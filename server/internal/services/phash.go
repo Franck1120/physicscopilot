@@ -1,3 +1,7 @@
+// phash.go implements DCT-based perceptual hashing (pHash) for camera frames.
+// Perceptual hashing lets ConversationService skip duplicate or near-identical
+// frames without calling the Gemini API, reducing cost and latency.
+
 package services
 
 import (

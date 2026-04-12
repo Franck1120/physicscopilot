@@ -51,7 +51,8 @@ func newRAGLRU(capacity int, ttl time.Duration) *ragLRU {
 	}
 }
 
-// cacheKey hashes the query string to keep map keys small.
+// cacheKey builds a ragCacheKey by hashing the query string (SHA-256) so that
+// map keys stay small regardless of query length.
 func cacheKey(query string, maxResults int) ragCacheKey {
 	h := sha256.Sum256([]byte(query))
 	return ragCacheKey{queryHash: hex.EncodeToString(h[:]), maxResults: maxResults}

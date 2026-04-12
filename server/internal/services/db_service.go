@@ -264,6 +264,9 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+// scanSessionRow reads a session row returned by a Postgres query into a
+// SessionState value. The expected column order is:
+// id, device_brand, device_model, problem_detected, created_at, last_activity.
 func scanSessionRow(r rowScanner) (*SessionState, error) {
 	var s SessionState
 	err := r.Scan(
