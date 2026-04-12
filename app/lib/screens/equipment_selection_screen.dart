@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,6 +14,7 @@ const _kBackground = Color(0xFF0D1B2A);
 const _kSurface = Color(0xFF1A2B3C);
 const _kOnSurface = Color(0xFFE0E8F0);
 
+/// Screen for selecting the target device from a pre-loaded profile list.
 class EquipmentSelectionScreen extends ConsumerStatefulWidget {
   final VoidCallback onComplete;
 
