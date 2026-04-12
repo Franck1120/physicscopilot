@@ -79,6 +79,7 @@ func (h *FeedbackHandler) Submit(c *fiber.Ctx) error {
 		)
 	}
 
+	metrics.FeedbackTotal.WithLabelValues(req.Rating).Inc()
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{"status": "ok"})
 }
 
