@@ -292,6 +292,48 @@ void main() {
       expect(backoffSecs(5), equals(30));
       expect(backoffSecs(6), equals(30));
     });
+
+    test('reconnectAttempts resets so next backoff starts at 1 s after re-connect',
+        () async {
+  // Verify that after a successful reconnect the back-off counter is 0,
+  // meaning the next disconnect will again wait only 1 second.
+  // We check this indirectly: connect → server closes → reconnect attempt fires
+  // → service reconnects → server closes again → reconnect fires in ~1 s (not 2+).
+  final server = _FakeServer();
+  await server.start();
+  addTearDown(server.stop);
+
+  final service = WebSocketService(server.url);
+  addTearDown(service.disconnect);
+  final statuses = <ConnectionStatus>[];
+  final sub = service.statusStream.listen(statuses.add);
+  addTearDown(sub.cancel);
+
+  await service.connect();
+  await Future<void>.delayed(const Duration(milliseconds: 50));
+  expect(statuses, contains(ConnectionStatus.connected));
+
+  // First disconnect → schedules reconnect after 1 s (_reconnectAttempts goes to 1).
+  await server.closeClientSocket();
+  await Future<void>.delayed(const Duration(milliseconds: 1300));
+  // After ~1 s reconnect fires; service should be connected again.
+  expect(statuses.last, equals(ConnectionStatus.connected));
+
+  // _reconnectAttempts was reset to 0 on the reconnect success.
+  // Close socket again → next backoff should be 1 s again.
+  await server.closeClientSocket();
+  await Future<void>.delayed(const Duration(milliseconds: 1300));
+  // We should see another connecting → connected cycle.
+  final connectingCount =
+      statuses.where((s) => s == ConnectionStatus.connecting).length;
+  expect(connectingCount, greaterThanOrEqualTo(2));
+},
+    timeout: const Timeout(Duration(seconds: 20)),
+    onPlatform: {
+      'windows': const Skip(
+        'Timing-sensitive test: skipped on Windows due to socket TIME_WAIT variability.',
+      ),
+    });
   });
 
   group('WebSocketService — message decoding', () {
