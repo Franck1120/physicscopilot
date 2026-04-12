@@ -1,0 +1,876 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "automotive",
+  "total": 20,
+  "problems": [
+    {
+      "id": "batteria_scarica_auto",
+      "name": "Batteria auto scarica",
+      "category": "elettrico",
+      "severity": "error",
+      "description": "L'auto non si avvia perché la batteria è scarica o insufficiente ad alimentare il motorino di avviamento.",
+      "visual_symptoms": [
+        "Clic rapidi o nessun rumore al giro di chiave",
+        "Luci fioche o lampeggianti",
+        "Strumentazione che si accende debolmente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria scarica per luci dimenticate accese o inutilizzo prolungato",
+          "probability": 0.45,
+          "test": "Misurare la tensione della batteria con un multimetro: sotto 12.2V a riposo indica batteria scarica"
+        },
+        {
+          "cause": "Batteria vecchia o deteriorata (oltre 4-5 anni)",
+          "probability": 0.35,
+          "test": "Portare la batteria in un'officina o negozio di auto per un test di carica"
+        },
+        {
+          "cause": "Alternatore che non ricarica la batteria",
+          "probability": 0.20,
+          "test": "Con motore acceso, misurare la tensione ai capi della batteria: deve essere tra 13.5 e 14.8V"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Usare i cavi di avviamento (cavi a coccodrillo) collegando una batteria carica: rosso+ su batteria scarica, rosso+ su batteria carica, nero- su batteria carica, nero- su massa metallica del veicolo scarico (non sulla batteria)",
+              "verification": "Motore avviato con i cavi di aiuto",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Tenere il motore acceso per almeno 30 minuti o fare un giro in auto per ricaricare parzialmente la batteria. Far testare la batteria in officina al più presto",
+              "verification": "Batteria testata e ricaricata o sostituita",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spia_motore_accesa",
+      "name": "Spia motore accesa (Check Engine)",
+      "category": "motore",
+      "severity": "warning",
+      "description": "La spia del motore (check engine) sul cruscotto rimane accesa fissa o lampeggia, indicando un guasto rilevato dalla centralina.",
+      "visual_symptoms": [
+        "Simbolo motore giallo/arancione acceso sul cruscotto",
+        "Spia che lampeggia (guasto grave) o è fissa (guasto minore)",
+        "Eventuale perdita di prestazioni o aumento consumi"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sensore ossigeno (lambda) difettoso",
+          "probability": 0.30,
+          "test": "Solo leggendo il codice errore con uno scanner OBD2 si può identificare la causa esatta"
+        },
+        {
+          "cause": "Tappo serbatoio carburante allentato o mancante",
+          "probability": 0.20,
+          "test": "Verificare che il tappo del serbatoio sia chiuso ermeticamente"
+        },
+        {
+          "cause": "Catalizzatore deteriorato",
+          "probability": 0.25,
+          "test": "Scanner OBD2 mostra codici P0420/P0430 per catalizzatore inefficiente"
+        },
+        {
+          "cause": "Bobina accensione o candele difettose",
+          "probability": 0.25,
+          "test": "Scanner OBD2 mostra codici di misfiring (P0300-P0312). Motore con vibrazioni anomale"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare e serrare il tappo del serbatoio del carburante. A volte è sufficiente per spegnere la spia dopo qualche ciclo di guida",
+              "verification": "Tappo serrato ermeticamente",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Usare uno scanner OBD2 (disponibili a meno di 30€) per leggere il codice di errore. Il codice indica esattamente il componente guasto",
+              "verification": "Codice di errore identificato",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Portare l'auto in officina per diagnosi approfondita con scanner professionale e riparazione del componente guasto indicato dal codice",
+              "verification": "Guasto riparato e spia spenta",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "freni_stridono",
+      "name": "Freni che stridono",
+      "category": "freni",
+      "severity": "warning",
+      "description": "I freni producono uno stridio acuto o metallico durante la frenata, indicando pastiglie consumate o disco rovinato.",
+      "visual_symptoms": [
+        "Stridio acuto durante la frenata",
+        "Rumore metallico al primo utilizzo dei freni dopo la pioggia",
+        "Vibrazione durante la frenata"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pastiglie freni consumate (indicatore di usura attivo)",
+          "probability": 0.50,
+          "test": "Le pastiglie hanno un indicatore metallico che striscia sul disco quando sono consumate, producendo lo stridio caratteristico"
+        },
+        {
+          "cause": "Ruggine superficiale sui dischi dopo pioggia o inutilizzo",
+          "probability": 0.30,
+          "test": "Se lo stridio sparisce dopo poche frenate al mattino, è ruggine superficiale normale"
+        },
+        {
+          "cause": "Disco freno rigato o danneggiato",
+          "probability": 0.20,
+          "test": "Corpo estraneo tra disco e pastiglia produce stridio continuo, non solo durante la frenata"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Se lo stridio è presente solo al mattino o dopo pioggia e sparisce dopo poche frenate, è normale ossidazione superficiale. Non richiede intervento",
+              "verification": "Stridio assente dopo le prime frenate",
+              "time_seconds": 120
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Se lo stridio è persistente, portare l'auto in officina per verifica e sostituzione delle pastiglie freni e valutazione dei dischi",
+              "verification": "Pastiglie nuove installate e dischi verificati o sostituiti",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "auto_non_parte",
+      "name": "Auto non parte",
+      "category": "avviamento",
+      "severity": "error",
+      "description": "L'auto non si avvia nonostante il giro di chiave, con vari possibili sintomi a seconda della causa.",
+      "visual_symptoms": [
+        "Nessun rumore o solo clic al giro di chiave",
+        "Motorino che gira ma il motore non parte",
+        "Cruscotto spento o con spie insolite"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Batteria scarica",
+          "probability": 0.40,
+          "test": "Verificare se le luci del cruscotto sono fioche o assenti"
+        },
+        {
+          "cause": "Motorino di avviamento guasto",
+          "probability": 0.25,
+          "test": "Se si sente un click forte e singolo ma il motore non gira, il motorino potrebbe essere guasto"
+        },
+        {
+          "cause": "Carburante esaurito",
+          "probability": 0.20,
+          "test": "Verificare l'indicatore del carburante"
+        },
+        {
+          "cause": "Blocco antifurto o immobilizer attivo",
+          "probability": 0.15,
+          "test": "Verificare se la spia dell'antifurto lampeggia. Provare con la chiave di riserva"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare il livello del carburante. Se il serbatoio è vuoto, aggiungere almeno 5 litri con un contenitore. Attendere 2-3 minuti e riprovare",
+              "verification": "Motore avviato dopo l'aggiunta di carburante",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se la batteria è scarica, usare i cavi di avviamento o un jump starter portatile come descritto nella procedura per batteria scarica",
+              "verification": "Motore avviato con il supporto di una batteria esterna",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gomma_terra",
+      "name": "Gomma a terra (foratura)",
+      "category": "pneumatici",
+      "severity": "error",
+      "description": "Uno o più pneumatici perdono pressione improvvisamente o lentamente, rendendo l'auto instabile o inutilizzabile.",
+      "visual_symptoms": [
+        "Rumore di battito o strisciamento dal pneumatico forato",
+        "Auto che tira da un lato",
+        "Spia pressione pneumatici accesa (TPMS)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Chiodo, vite o oggetto aguzzo nel battistrada",
+          "probability": 0.55,
+          "test": "Ispezionare visivamente il battistrada per corpi estranei"
+        },
+        {
+          "cause": "Valvola della ruota difettosa o allentata",
+          "probability": 0.25,
+          "test": "Spruzzare acqua saponata sulla valvola: se fa bolle, perde aria"
+        },
+        {
+          "cause": "Spalla del pneumatico danneggiata da buca o cordolo",
+          "probability": 0.20,
+          "test": "Ispezionare la spalla del pneumatico per tagli, ernie o danni laterali"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Accostare in sicurezza, lontano dal traffico. Attivare le luci di emergenza. Sostituire la ruota forata con la ruota di scorta seguendo le istruzioni del manuale",
+              "verification": "Ruota di scorta montata correttamente e dadi serrati in croce al torque corretto",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "La ruota di scorta compatta (quella piccola) ha limite di velocità (80 km/h) e percorrenza (massimo 200 km). Recarsi in gommista al più presto",
+              "verification": "Pneumatico riparato o sostituito in gommista",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ac_auto_non_raffredda",
+      "name": "Aria condizionata auto non raffredda",
+      "category": "climatizzazione",
+      "severity": "warning",
+      "description": "L'impianto di climatizzazione dell'auto soffia aria calda o tiepida invece di aria fredda.",
+      "visual_symptoms": [
+        "Aria tiepida o calda dall'abitacolo nonostante AC acceso",
+        "Compressore che non si attiva",
+        "Scarsa differenza di temperatura tra impostato e percepito"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Gas refrigerante insufficiente (perdita lenta nel tempo)",
+          "probability": 0.45,
+          "test": "Solo un tecnico con strumentazione specifica può verificare la pressione del gas"
+        },
+        {
+          "cause": "Compressore AC che non si innesta",
+          "probability": 0.30,
+          "test": "Con AC acceso, verificare se la puleggia del compressore (sotto il cofano) gira tutta (compressore attivo) o solo la parte esterna (compressore non innestato)"
+        },
+        {
+          "cause": "Filtro abitacolo intasato",
+          "probability": 0.25,
+          "test": "Verificare il filtro abitacolo: se ostruito riduce il flusso d'aria ma non la temperatura"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Sostituire il filtro abitacolo (solitamente nel vano motore o sotto il cruscotto, lato passeggero). La sostituzione è semplice e migliora il flusso d'aria",
+              "verification": "Flusso d'aria dall'abitacolo aumentato",
+              "time_seconds": 600
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Portare l'auto in un'officina attrezzata per il ricarico del gas refrigerante. Il tecnico verifica la pressione, rimuove eventuali perdite e ricarica il gas",
+              "verification": "Gas refrigerante al livello corretto e AC che raffredda efficacemente",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "olio_motore_basso",
+      "name": "Livello olio motore basso",
+      "category": "motore",
+      "severity": "warning",
+      "description": "Il livello dell'olio motore è sotto il minimo, rischiando danni seri al motore se non ripristinato.",
+      "visual_symptoms": [
+        "Spia olio accesa sul cruscotto",
+        "Livello dell'astina sotto il minimo (MIN)",
+        "Eventuale rumore metallico dal motore"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Consumo normale di olio non reintegrato",
+          "probability": 0.45,
+          "test": "Estrarre l'astina del livello con motore freddo e verificare il livello"
+        },
+        {
+          "cause": "Perdita d'olio da guarnizioni o tappo coppa",
+          "probability": 0.35,
+          "test": "Verificare la presenza di macchie d'olio sul pavimento dove si parcheggia"
+        },
+        {
+          "cause": "Motore che brucia olio",
+          "probability": 0.20,
+          "test": "Fumo azzurro dallo scarico durante l'accelerazione indica combustione di olio"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Con motore freddo, aprire il cofano e individuare il tappo dell'olio (solitamente con simbolo olio giallo). Aggiungere l'olio corretto (vedere il libretto) a piccole quantità (250 ml alla volta)",
+              "verification": "Livello sull'astina tra MIN e MAX (zona tratteggiata)",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Riavviare il motore e verificare che la spia olio si spenga. Se rimane accesa, spegnere immediatamente e chiamare il soccorso stradale",
+              "verification": "Spia olio spenta, motore funzionante",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "surriscaldamento_motore",
+      "name": "Surriscaldamento del motore",
+      "category": "motore",
+      "severity": "error",
+      "description": "La temperatura del motore supera i valori normali, rischiando gravi danni al motore se non si interviene.",
+      "visual_symptoms": [
+        "Spia temperatura motore in zona rossa",
+        "Vapore o fumo dal cofano",
+        "Indicatore temperatura che sale oltre la metà del quadrante"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Livello liquido di raffreddamento basso",
+          "probability": 0.40,
+          "test": "Verificare il serbatoio del liquido di raffreddamento: deve essere tra MIN e MAX"
+        },
+        {
+          "cause": "Ventola del radiatore non funzionante",
+          "probability": 0.30,
+          "test": "Con motore acceso e caldo, verificare se la ventola elettrica del radiatore gira"
+        },
+        {
+          "cause": "Termostato bloccato in posizione chiusa",
+          "probability": 0.20,
+          "test": "Se il motore si scalda rapidamente e il liquido non circola, il termostato potrebbe essere bloccato"
+        },
+        {
+          "cause": "Perdita nel circuito di raffreddamento",
+          "probability": 0.10,
+          "test": "Verificare presenza di perdite di liquido verde/arancio sotto il veicolo o fumo dal cofano"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "EMERGENZA: Accostare immediatamente in sicurezza e spegnere il motore. Non aprire il cofano immediatamente: attendere 15-20 minuti prima di toccare qualsiasi cosa per evitare ustioni",
+              "verification": "Auto ferma e motore spento",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Dopo il raffreddamento, verificare il livello del liquido di raffreddamento. Se basso, aggiungere acqua distillata come soluzione temporanea. Chiamare assistenza stradale",
+              "verification": "Liquido rabboccato e assistenza contattata",
+              "time_seconds": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trasmissione_scatta",
+      "name": "Trasmissione automatica scatta",
+      "category": "trasmissione",
+      "severity": "warning",
+      "description": "Il cambio automatico produce strappi, scatti o ritardi nei cambi di marcia.",
+      "visual_symptoms": [
+        "Strappi durante il cambio di marcia",
+        "Ritardi prima che il cambio avvenga",
+        "Marcia che non ingrana agevolmente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Livello olio cambio basso o olio deteriorato",
+          "probability": 0.40,
+          "test": "Verificare il livello dell'olio cambio (se presente l'astina) e il suo colore: deve essere rosso trasparente, non scuro o opaco"
+        },
+        {
+          "cause": "Centralina cambio con necessità di adattamento",
+          "probability": 0.30,
+          "test": "Se il problema è comparso dopo sostituzione batteria o reset elettronica, la centralina deve riadattarsi"
+        },
+        {
+          "cause": "Frizioni del cambio automatico consumate",
+          "probability": 0.30,
+          "test": "Se il problema peggiora progressivamente e il veicolo ha molti km, le frizioni interne potrebbero essere usurate"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Per riadattare la centralina cambio: portare l'auto in temperatura, effettuare accelerazioni e decelerazioni graduali per permettere alla centralina di reimparare i punti di innesto",
+              "verification": "I cambi diventano più fluidi dopo alcuni km di guida normale",
+              "time_seconds": 1800
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Portare l'auto in officina specializzata in cambi automatici per verifica del livello e qualità dell'olio cambio e diagnostica con scanner professionale",
+              "verification": "Olio cambio sostituito o problema identificato e risolto",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sterzo_duro",
+      "name": "Sterzo duro o pesante",
+      "category": "sterzo",
+      "severity": "warning",
+      "description": "Il volante è difficile da girare, richiedendo uno sforzo eccessivo soprattutto a bassa velocità.",
+      "visual_symptoms": [
+        "Volante pesante soprattutto durante le manovre",
+        "Rumore durante la sterzata",
+        "Perdita di fluido servoguida (liquido rosso/trasparente)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Livello fluido servoguida basso",
+          "probability": 0.45,
+          "test": "Verificare il serbatoio della servoguida idraulica (serbatoio piccolo con tappo giallo/nero)"
+        },
+        {
+          "cause": "Pompa servoguida guasta",
+          "probability": 0.30,
+          "test": "Rumore caratteristico di gemito durante la sterzata indica pompa difettosa"
+        },
+        {
+          "cause": "Pneumatici sgonfi",
+          "probability": 0.25,
+          "test": "Verificare la pressione dei pneumatici con un manometro"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare e gonfiare i pneumatici alla pressione corretta (indicata sull'adesivo sul montante porta o nel libretto)",
+              "verification": "Pressione pneumatici corretta, sterzo più leggero",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Per servoguida idraulica: verificare il livello del fluido servoguida e rabboccare con il fluido appropriato (vedere manuale). Verificare eventuale perdite",
+              "verification": "Livello fluido corretto e sterzo funzionante",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faro_fulminato",
+      "name": "Faro o lampada fulminata",
+      "category": "elettrico",
+      "severity": "info",
+      "description": "Uno o più fari, luci posteriori o indicatori di direzione non funzionano.",
+      "visual_symptoms": [
+        "Luce spenta visibile dall'esterno",
+        "Spia sul cruscotto per lampada bruciata",
+        "Freccia che lampeggia più velocemente del normale (indica lampada bruciata)"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Lampadina bruciata",
+          "probability": 0.65,
+          "test": "Verificare visivamente la lampadina: il filamento spezzato o il vetro annerito indicano la bruciatura"
+        },
+        {
+          "cause": "Fusibile bruciato",
+          "probability": 0.25,
+          "test": "Verificare il fusibile corrispondente nel quadro fusibili (manuale indica quale): il filamento visibile spezzato indica fusibile bruciato"
+        },
+        {
+          "cause": "Problemi di cablaggio o contatti ossidati",
+          "probability": 0.10,
+          "test": "Se dopo aver sostituito la lampadina e il fusibile il problema persiste, verificare i contatti del portalampada"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Identificare la lampadina da sostituire consultando il manuale. Acquistare la lampadina corretta (stesso attacco e wattaggio)",
+              "verification": "Lampadina corretta acquistata",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Accedere alla lampadina (solitamente dal vano motore per i fari anteriori o dal bagagliaio per i posteriori). Sostituire la lampadina con quella nuova senza toccare il vetro con le dita (per le alogene)",
+              "verification": "Luce funzionante dopo la sostituzione",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clacson_non_funziona",
+      "name": "Clacson non funziona",
+      "category": "elettrico",
+      "severity": "info",
+      "description": "Il clacson dell'auto non emette suono quando si preme il pulsante sul volante.",
+      "visual_symptoms": [
+        "Nessun suono alla pressione del clacson",
+        "Suono debole o distorto",
+        "Funzionamento intermittente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Fusibile del clacson bruciato",
+          "probability": 0.40,
+          "test": "Verificare il fusibile del clacson nel quadro fusibili indicato nel manuale"
+        },
+        {
+          "cause": "Clacson guasto",
+          "probability": 0.35,
+          "test": "Collegare il clacson direttamente alla batteria (12V) per verificare se funziona"
+        },
+        {
+          "cause": "Contatto sul volante ossidato o difettoso",
+          "probability": 0.25,
+          "test": "Verificare se il pulsante del clacson risponde (tasto rigido = contatto difettoso)"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare e sostituire il fusibile del clacson nel quadro fusibili (la posizione è indicata sul coperchio del quadro fusibili o nel manuale)",
+              "verification": "Fusibile sostituito e clacson funzionante",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portiera_non_apre",
+      "name": "Portiera non si apre",
+      "category": "carrozzeria",
+      "severity": "warning",
+      "description": "Una portiera non si apre dall'interno o dall'esterno, bloccando l'accesso o l'uscita dal veicolo.",
+      "visual_symptoms": [
+        "Maniglia interna o esterna che non reagisce",
+        "Clic senza apertura della portiera",
+        "Portiera bloccata in posizione chiusa"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Blocco bambini attivo sulla portiera posteriore",
+          "probability": 0.35,
+          "test": "Verificare se c'è un piccolo selettore nel bordo della portiera: in posizione blocco, la maniglia interna non funziona"
+        },
+        {
+          "cause": "Leverismo della serratura rotto o scollegato",
+          "probability": 0.35,
+          "test": "Se la serratura funziona (si vede il bottone chiudi/apri) ma la maniglia non apre, il leverismo è scollegato"
+        },
+        {
+          "cause": "Serratura della portiera guasta o bloccata",
+          "probability": 0.30,
+          "test": "Provare con il telecomando e con la chiave manuale"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Per le portiere posteriori, verificare il blocco bambini nel bordo interno della portiera (quando è aperta). Spostare il selettore nella posizione di sblocco",
+              "verification": "Maniglia interna funzionante",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Aprire la portiera dall'esterno se possibile, poi verificare dall'interno il collegamento del leverismo alla maniglia",
+              "verification": "Portiera che si apre correttamente",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cinghia_distribuzione_rumorosa",
+      "name": "Rumore cinghia distribuzione",
+      "category": "motore",
+      "severity": "error",
+      "description": "La zona del motore produce un ticchettio o fischio correlato alla cinghia di distribuzione o ai suoi componenti.",
+      "visual_symptoms": [
+        "Ticchettio o cigolìo dal lato anteriore del motore",
+        "Rumore che varia con il regime del motore",
+        "Eventuale vibrazione trasmessa al cofano"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cinghia di distribuzione usurata o allentata",
+          "probability": 0.35,
+          "test": "Verificare il chilometraggio: la cinghia va sostituita ogni 60.000-120.000 km (dipende dal modello)"
+        },
+        {
+          "cause": "Tenditore o rullo guida della cinghia difettoso",
+          "probability": 0.35,
+          "test": "Il tenditore usurato produce un fischio o cigolìo caratteristico"
+        },
+        {
+          "cause": "Pompa acqua in via di cedimento",
+          "probability": 0.30,
+          "test": "La pompa acqua comandata dalla cinghia di distribuzione produce un cigolìo quando i cuscinetti cedono"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "NON rimandare questo intervento: la rottura della cinghia di distribuzione causa danni catastrofici al motore. Portare l'auto in officina immediatamente per sostituzione del kit distribuzione completo (cinghia, tenditore, rulli, pompa acqua)",
+              "verification": "Kit distribuzione sostituito entro i km previsti dal costruttore",
+              "time_seconds": 14400
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marcia_non_ingrana",
+      "name": "Marcia non ingrana (cambio manuale)",
+      "category": "trasmissione",
+      "severity": "warning",
+      "description": "Con cambio manuale, una o più marce non si inseriscono correttamente o richiedono forza eccessiva.",
+      "visual_symptoms": [
+        "Resistenza o crepitio nell'innesto della marcia",
+        "Marcia che esce da sola (in genere la seconda)",
+        "Cambio rigido e difficile da muovere"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Frizione non completamente disinnestata",
+          "probability": 0.40,
+          "test": "Premere il pedale della frizione fino in fondo e attendere 2 secondi prima di inserire la marcia"
+        },
+        {
+          "cause": "Olio cambio deteriorato o livello basso",
+          "probability": 0.35,
+          "test": "L'olio cambio si degrada col tempo e rende difficili i cambi, specialmente da freddo"
+        },
+        {
+          "cause": "Sincronizzatori del cambio usurati",
+          "probability": 0.25,
+          "test": "Difficoltà a innestare una marcia specifica (spesso 2ª o 3ª) indica sincronizzatori usurati"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Verificare che la frizione sia completamente premuta. Per marce difficili da freddo, aspettare che il motore si scaldi prima di guidare con forza",
+              "verification": "Marce che si inseriscono senza resistenza con frizione completamente premuta",
+              "time_seconds": 300
+            }
+          ]
+        },
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Far sostituire l'olio del cambio in officina con olio della viscosità corretta per il modello. Questo spesso risolve difficoltà nei cambi da freddo",
+              "verification": "Cambio più fluido dopo la sostituzione dell'olio",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sensore_parcheggio_beep_continuo",
+      "name": "Sensore parcheggio con beep continuo",
+      "category": "elettronico",
+      "severity": "info",
+      "description": "I sensori di parcheggio emettono un segnale acustico continuo anche in assenza di ostacoli.",
+      "visual_symptoms": [
+        "Beep continuo o frequente dai sensori di parcheggio",
+        "Segnale che non si interrompe anche in spazio aperto",
+        "Display parcheggio che mostra ostacoli inesistenti"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sensore sporco (fango, ghiaccio, insetti)",
+          "probability": 0.50,
+          "test": "Ispezionare visivamente i sensori nel paraurti: se sporchi o coperti, pulirli e ritestare"
+        },
+        {
+          "cause": "Sensore danneggiato fisicamente",
+          "probability": 0.30,
+          "test": "Verificare se un sensore specifico è incrinato, graffiato o fisicamente danneggiato"
+        },
+        {
+          "cause": "Interferenza con rimorchio o portabici",
+          "probability": 0.20,
+          "test": "Verificare se il beep è iniziato dopo il collegamento di un rimorchio o portabici"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire accuratamente i sensori nel paraurti con acqua e un panno morbido. Rimuovere fango, ghiaccio o detriti da tutti i sensori",
+              "verification": "Beep assente dopo la pulizia in spazio aperto",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Verificare nelle impostazioni del veicolo se è possibile disabilitare temporaneamente i sensori per isolare il problema",
+              "verification": "Sensori funzionanti correttamente dopo la pulizia",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tergicristalli_stridono",
+      "name": "Tergicristalli che stridono",
+      "category": "carrozzeria",
+      "severity": "info",
+      "description": "I tergicristalli producono uno stridio o una sbavatura durante il movimento, riducendo la visibilità.",
+      "visual_symptoms": [
+        "Striscia orizzontale non pulita lasciata dai tergicristalli",
+        "Rumore di stridio durante il movimento",
+        "Tracce di acqua e sporco che rimangono sul vetro"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Gomma del tergicristallo indurita o usurata",
+          "probability": 0.55,
+          "test": "Ispezionare la gomma del tergicristallo: se indurita, screpolata o con bordi irregolari, va sostituita"
+        },
+        {
+          "cause": "Parabrezza sporco con film oleoso",
+          "probability": 0.30,
+          "test": "Pulire il parabrezza con un detergente specifico per vetri auto e verificare se lo stridio sparisce"
+        },
+        {
+          "cause": "Braccio tergicristallo deformato o con tensione errata",
+          "probability": 0.15,
+          "test": "Verificare se il tergicristallo mantiene la pressione corretta sul vetro lungo tutto il percorso"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Pulire il parabrezza con un detergente sgrassante specifico per vetri auto. Pulire anche la gomma del tergicristallo strofinandola con un panno umido",
+              "verification": "Tergicristalli che scivolano silenziosamente senza strisciare",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Se il problema persiste, sostituire le spazzole dei tergicristalli (operazione semplice, senza attrezzi, la clip si sgancia manualmente). Acquistare la misura corretta indicata nel manuale",
+              "verification": "Nuove spazzole montate e visibilità ottimale durante la pioggia",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consumo_benzina_eccessivo",
+      "name": "Consumo carburante eccessivo",
+      "category": "motore",
+      "severity": "warning",
+      "description": "L'auto consuma significativamente più carburante del normale o dei valori dichiarati dal costruttore.",
+      "visual_symptoms": [
+        "Serbatoio che si svuota più velocemente del solito",
+        "Computer di bordo che indica consumo anomalo",
+        "Necessità di fermarsi a fare rifornimento più frequentemente"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pneumatici sgonfi",
+          "probability": 0.30,
+          "test": "Verificare la pressione dei pneumatici: ogni bar in meno aumenta i consumi del 3-5%"
+        },
+        {
+          "cause": "Filtro aria motore intasato",
+          "probability": 0.30,
+          "test": "Ispezionare il filtro aria: se grigio e compatto, va sostituito"
+        },
+        {
+          "cause": "Stile di guida aggressivo o climatizzatore sempre acceso",
+          "probability": 0.25,
+          "test": "Confrontare i consumi con e senza AC e con stile di guida diverso"
+        },
+        {
+          "cause": "Sensori motore guasti (lambda, MAF)",
+          "probability": 0.15,
+          "test": "Scanner OBD2 può identificare sensori malfunzionanti che causano miscela errata"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Gonfiare i pneumatici alla pressione corretta (indicata sull'adesivo sul montante porta o nel libretto d'uso)",
+              "verification": "Pressione pneumatici corretta",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Sostituire il filtro aria motore se visibilmente sporco. Il filtro aria si trova solitamente in una scatola nera vicino al motore",
+              "verification": "Filtro aria nuovo installato e consumi migliorati",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
