@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,6 +25,43 @@ type createSessionRequest struct {
 	DeviceModel string `json:"device_model"`
 }
 
+// sessionDevice mirrors the device sub-object in the REST response.
+type sessionDevice struct {
+	Brand string `json:"brand"`
+	Model string `json:"model"`
+}
+
+// sessionResponse is the API DTO for a session. Field names match the JSON keys
+// expected by the Flutter client (Session.fromJson in lib/models/session.dart).
+// The internal services.SessionState uses different field names, so we map here.
+type sessionResponse struct {
+	ID              string        `json:"id"`
+	Status          string        `json:"status"`
+	Device          sessionDevice `json:"device"`
+	ProblemDetected string        `json:"problem_detected,omitempty"`
+	CurrentStep     int           `json:"current_step"`
+	TotalSteps      int           `json:"total_steps"`
+	CreatedAt       time.Time     `json:"created_at"`
+	LastActivity    time.Time     `json:"last_activity"`
+}
+
+// toResponse converts an internal SessionState to the public DTO.
+func toResponse(s services.SessionState) sessionResponse {
+	return sessionResponse{
+		ID:     s.SessionID,
+		Status: "active",
+		Device: sessionDevice{
+			Brand: s.DeviceInfo.Brand,
+			Model: s.DeviceInfo.Model,
+		},
+		ProblemDetected: s.ProblemDetected,
+		CurrentStep:     s.CurrentStep,
+		TotalSteps:      s.TotalSteps,
+		CreatedAt:       s.CreatedAt,
+		LastActivity:    s.LastActivity,
+	}
+}
+
 // CreateSession handles POST /api/sessions.
 //
 // Body (JSON): {"device_brand": "Prusa", "device_model": "MK4"}
@@ -39,7 +78,7 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(session)
+	return c.Status(fiber.StatusCreated).JSON(toResponse(*session))
 }
 
 // ListSessions handles GET /api/sessions.
@@ -47,15 +86,19 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 // Response 200: {"sessions": [...], "count": N}
 func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 	all := h.sessions.ListSessions()
+	dtos := make([]sessionResponse, len(all))
+	for i, s := range all {
+		dtos[i] = toResponse(s)
+	}
 	return c.JSON(fiber.Map{
-		"sessions": all,
-		"count":    len(all),
+		"sessions": dtos,
+		"count":    len(dtos),
 	})
 }
 
 // GetSession handles GET /api/sessions/:id.
 //
-// Response 200: SessionState JSON including conversation history.
+// Response 200: session JSON.
 // Response 404: session not found.
 func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -63,7 +106,7 @@ func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
-	return c.JSON(session)
+	return c.JSON(toResponse(*session))
 }
 
 // DeleteSession handles DELETE /api/sessions/:id.

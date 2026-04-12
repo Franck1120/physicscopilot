@@ -131,8 +131,9 @@ func main() {
 	// Health check — version, uptime, active connections, memory
 	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
 
-	// Session REST API — rate-limited
-	api := app.Group("/api", apiLimiter.Middleware())
+	// Session REST API — rate-limited + JWT auth (no-op when SUPABASE_JWT_SECRET is unset).
+	// In production the client must send: Authorization: Bearer <supabase-jwt>
+	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
 	api.Post("/sessions", sessionHandler.CreateSession)
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)

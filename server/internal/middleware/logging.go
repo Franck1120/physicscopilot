@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"log/slog"
 	"time"
@@ -21,6 +22,7 @@ const requestIDKey = "request_id"
 // Log level escalates automatically: INFO for 2xx/3xx, WARN for 4xx, ERROR for 5xx.
 // The output format (JSON or text) is determined by the global slog handler
 // configured in logger.Init() — JSON in production, text in development.
+// IP addresses are anonymized (SHA-256, first 4 bytes) before logging.
 func StructuredLogger() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
@@ -46,7 +48,7 @@ func StructuredLogger() fiber.Handler {
 			"path", c.Path(),
 			"status", status,
 			"latency_ms", latency.Milliseconds(),
-			"ip", c.IP(),
+			"ip_hash", anonymizeIP(c.IP()),
 		)
 
 		return err
@@ -68,4 +70,12 @@ func generateRequestID() string {
 		return "00000000deadbeef"
 	}
 	return hex.EncodeToString(b)
+}
+
+// anonymizeIP hashes the raw IP with SHA-256 and returns the first 4 bytes
+// as an 8-character hex string. This is sufficient for log correlation while
+// avoiding storage of personally identifiable network addresses.
+func anonymizeIP(ip string) string {
+	h := sha256.Sum256([]byte(ip))
+	return hex.EncodeToString(h[:4])
 }
