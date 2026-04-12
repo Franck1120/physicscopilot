@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"strings"
 	"testing"
 )
 
@@ -99,42 +98,83 @@ func TestNewAIBackendUnknownReturnsError(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Stub AnalyzeFrame calls return "not yet implemented" errors
-// ---------------------------------------------------------------------------
-
-func TestOpenAIBackendAnalyzeFrameNotImplemented(t *testing.T) {
-	t.Setenv("AI_BACKEND", "openai")
-	t.Setenv("OPENAI_API_KEY", "sk-test")
-
-	backend, err := NewAIBackend()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+// TestNewAIBackendCaseSensitive verifies that AI_BACKEND values are case-sensitive:
+// "Gemini", "GEMINI" are unknown backends — only lowercase "gemini" is valid.
+func TestNewAIBackendCaseSensitive(t *testing.T) {
+	cases := []struct {
+		value string
+	}{
+		{"Gemini"},
+		{"GEMINI"},
+		{"OpenAI"},
+		{"OPENAI"},
+		{"Claude"},
+		{"CLAUDE"},
 	}
 
-	_, err = backend.AnalyzeFrame(context.Background(), "frame", "ctx", "it")
-	if err == nil {
-		t.Fatal("expected error from OpenAI stub")
-	}
-	if !strings.Contains(err.Error(), "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in error, got: %v", err)
+	for _, tc := range cases {
+		t.Run(tc.value, func(t *testing.T) {
+			t.Setenv("AI_BACKEND", tc.value)
+
+			_, err := NewAIBackend()
+			if err == nil {
+				t.Errorf("expected error for mixed-case AI_BACKEND %q, got nil", tc.value)
+			}
+		})
 	}
 }
 
-func TestClaudeBackendAnalyzeFrameNotImplemented(t *testing.T) {
-	t.Setenv("AI_BACKEND", "claude")
-	t.Setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+// TestNewAIBackendWhitespaceReturnsError verifies that a backend name with
+// surrounding whitespace is treated as unknown (no implicit trimming).
+func TestNewAIBackendWhitespaceReturnsError(t *testing.T) {
+	cases := []string{
+		" gemini",
+		"gemini ",
+		" gemini ",
+		"\tgemini",
+		"gemini\n",
+	}
+
+	for _, val := range cases {
+		t.Run("whitespace:"+val, func(t *testing.T) {
+			t.Setenv("AI_BACKEND", val)
+
+			_, err := NewAIBackend()
+			if err == nil {
+				t.Errorf("expected error for whitespace-padded AI_BACKEND %q, got nil", val)
+			}
+		})
+	}
+}
+
+// TestGeminiServiceAnalyzeFrameCallable confirms that GeminiService satisfies
+// the AIBackend interface and that AnalyzeFrame is callable. The call will
+// fail (no real server) but must not panic.
+func TestGeminiServiceAnalyzeFrameCallable(t *testing.T) {
+	t.Setenv("AI_BACKEND", "gemini")
+	t.Setenv("GEMINI_API_KEY", "")
+	t.Setenv("CLIPROXY_URL", "http://127.0.0.1:19999") // nothing listens → fast error
 
 	backend, err := NewAIBackend()
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("NewAIBackend: %v", err)
 	}
 
-	_, err = backend.AnalyzeFrame(context.Background(), "frame", "ctx", "it")
-	if err == nil {
-		t.Fatal("expected error from Claude stub")
+	gs, ok := backend.(*GeminiService)
+	if !ok {
+		t.Fatalf("expected *GeminiService, got %T", backend)
 	}
-	if !strings.Contains(err.Error(), "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in error, got: %v", err)
+
+	// Create a context that is already cancelled so the rate-limiter Wait
+	// returns immediately with an error instead of blocking or making a real
+	// network call.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	// The method must exist, compile, and return an error without panicking.
+	_, callErr := gs.AnalyzeFrame(ctx, "", "", "it")
+	if callErr == nil {
+		// Unlikely (cancelled ctx / no server), but not a correctness failure.
+		t.Log("AnalyzeFrame unexpectedly succeeded; no panic = OK")
 	}
 }

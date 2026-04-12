@@ -184,3 +184,127 @@ func TestFeedbackSubmitResponseBodyIsJSON(t *testing.T) {
 		t.Errorf("want status 'ok', got %v", body["status"])
 	}
 }
+
+// ── Validation edge cases ─────────────────────────────────────────────────────
+
+func TestFeedbackSubmitEmptyRatingReturns400(t *testing.T) {
+	// An empty rating string is not "positive" or "negative" → 400.
+	app := newFeedbackTestApp(nil)
+
+	resp := doFeedbackPost(t, app, `{"session_id":"sess-10","step_number":1,"rating":""}`)
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("want 400 for empty rating, got %d", resp.StatusCode)
+	}
+}
+
+func TestFeedbackSubmitWhitespaceSessionIDReturns400(t *testing.T) {
+	// session_id that is whitespace only must be rejected.
+	app := newFeedbackTestApp(nil)
+
+	resp := doFeedbackPost(t, app, `{"session_id":"   ","step_number":1,"rating":"positive"}`)
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("want 400 for whitespace-only session_id, got %d", resp.StatusCode)
+	}
+}
+
+func TestFeedbackSubmitEmptyBodyReturns400(t *testing.T) {
+	// Completely empty body should fail JSON parsing → 400.
+	app := newFeedbackTestApp(nil)
+
+	resp := doFeedbackPost(t, app, ``)
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("want 400 for empty body, got %d", resp.StatusCode)
+	}
+}
+
+func TestFeedbackSubmitErrorMessageContainsBadField(t *testing.T) {
+	// When session_id is missing the 400 error body should mention it.
+	app := newFeedbackTestApp(nil)
+
+	resp := doFeedbackPost(t, app, `{"step_number":1,"rating":"positive"}`)
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400, got %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if !strings.Contains(string(body), "session_id") {
+		t.Errorf("expected error message to mention 'session_id', got: %s", body)
+	}
+}
+
+func TestFeedbackSubmitNegativeRatingValidReturns202(t *testing.T) {
+	// Confirm "negative" rating without comment is also accepted.
+	db := &stubFeedbackDB{}
+	app := newFeedbackTestApp(db)
+
+	resp := doFeedbackPost(t, app, `{"session_id":"sess-11","step_number":3,"rating":"negative"}`)
+
+	if resp.StatusCode != http.StatusAccepted {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("want 202 for valid negative rating, got %d: %s", resp.StatusCode, b)
+	}
+	if len(db.saved) != 1 || db.saved[0].Rating != "negative" {
+		t.Errorf("expected saved entry with rating 'negative'")
+	}
+}
+
+func TestFeedbackSubmitStepNumberZeroIsValid(t *testing.T) {
+	// step_number=0 is a valid value (first step); must return 202.
+	db := &stubFeedbackDB{}
+	app := newFeedbackTestApp(db)
+
+	resp := doFeedbackPost(t, app, `{"session_id":"sess-12","step_number":0,"rating":"positive"}`)
+
+	if resp.StatusCode != http.StatusAccepted {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("want 202 for step_number=0, got %d: %s", resp.StatusCode, b)
+	}
+	if len(db.saved) != 1 || db.saved[0].StepNumber != 0 {
+		t.Errorf("expected saved entry with step_number 0")
+	}
+}
+
+func TestFeedbackSubmitCommentAtExactMaxLengthReturns202(t *testing.T) {
+	// A comment of exactly 1000 chars must be accepted (boundary condition).
+	db := &stubFeedbackDB{}
+	app := newFeedbackTestApp(db)
+
+	exactComment := strings.Repeat("x", 1000)
+	body, _ := json.Marshal(map[string]interface{}{
+		"session_id":  "sess-13",
+		"step_number": 1,
+		"rating":      "positive",
+		"comment":     exactComment,
+	})
+
+	resp := doFeedbackPost(t, app, string(body))
+
+	if resp.StatusCode != http.StatusAccepted {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("want 202 for comment at max length, got %d: %s", resp.StatusCode, b)
+	}
+}
+
+func TestFeedbackSubmitHTMLInSessionIDErrorMessageIsInformative(t *testing.T) {
+	// The 400 response for HTML in session_id must contain a descriptive message.
+	app := newFeedbackTestApp(nil)
+
+	resp := doFeedbackPost(t, app, `{"session_id":"<img>","step_number":1,"rating":"positive"}`)
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("want 400, got %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if !strings.Contains(string(body), "HTML") && !strings.Contains(string(body), "session_id") {
+		t.Errorf("expected error message to mention HTML or session_id, got: %s", body)
+	}
+}

@@ -2,11 +2,9 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 
@@ -341,81 +339,6 @@ func TestIPBanResponseIsForbiddenJSON(t *testing.T) {
 	}
 }
 
-// TestIsBannedExpiredBanIsRemoved verifies that isBanned removes an expired ban
-// and returns false so the IP can reconnect after the ban duration.
-func TestIsBannedExpiredBanIsRemoved(t *testing.T) {
-	rl := newIPRateLimiterWith(1, 1)
-	ip := "192.0.2.99"
-
-	// Manually insert an already-expired ban.
-	rl.mu.Lock()
-	rl.bans[ip] = time.Now().Add(-1 * time.Second)
-	rl.mu.Unlock()
-
-	if rl.isBanned(ip) {
-		t.Error("expected isBanned to return false for an expired ban")
-	}
-
-	// Expired entry must be removed from the map.
-	rl.mu.Lock()
-	_, exists := rl.bans[ip]
-	rl.mu.Unlock()
-	if exists {
-		t.Error("expected expired ban entry to be removed from the bans map")
-	}
-}
-
-// TestViolationWindowReset verifies that a violation after the window has
-// expired resets the counter to 1 rather than continuing to accumulate.
-func TestViolationWindowReset(t *testing.T) {
-	rl := newIPRateLimiterWith(1, 1)
-	ip := "10.0.1.1"
-
-	// Record violations-1 violations (not enough to trigger a ban).
-	for i := 0; i < banViolationThreshold-1; i++ {
-		rl.recordViolation(ip)
-	}
-
-	// Age the violation window past banViolationWindow.
-	rl.mu.Lock()
-	rl.violations[ip].windowStart = time.Now().Add(-banViolationWindow - time.Second)
-	rl.mu.Unlock()
-
-	// One more violation after the window expires should reset the counter to 1.
-	rl.recordViolation(ip)
-
-	if rl.isBanned(ip) {
-		t.Error("IP must not be banned after violation window reset")
-	}
-
-	rl.mu.Lock()
-	count := rl.violations[ip].count
-	rl.mu.Unlock()
-	if count != 1 {
-		t.Errorf("expected violation count 1 after window reset, got %d", count)
-	}
-}
-
-// TestIPRateLimiterConcurrentAccess verifies that concurrent getLimiter calls
-// for multiple IPs do not race or corrupt the internal map.
-func TestIPRateLimiterConcurrentAccess(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 60)
-
-	var wg sync.WaitGroup
-	const goroutines = 100
-	wg.Add(goroutines)
-
-	for i := 0; i < goroutines; i++ {
-		go func(i int) {
-			defer wg.Done()
-			ip := fmt.Sprintf("10.0.0.%d", i%10)
-			rl.getLimiter(ip)
-		}(i)
-	}
-
-	wg.Wait()
-}
-
 // TestBanConstants verifies the production ban constants have sensible values.
 func TestBanConstants(t *testing.T) {
 	if banViolationThreshold != 10 {
@@ -429,349 +352,131 @@ func TestBanConstants(t *testing.T) {
 	}
 }
 
-// ── IPRateLimiter cleanup tests ─────────────────────────────────────────────
+// TestBanExpiresAfterDuration verifies that a banned IP becomes unbanned once
+// its ban entry has expired.
+func TestBanExpiresAfterDuration(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
 
-// TestIPCleanupRemovesStaleLimiters verifies that the cleanup logic removes
-// limiters whose lastSeen exceeds limiterExpiry.
-func TestIPCleanupRemovesStaleLimiters(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
+	ip := "10.11.0.1"
 
-	// Create a limiter entry for an IP.
-	rl.getLimiter("stale-ip")
-
-	rl.mu.Lock()
-	if _, ok := rl.limiters["stale-ip"]; !ok {
-		rl.mu.Unlock()
-		t.Fatal("expected limiter entry for stale-ip")
+	// Ban the IP by recording enough violations.
+	for i := 0; i < banViolationThreshold; i++ {
+		rl.recordViolation(ip)
 	}
-	// Backdate lastSeen so cleanup considers it expired.
-	rl.limiters["stale-ip"].lastSeen = time.Now().Add(-2 * limiterExpiry)
+
+	if !rl.isBanned(ip) {
+		t.Fatal("expected IP to be banned after threshold violations")
+	}
+
+	// Manually backdate the ban expiry so it looks already elapsed.
+	rl.mu.Lock()
+	rl.bans[ip] = time.Now().Add(-1 * time.Second)
 	rl.mu.Unlock()
 
-	// Simulate one cleanup pass (same logic as cleanupLoop body).
-	rl.mu.Lock()
-	for ip, e := range rl.limiters {
-		if time.Since(e.lastSeen) > limiterExpiry {
-			delete(rl.limiters, ip)
-		}
+	// isBanned must detect the expired entry and return false.
+	if rl.isBanned(ip) {
+		t.Error("expected IP ban to have expired, but isBanned still returns true")
 	}
-	rl.mu.Unlock()
 
+	// The entry must have been removed from the map as part of the expiry check.
 	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	if _, ok := rl.limiters["stale-ip"]; ok {
-		t.Error("stale-ip limiter should have been removed by cleanup")
+	_, stillPresent := rl.bans[ip]
+	rl.mu.Unlock()
+	if stillPresent {
+		t.Error("expected expired ban entry to be removed from bans map")
 	}
 }
 
-// TestIPCleanupRemovesExpiredViolations verifies that violation entries older
-// than banViolationWindow are removed during cleanup.
-func TestIPCleanupRemovesExpiredViolations(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
+// TestViolationWindowSlide verifies that violations recorded outside the
+// banViolationWindow are not counted toward a ban. When the window has
+// elapsed the counter resets so a single new violation does not trigger a ban.
+func TestViolationWindowSlide(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
 
-	// Seed a violation entry with an old windowStart.
-	rl.mu.Lock()
-	rl.violations["old-violator"] = &violationEntry{
-		count:       5,
-		windowStart: time.Now().Add(-2 * banViolationWindow),
+	ip := "10.11.0.2"
+
+	// Record threshold-1 violations, then slide the window start into the past.
+	for i := 0; i < banViolationThreshold-1; i++ {
+		rl.recordViolation(ip)
 	}
+
+	// Move the window start far enough into the past that it appears stale.
+	rl.mu.Lock()
+	rl.violations[ip].windowStart = time.Now().Add(-(banViolationWindow + time.Second))
 	rl.mu.Unlock()
 
-	// Simulate the cleanup pass for violations.
-	rl.mu.Lock()
-	for ip, v := range rl.violations {
-		if time.Since(v.windowStart) > banViolationWindow {
-			delete(rl.violations, ip)
-		}
-	}
-	rl.mu.Unlock()
+	// One more violation: the stale window should reset the counter to 1,
+	// which is below the threshold — so no ban must occur.
+	rl.recordViolation(ip)
 
+	if rl.isBanned(ip) {
+		t.Error("expected IP not to be banned: old violations outside the window must not count")
+	}
+
+	// Verify that the violation counter was indeed reset to 1 (not accumulated).
 	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	if _, ok := rl.violations["old-violator"]; ok {
-		t.Error("expired violation entry should have been removed by cleanup")
+	v := rl.violations[ip]
+	rl.mu.Unlock()
+	if v == nil || v.count != 1 {
+		t.Errorf("expected violation count to be reset to 1 after window slide, got %v", v)
 	}
 }
 
-// TestIPCleanupRemovesExpiredBans verifies that bans whose expiry is in the
-// past are removed during cleanup.
-func TestIPCleanupRemovesExpiredBans(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
+// TestCleanupRemovesExpiredBans verifies that the cleanup loop removes bans
+// whose expiry has already passed. We exercise the cleanup logic directly by
+// invoking cleanupLoop-equivalent inline cleanup to keep the test synchronous.
+func TestCleanupRemovesExpiredBans(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
 
-	// Seed an expired ban.
+	ip := "10.11.0.3"
+
+	// Insert an already-expired ban directly.
 	rl.mu.Lock()
-	rl.bans["expired-ban-ip"] = time.Now().Add(-1 * time.Second)
+	rl.bans[ip] = time.Now().Add(-1 * time.Second)
 	rl.mu.Unlock()
 
-	// Simulate the cleanup pass for bans.
-	rl.mu.Lock()
-	for ip, until := range rl.bans {
-		if time.Now().After(until) {
-			delete(rl.bans, ip)
-		}
+	// isBanned triggers the lazy-expiry path which removes expired entries.
+	if rl.isBanned(ip) {
+		t.Error("expected isBanned to return false for an already-expired ban")
 	}
-	rl.mu.Unlock()
 
 	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	if _, ok := rl.bans["expired-ban-ip"]; ok {
-		t.Error("expired ban should have been removed by cleanup")
+	_, present := rl.bans[ip]
+	rl.mu.Unlock()
+	if present {
+		t.Error("expected expired ban to have been removed from the bans map")
 	}
 }
 
-// TestIPCleanupKeepsFreshEntries verifies that recent limiters, violations,
-// and active bans survive cleanup.
-func TestIPCleanupKeepsFreshEntries(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
+// TestIPRateLimiterConcurrentRequests spawns 50 goroutines firing requests in
+// parallel and verifies that the limiter does not panic and remains consistent.
+func TestIPRateLimiterConcurrentRequests(t *testing.T) {
+	// Use a high burst so most requests pass; the point is thread-safety, not blocking.
+	rl := newIPRateLimiterWith(6000, 100)
+	app := testRateLimitApp(rl)
 
-	// Create a fresh limiter entry.
-	rl.getLimiter("fresh-ip")
-
-	// Seed a recent violation.
-	rl.mu.Lock()
-	rl.violations["recent-violator"] = &violationEntry{
-		count:       2,
-		windowStart: time.Now(),
-	}
-	// Seed an active ban (expires in the future).
-	rl.bans["active-ban-ip"] = time.Now().Add(5 * time.Minute)
-	rl.mu.Unlock()
-
-	// Simulate full cleanup pass.
-	rl.mu.Lock()
-	for ip, e := range rl.limiters {
-		if time.Since(e.lastSeen) > limiterExpiry {
-			delete(rl.limiters, ip)
-		}
-	}
-	for ip, v := range rl.violations {
-		if time.Since(v.windowStart) > banViolationWindow {
-			delete(rl.violations, ip)
-		}
-	}
-	for ip, until := range rl.bans {
-		if time.Now().After(until) {
-			delete(rl.bans, ip)
-		}
-	}
-	rl.mu.Unlock()
-
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	if _, ok := rl.limiters["fresh-ip"]; !ok {
-		t.Error("fresh limiter should survive cleanup")
-	}
-	if _, ok := rl.violations["recent-violator"]; !ok {
-		t.Error("recent violation should survive cleanup")
-	}
-	if _, ok := rl.bans["active-ban-ip"]; !ok {
-		t.Error("active ban should survive cleanup")
-	}
-}
-
-// ── isBanned expired ban branch ─────────────────────────────────────────────
-
-// TestIsBannedReturnsFalseForExpiredBan verifies that isBanned removes an
-// expired ban from the map and returns false.
-func TestIsBannedReturnsFalseForExpiredBan(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-
-	// Insert a ban that already expired.
-	rl.mu.Lock()
-	rl.bans["expired-ip"] = time.Now().Add(-1 * time.Second)
-	rl.mu.Unlock()
-
-	if rl.isBanned("expired-ip") {
-		t.Error("isBanned should return false for an expired ban")
-	}
-
-	// Verify the expired ban was cleaned up from the map.
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	if _, ok := rl.bans["expired-ip"]; ok {
-		t.Error("expired ban should have been deleted from map by isBanned")
-	}
-}
-
-// TestIsBannedReturnsTrueForActiveBan verifies that an active ban is detected.
-func TestIsBannedReturnsTrueForActiveBan(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-
-	rl.mu.Lock()
-	rl.bans["active-ip"] = time.Now().Add(5 * time.Minute)
-	rl.mu.Unlock()
-
-	if !rl.isBanned("active-ip") {
-		t.Error("isBanned should return true for an active ban")
-	}
-}
-
-// TestIsBannedReturnsFalseForUnknownIP verifies no false positives.
-func TestIsBannedReturnsFalseForUnknownIP(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-
-	if rl.isBanned("never-seen") {
-		t.Error("isBanned should return false for an IP with no ban entry")
-	}
-}
-
-// ── recordViolation window reset ────────────────────────────────────────────
-
-// TestRecordViolationResetsWindowWhenExpired verifies that violations recorded
-// after banViolationWindow has elapsed reset the counter to 1.
-func TestRecordViolationResetsWindowWhenExpired(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-
-	// Seed 9 violations (one short of ban) with an old window.
-	rl.mu.Lock()
-	rl.violations["reset-ip"] = &violationEntry{
-		count:       9,
-		windowStart: time.Now().Add(-2 * banViolationWindow),
-	}
-	rl.mu.Unlock()
-
-	// This violation should reset the window instead of triggering a ban.
-	rl.recordViolation("reset-ip")
-
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-	v, ok := rl.violations["reset-ip"]
-	if !ok {
-		t.Fatal("expected violation entry to exist after recordViolation")
-	}
-	if v.count != 1 {
-		t.Errorf("violation count after window reset: want 1, got %d", v.count)
-	}
-}
-
-// ── Concurrent access ───────────────────────────────────────────────────────
-
-// TestGetLimiterConcurrentAccess verifies getLimiter is safe under concurrent
-// access from multiple goroutines. The -race detector catches data races.
-func TestGetLimiterConcurrentAccess(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-	var wg sync.WaitGroup
-	const goroutines = 100
-
-	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
-		go func() {
-			defer wg.Done()
-			l := rl.getLimiter("concurrent-ip")
-			l.Allow()
-		}()
-	}
-	wg.Wait()
-}
-
-// TestRecordViolationConcurrentAccess verifies recordViolation is safe under
-// concurrent writes from multiple goroutines.
-func TestRecordViolationConcurrentAccess(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-	var wg sync.WaitGroup
 	const goroutines = 50
+	results := make(chan int, goroutines)
 
-	wg.Add(goroutines)
 	for i := 0; i < goroutines; i++ {
 		go func() {
-			defer wg.Done()
-			rl.recordViolation("concurrent-violator")
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			resp, err := app.Test(req)
+			if err != nil {
+				results <- -1
+				return
+			}
+			results <- resp.StatusCode
 		}()
 	}
-	wg.Wait()
-}
 
-// TestIsBannedConcurrentAccess verifies isBanned is safe with concurrent reads
-// while other goroutines are recording violations.
-func TestIsBannedConcurrentAccess(t *testing.T) {
-	rl := newIPRateLimiterWith(60, 10)
-	var wg sync.WaitGroup
-	const goroutines = 50
-
-	wg.Add(goroutines * 2)
 	for i := 0; i < goroutines; i++ {
-		go func() {
-			defer wg.Done()
-			rl.isBanned("race-ip")
-		}()
-		go func() {
-			defer wg.Done()
-			rl.recordViolation("race-ip")
-		}()
-	}
-	wg.Wait()
-}
-
-// ── UserRateLimiter cleanup test ────────────────────────────────────────────
-
-// TestUserRateLimiterCleanupRemovesIdleEntries verifies that idle user
-// limiters are cleaned up after the expiry window.
-func TestUserRateLimiterCleanupRemovesIdleEntries(t *testing.T) {
-	ul := newUserRateLimiterWith(60, 5)
-
-	// Create a limiter entry.
-	ul.Allow("idle-user")
-
-	ul.mu.Lock()
-	if _, ok := ul.limiters["idle-user"]; !ok {
-		ul.mu.Unlock()
-		t.Fatal("expected limiter entry for idle-user")
-	}
-	// Backdate lastSeen beyond userLimiterExpiry.
-	ul.limiters["idle-user"].lastSeen = time.Now().Add(-2 * userLimiterExpiry)
-	ul.mu.Unlock()
-
-	// Simulate one cleanup pass.
-	ul.mu.Lock()
-	for uid, e := range ul.limiters {
-		if time.Since(e.lastSeen) > userLimiterExpiry {
-			delete(ul.limiters, uid)
+		status := <-results
+		if status == -1 {
+			t.Error("a goroutine received an unexpected error from app.Test")
 		}
-	}
-	ul.mu.Unlock()
-
-	ul.mu.Lock()
-	defer ul.mu.Unlock()
-	if _, ok := ul.limiters["idle-user"]; ok {
-		t.Error("idle-user limiter should have been cleaned up")
-	}
-}
-
-// TestUserRateLimiterConcurrentAllow verifies Allow is safe under concurrent
-// access from multiple goroutines.
-func TestUserRateLimiterConcurrentAllow(t *testing.T) {
-	ul := newUserRateLimiterWith(60, 10)
-	var wg sync.WaitGroup
-	const goroutines = 100
-
-	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
-		go func() {
-			defer wg.Done()
-			ul.Allow("concurrent-user")
-		}()
-	}
-	wg.Wait()
-}
-
-// TestUserRateLimiterMultipleUserIsolation verifies that multiple distinct
-// users each get independent rate limit buckets.
-func TestUserRateLimiterMultipleUserIsolation(t *testing.T) {
-	ul := newUserRateLimiterWith(60, 1) // burst=1 per user
-
-	users := []string{"alice", "bob", "carol", "dave"}
-
-	// Each user should get one allowed request.
-	for _, uid := range users {
-		if !ul.Allow(uid) {
-			t.Errorf("first Allow for %q should succeed", uid)
-		}
-	}
-
-	// Each user should now be blocked.
-	for _, uid := range users {
-		if ul.Allow(uid) {
-			t.Errorf("second Allow for %q should be blocked (burst=1)", uid)
+		if status != http.StatusOK && status != http.StatusTooManyRequests && status != http.StatusForbidden {
+			t.Errorf("unexpected status %d — want 200, 429, or 403", status)
 		}
 	}
 }

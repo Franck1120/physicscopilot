@@ -299,3 +299,89 @@ func TestQueryKBDifferentMaxResultsAreCachedSeparately(t *testing.T) {
 		t.Errorf("maxResults=3 should potentially return more than maxResults=1")
 	}
 }
+
+// TestRAGServiceReturnsTopKResults verifies that QueryKB never returns more
+// entries than the requested K parameter, regardless of KB size.
+func TestRAGServiceReturnsTopKResults(t *testing.T) {
+	entries := []KBEntry{
+		{ID: "a", Name: "Clogged Nozzle", Description: "nozzle blocked under-extrusion"},
+		{ID: "b", Name: "Warping", Description: "corners lift bed adhesion"},
+		{ID: "c", Name: "Stringing", Description: "thin strands between parts"},
+		{ID: "d", Name: "Layer Shift", Description: "layers misaligned stepper"},
+		{ID: "e", Name: "Under Extrusion", Description: "insufficient filament flow nozzle"},
+	}
+	path := writeTestKB(t, entries)
+	t.Setenv("KB_PATH", path)
+
+	svc, err := NewRAGService()
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+
+	for _, k := range []int{1, 2, 3} {
+		results := svc.QueryKB("nozzle filament extrusion", k)
+		if len(results) > k {
+			t.Errorf("K=%d: expected at most %d results, got %d", k, k, len(results))
+		}
+	}
+}
+
+// TestRAGServiceEmptyQueryReturnsEmpty verifies that an empty query string
+// returns nil without panicking, even when the KB contains entries.
+func TestRAGServiceEmptyQueryReturnsEmpty(t *testing.T) {
+	entries := []KBEntry{
+		{ID: "x", Name: "Some Issue", Description: "some description"},
+	}
+	path := writeTestKB(t, entries)
+	t.Setenv("KB_PATH", path)
+
+	svc, err := NewRAGService()
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+
+	results := svc.QueryKB("", 5)
+	if results != nil {
+		t.Errorf("expected nil for empty query, got %v", results)
+	}
+}
+
+// TestRAGServiceIndexAndSearch verifies the full index-then-search pipeline:
+// documents are indexed at construction time and the most relevant result
+// appears first for a targeted query.
+func TestRAGServiceIndexAndSearch(t *testing.T) {
+	entries := []KBEntry{
+		{ID: "warp", Name: "Warping", Category: "bed_adhesion",
+			Description: "print corners lift off the heated bed"},
+		{ID: "clog", Name: "Clogged Nozzle", Category: "extrusion",
+			Description: "nozzle is blocked causing severe under-extrusion"},
+		{ID: "shift", Name: "Layer Shift", Category: "mechanical",
+			Description: "layers are misaligned due to skipped stepper steps"},
+	}
+	path := writeTestKB(t, entries)
+	t.Setenv("KB_PATH", path)
+
+	svc, err := NewRAGService()
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	if !svc.Loaded() {
+		t.Fatal("service must be Loaded after successful KB load")
+	}
+
+	// Query strongly associated with the clog entry.
+	results := svc.QueryKB("clogged nozzle extrusion blocked", 3)
+	if len(results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	// The most relevant result should be the clogged nozzle entry.
+	if results[0].ID != "clog" {
+		t.Errorf("expected top result 'clog', got %q", results[0].ID)
+	}
+
+	// Results must be in descending relevance order — no single criterion, so
+	// just verify the slice length is capped at the requested K.
+	if len(results) > 3 {
+		t.Errorf("expected at most 3 results, got %d", len(results))
+	}
+}

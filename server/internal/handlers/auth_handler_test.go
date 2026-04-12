@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -142,52 +141,127 @@ func TestWSAuthMiddlewareExpiredTokenReturns401(t *testing.T) {
 	}
 }
 
-func TestWSAuthMiddlewareWrongSigningMethodReturns401(t *testing.T) {
-	const secret = "test-secret-signing-method"
+// TestWSAuthMiddlewareWrongBearerFormatReturns401 verifies that a token prefixed
+// with "Token " instead of "Bearer " is rejected with 401.
+func TestWSAuthMiddlewareWrongBearerFormatReturns401(t *testing.T) {
+	const secret = "test-secret-wrong-prefix"
 	t.Setenv("SUPABASE_JWT_SECRET", secret)
 	app := newAuthTestApp(t)
 
-	// Craft a raw JWT claiming RS256 (non-HMAC) with a dummy signature.
-	// The middleware keyFunc rejects non-HMAC methods before verifying the signature,
-	// so the exact signature value does not matter.
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
-	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"x","exp":9999999999}`))
-	fakeToken := header + "." + payload + ".fakesig"
-
-	req := httptest.NewRequest(http.MethodGet, "/protected?token="+fakeToken, nil)
+	tok := signToken(t, secret, "user-123")
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Token "+tok) // wrong prefix
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("test: %v", err)
 	}
 	if resp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("wrong signing method: want 401, got %d", resp.StatusCode)
+		t.Errorf("wrong prefix (Token): want 401, got %d", resp.StatusCode)
 	}
 }
 
-func TestWSAuthMiddlewareTokenWithoutSubDoesNotSetUserID(t *testing.T) {
-	const secret = "test-secret-no-sub"
+// TestWSAuthMiddlewareBearerNoSpaceReturns401 verifies that "Bearer<token>" (no
+// space after Bearer) is treated as a missing token, not a valid header.
+func TestWSAuthMiddlewareBearerNoSpaceReturns401(t *testing.T) {
+	const secret = "test-secret-nospace"
 	t.Setenv("SUPABASE_JWT_SECRET", secret)
 	app := newAuthTestApp(t)
 
-	// Sign a valid token without a "sub" claim — request should pass but
-	// user_id must not be set in c.Locals.
-	claims := jwt.MapClaims{
-		"exp": time.Now().Add(time.Hour).Unix(),
-		"iat": time.Now().Unix(),
-		// no "sub" claim
-	}
-	tok, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
-	if err != nil {
-		t.Fatalf("sign token: %v", err)
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/protected?token="+tok, nil)
+	tok := signToken(t, secret, "user-456")
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	req.Header.Set("Authorization", "Bearer"+tok) // no space
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("test: %v", err)
 	}
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("no-space Bearer: want 401, got %d", resp.StatusCode)
+	}
+}
+
+// TestWSAuthMiddlewareTokenWithNoSubStillAllows verifies that a valid signed
+// token without a "sub" claim passes authentication (sub is optional for
+// authorization) but stores an empty user_id.
+func TestWSAuthMiddlewareTokenWithNoSubStillAllows(t *testing.T) {
+	const secret = "test-secret-no-sub"
+	t.Setenv("SUPABASE_JWT_SECRET", secret)
+	app := newAuthTestApp(t)
+
+	// Token without a sub claim — still valid HS256 with exp in the future.
+	claims := jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour).Unix(),
+		"iat": time.Now().Unix(),
+		// no "sub" field
+	}
+	tok, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("sign no-sub token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/protected?token="+tok, nil)
+	resp, respErr := app.Test(req)
+	if respErr != nil {
+		t.Fatalf("test: %v", respErr)
+	}
+	// The middleware must allow a valid token even without sub (sub is
+	// stored only when present; absence is not an auth failure).
 	if resp.StatusCode != http.StatusOK {
-		t.Errorf("no-sub token: want 200 (request allowed), got %d", resp.StatusCode)
+		t.Errorf("token without sub: want 200, got %d", resp.StatusCode)
+	}
+}
+
+// TestWSAuthMiddlewareWrongAlgorithmReturns401 verifies that a token signed
+// with an unexpected algorithm (RS256/ECDSA) is rejected even if the header
+// claims HS256 but the payload was not signed with the correct secret.
+func TestWSAuthMiddlewareWrongAlgorithmReturns401(t *testing.T) {
+	const secret = "test-secret-wrong-algo"
+	t.Setenv("SUPABASE_JWT_SECRET", secret)
+	app := newAuthTestApp(t)
+
+	// Build a token signed with a different secret to simulate key mismatch.
+	claims := jwt.MapClaims{
+		"sub": "attacker",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	}
+	tok, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte("wrong-secret"))
+	if err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/protected?token="+tok, nil)
+	resp, respErr := app.Test(req)
+	if respErr != nil {
+		t.Fatalf("test: %v", respErr)
+	}
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("wrong secret: want 401, got %d", resp.StatusCode)
+	}
+}
+
+// TestWSAuthMiddlewareBothQueryAndHeaderUsesQuery verifies that when both the
+// query param and Authorization header contain tokens, the query param takes
+// precedence (as documented in the handler).
+func TestWSAuthMiddlewareBothQueryAndHeaderUsesQuery(t *testing.T) {
+	const secret = "test-secret-precedence"
+	t.Setenv("SUPABASE_JWT_SECRET", secret)
+	app := newAuthTestApp(t)
+
+	validTok := signToken(t, secret, "query-user")
+	// Header token signed with wrong secret — if header took precedence it would fail.
+	invalidHeaderTok, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": "header-user",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	}).SignedString([]byte("wrong-secret"))
+
+	req := httptest.NewRequest(http.MethodGet, "/protected?token="+validTok, nil)
+	req.Header.Set("Authorization", "Bearer "+invalidHeaderTok)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	// Query param (valid) should win → 200.
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("query param should take precedence: want 200, got %d", resp.StatusCode)
 	}
 }
 

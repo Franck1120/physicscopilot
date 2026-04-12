@@ -234,3 +234,139 @@ func TestComputeDocTFEmptyEntry(t *testing.T) {
 func TestVectorStoreInterfaceCompliance(t *testing.T) {
 	var _ VectorStore = NewMemoryVectorStore()
 }
+
+// ── TF-IDF accuracy ──────────────────────────────────────────────────────────
+
+// TestTFIDFRareTermScoresHigherThanCommonTerm verifies that a document
+// containing a rare, domain-specific term scores higher than a document
+// containing only a common term (high IDF for rare, low IDF for common).
+func TestTFIDFRareTermScoresHigherThanCommonTerm(t *testing.T) {
+	// "device" appears in every document (low IDF).
+	// "overextrusion" appears only in one document (high IDF).
+	docs := []KBEntry{
+		{ID: "overext", Name: "Overextrusion", Category: "extrusion",
+			Description: "too much filament overextrusion causes blobs on the device"},
+		{ID: "warp", Name: "Warping", Category: "bed",
+			Description: "print corners lift off the device bed during printing"},
+		{ID: "jam", Name: "Jam", Category: "extrusion",
+			Description: "filament jam inside the device extruder"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(docs)
+
+	// Query for the rare term — overextrusion doc must rank first.
+	results := store.Search("overextrusion", 3)
+	if len(results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	if results[0].ID != "overext" {
+		t.Errorf("expected 'overext' (rare term) ranked first, got %q", results[0].ID)
+	}
+
+	// Query for the common term "device" — must still return results but
+	// must NOT make the overextrusion document rank above all others purely
+	// based on the common term (IDF dampens it).
+	commonResults := store.Search("device", 3)
+	if len(commonResults) == 0 {
+		t.Fatal("expected results for common term 'device'")
+	}
+	// All three documents contain "device", so all three should match.
+	if len(commonResults) != 3 {
+		t.Errorf("expected all 3 docs to match common term 'device', got %d", len(commonResults))
+	}
+}
+
+// TestSearchOnlyStopwordsReturnsNil verifies that a query composed entirely of
+// very short tokens (below the 3-char minimum accepted by tokenize) produces
+// no results, because tokenize filters them out.
+func TestSearchOnlyStopwordsReturnsNil(t *testing.T) {
+	docs := []KBEntry{
+		{ID: "clog", Name: "Clogged Nozzle", Description: "nozzle blocked by filament"},
+	}
+	store := NewMemoryVectorStore()
+	store.Index(docs)
+
+	// Single- and two-character tokens are filtered by tokenize, so the
+	// effective query is empty.
+	shortOnlyQueries := []string{
+		"a b c",   // all 1-char
+		"is it",   // all 2-char
+		"to be or", // "or" is 2 chars
+	}
+
+	for _, q := range shortOnlyQueries {
+		if got := store.Search(q, 5); got != nil {
+			t.Errorf("Search(%q) = %v, want nil (all tokens filtered)", q, got)
+		}
+	}
+}
+
+// TestReIndexOldDocumentsNotFindable verifies that after re-indexing with a
+// completely different corpus, documents from the original corpus are no
+// longer retrievable — even with exact-match queries against their content.
+func TestReIndexOldDocumentsNotFindable(t *testing.T) {
+	store := NewMemoryVectorStore()
+
+	// First corpus: clogging topics.
+	oldCorpus := []KBEntry{
+		{ID: "clog-a", Name: "Clog Alpha", Description: "severe nozzle clogging during print"},
+		{ID: "clog-b", Name: "Clog Beta", Description: "partial nozzle blockage clogging issue"},
+	}
+	store.Index(oldCorpus)
+
+	// Verify old docs are findable before re-index.
+	beforeResults := store.Search("nozzle clogging", 5)
+	if len(beforeResults) == 0 {
+		t.Fatal("expected old corpus to be searchable before re-index")
+	}
+
+	// Re-index with a completely unrelated corpus (bed-levelling topics).
+	newCorpus := []KBEntry{
+		{ID: "bed-1", Name: "Bed Levelling", Description: "first layer adhesion bed surface calibration"},
+		{ID: "bed-2", Name: "Bed Tilt", Description: "uneven bed tilt causing first layer problems"},
+	}
+	store.Index(newCorpus)
+
+	// Old documents (clog-a, clog-b) must not appear in search results.
+	afterResults := store.Search("nozzle clogging", 5)
+	for _, r := range afterResults {
+		if r.ID == "clog-a" || r.ID == "clog-b" {
+			t.Errorf("old document %q found after re-index; corpus should be fully replaced", r.ID)
+		}
+	}
+
+	// New corpus documents must be findable.
+	newResults := store.Search("bed calibration adhesion", 5)
+	if len(newResults) == 0 {
+		t.Fatal("expected new corpus to be searchable after re-index")
+	}
+	if newResults[0].ID != "bed-1" && newResults[0].ID != "bed-2" {
+		t.Errorf("expected new corpus document, got %q", newResults[0].ID)
+	}
+}
+
+// TestSearchConcurrentSafety verifies that concurrent Index and Search calls
+// do not cause data races (run with -race flag).
+func TestSearchConcurrentSafety(t *testing.T) {
+	store := NewMemoryVectorStore()
+	docs := []KBEntry{
+		{ID: "x", Name: "Extrusion failure", Description: "under-extrusion layer gaps"},
+		{ID: "y", Name: "Warping problem", Description: "bed adhesion lift first layer"},
+	}
+	store.Index(docs)
+
+	done := make(chan struct{}, 10)
+	for i := range 5 {
+		go func(i int) {
+			defer func() { done <- struct{}{} }()
+			store.Search("extrusion failure", 2)
+		}(i)
+		go func(i int) {
+			defer func() { done <- struct{}{} }()
+			store.Index(docs) // re-index while others search
+		}(i)
+	}
+	for range 10 {
+		<-done
+	}
+}

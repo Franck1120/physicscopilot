@@ -611,3 +611,176 @@ func TestWSHandlerIgnoresUnknownMessageType(t *testing.T) {
 		t.Errorf("expected pong after unknown type, got %q", resp.Type)
 	}
 }
+
+// ── Ping/pong heartbeat cycle ─────────────────────────────────────────────────
+
+// TestWSHandlerHeartbeatPingCycleKeepsConnectionAlive verifies that the server
+// sends WebSocket Ping control frames and the connection stays alive when the
+// client responds with Pong frames as expected.
+func TestWSHandlerHeartbeatPingCycleKeepsConnectionAlive(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+
+	// Use a short ping interval so the test completes quickly.
+	wsHandler.PingInterval = 80 * time.Millisecond
+	wsHandler.PongWait = 500 * time.Millisecond
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	// The gorilla client sends Pong automatically when it receives a Ping
+	// (default ping handler). Count how many pings are received.
+	pingCount := 0
+	conn.SetPingHandler(func(data string) error {
+		pingCount++
+		// Reply with a Pong control frame to keep the server happy.
+		return conn.WriteControl(gorilla.PongMessage, []byte(data), time.Now().Add(time.Second))
+	})
+
+	// Read any application messages for 300 ms while the ping handler runs.
+	conn.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
+	for {
+		_, _, readErr := conn.ReadMessage()
+		if readErr != nil {
+			break
+		}
+	}
+
+	// With PingInterval=80ms, we expect at least 2 server pings in 300 ms.
+	if pingCount < 2 {
+		t.Errorf("expected at least 2 ping frames, got %d", pingCount)
+	}
+}
+
+// ── Graceful close ────────────────────────────────────────────────────────────
+
+// TestWSHandlerGracefulCloseRemovesSession verifies that when the client sends
+// a normal close frame the session is removed from the SessionService.
+func TestWSHandlerGracefulCloseRemovesSession(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+
+	// Give the handler goroutine time to register the session.
+	time.Sleep(50 * time.Millisecond)
+
+	sessionsBefore := sessionSvc.ListSessions()
+	if len(sessionsBefore) == 0 {
+		t.Fatal("expected session to be created on connect")
+	}
+
+	// Send a normal close frame and close the client side.
+	conn.WriteMessage(gorilla.CloseMessage, gorilla.FormatCloseMessage(gorilla.CloseNormalClosure, "bye")) //nolint:errcheck
+	conn.Close()
+
+	// Allow the server's deferred cleanup to run.
+	time.Sleep(100 * time.Millisecond)
+
+	sessionsAfter := sessionSvc.ListSessions()
+	if len(sessionsAfter) != 0 {
+		t.Errorf("expected session to be removed after disconnect, got %d sessions", len(sessionsAfter))
+	}
+}
+
+// TestWSHandlerActiveConnectionsDecreasesOnDisconnect checks the active
+// connection counter is incremented on connect and decremented on disconnect.
+func TestWSHandlerActiveConnectionsDecreasesOnDisconnect(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	if wsHandler.ActiveConnections() != 0 {
+		t.Fatalf("expected 0 active connections before any client, got %d", wsHandler.ActiveConnections())
+	}
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+
+	// Allow Handle goroutine to increment the counter.
+	time.Sleep(50 * time.Millisecond)
+	if wsHandler.ActiveConnections() != 1 {
+		t.Errorf("expected 1 active connection after connect, got %d", wsHandler.ActiveConnections())
+	}
+
+	conn.Close()
+
+	// Allow defer in Handle to decrement the counter.
+	time.Sleep(100 * time.Millisecond)
+	if wsHandler.ActiveConnections() != 0 {
+		t.Errorf("expected 0 active connections after disconnect, got %d", wsHandler.ActiveConnections())
+	}
+}
+
+// ── Handler state after multiple disconnects ──────────────────────────────────
+
+// TestWSHandlerConnsMapEmptyAfterAllClientsDisconnect verifies that the internal
+// connection map is empty after all clients disconnect, preventing resource leaks.
+func TestWSHandlerConnsMapEmptyAfterAllClientsDisconnect(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	const numClients = 3
+	conns := make([]*gorilla.Conn, numClients)
+	for i := range conns {
+		c, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+		if err != nil {
+			t.Fatalf("dial client %d: %v", i, err)
+		}
+		conns[i] = c
+	}
+
+	// Allow all Handle goroutines to register.
+	time.Sleep(80 * time.Millisecond)
+
+	wsHandler.connsMu.Lock()
+	registeredCount := len(wsHandler.conns)
+	wsHandler.connsMu.Unlock()
+	if registeredCount != numClients {
+		t.Errorf("expected %d registered conns, got %d", numClients, registeredCount)
+	}
+
+	// Disconnect all clients.
+	for _, c := range conns {
+		c.Close()
+	}
+
+	// Allow deferred deregister to run.
+	time.Sleep(150 * time.Millisecond)
+
+	wsHandler.connsMu.Lock()
+	remaining := len(wsHandler.conns)
+	wsHandler.connsMu.Unlock()
+	if remaining != 0 {
+		t.Errorf("expected 0 registered conns after all clients disconnected, got %d", remaining)
+	}
+}

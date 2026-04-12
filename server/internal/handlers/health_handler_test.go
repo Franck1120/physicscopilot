@@ -241,3 +241,170 @@ func TestHealthEndpointDBPoolStatsAbsentForPlainPinger(t *testing.T) {
 		t.Errorf("expected db_pool to be absent for plain DBPinger, got %+v", body.DBPool)
 	}
 }
+
+// ── Content-Type and JSON validity ───────────────────────────────────────────
+
+func TestHealthEndpointContentTypeIsJSON(t *testing.T) {
+	app, _ := newHealthApp("0.1.0", time.Now())
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	ct := resp.Header.Get("Content-Type")
+	if !strings.Contains(ct, "application/json") {
+		t.Errorf("Content-Type: want application/json, got %q", ct)
+	}
+}
+
+func TestHealthEndpointResponseIsValidJSON(t *testing.T) {
+	app, _ := newHealthApp("0.1.0", time.Now())
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	var raw map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		t.Fatalf("response body is not valid JSON: %v", err)
+	}
+}
+
+// ── All top-level fields present ──────────────────────────────────────────────
+
+func TestHealthEndpointAllTopLevelFieldsPresent(t *testing.T) {
+	app, _ := newHealthApp("1.0.0", time.Now().Add(-10*time.Second))
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	required := []string{"status", "service", "version", "uptime", "active_connections", "memory_mb", "db_status"}
+	for _, field := range required {
+		if _, ok := raw[field]; !ok {
+			t.Errorf("missing required field %q in health response", field)
+		}
+	}
+}
+
+// ── memory_mb field ───────────────────────────────────────────────────────────
+
+func TestHealthEndpointMemoryMBIsNonNegative(t *testing.T) {
+	app, _ := newHealthApp("0.1.0", time.Now())
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	// memory_mb is a uint64 and always >= 0; the Go runtime allocates at least
+	// a small amount, so we just check the field is present (non-zero in practice).
+	// We don't assert a specific value since that would be fragile.
+	_ = body.MemoryMB // field must decode without error
+}
+
+// ── uptime increases over time ────────────────────────────────────────────────
+
+func TestHealthEndpointUptimeReflectsStartTime(t *testing.T) {
+	// Start time 2 minutes in the past — uptime string must contain digits > 0.
+	startTime := time.Now().Add(-2 * time.Minute)
+	app, _ := newHealthApp("0.1.0", startTime)
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	// The uptime must be a non-empty string with at least one digit.
+	if body.Uptime == "" {
+		t.Error("uptime must not be empty")
+	}
+	if body.Uptime == "0s" {
+		t.Error("uptime should reflect non-zero elapsed time since startTime 2 minutes ago")
+	}
+}
+
+// ── service field value ───────────────────────────────────────────────────────
+
+func TestHealthEndpointServiceNameIsPhysicscopilot(t *testing.T) {
+	app, _ := newHealthApp("0.0.1", time.Now())
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.Service != "physicscopilot" {
+		t.Errorf("service: want %q, got %q", "physicscopilot", body.Service)
+	}
+}
+
+// ── DBPool idle/acquired fields ───────────────────────────────────────────────
+
+func TestHealthEndpointDBPoolIdleAndAcquiredFields(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := NewWSHandler(convSvc, sessionSvc)
+
+	ps := &mockPoolStatter{
+		stats: services.DBPoolStats{
+			TotalConns:    5,
+			IdleConns:     3,
+			AcquiredConns: 2,
+			MaxConns:      20,
+		},
+	}
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/health", NewHealthHandler("0.1.0", time.Now(), ws, ps))
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.DBPool == nil {
+		t.Fatal("expected db_pool to be present")
+	}
+	if body.DBPool.IdleConns != 3 {
+		t.Errorf("idle_conns: want 3, got %d", body.DBPool.IdleConns)
+	}
+	if body.DBPool.AcquiredConns != 2 {
+		t.Errorf("acquired_conns: want 2, got %d", body.DBPool.AcquiredConns)
+	}
+}

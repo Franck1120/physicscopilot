@@ -2,6 +2,7 @@ package metrics_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -114,4 +115,103 @@ func TestTrackError_ExtraAttrsForwarded(t *testing.T) {
 		}
 	}()
 	metrics.TrackError(metrics.CategoryAuth, errors.New("odd"), "key_without_value")
+}
+
+// TestTrackError_ConcurrentTracking verifies that 10 goroutines concurrently
+// calling TrackError on the same category produces no data race (run with
+// -race to surface issues). All goroutines must complete without panicking.
+func TestTrackError_ConcurrentTracking(t *testing.T) {
+	const goroutines = 10
+	done := make(chan struct{}, goroutines)
+
+	for i := range goroutines {
+		go func(idx int) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("goroutine %d: TrackError panicked: %v", idx, r)
+				}
+				done <- struct{}{}
+			}()
+			metrics.TrackError(metrics.CategoryAI, errors.New("concurrent error"), "goroutine", idx)
+		}(i)
+	}
+
+	for range goroutines {
+		<-done
+	}
+
+	// All goroutines completed — verify the counter is present in output.
+	output := scrapeMetrics(t)
+	if !strings.Contains(output, `app_errors_total{category="AI_ERROR"}`) {
+		t.Error("expected AI_ERROR counter present after concurrent tracking")
+	}
+}
+
+// TestTrackError_CategoriesAreIndependent verifies that incrementing one
+// category does not affect the counter of a different category.
+func TestTrackError_CategoriesAreIndependent(t *testing.T) {
+	// Seed all categories so their lines are present.
+	metrics.TrackError(metrics.CategoryDB, errors.New("db probe"), "test", "true")
+	metrics.TrackError(metrics.CategoryWS, errors.New("ws probe"), "test", "true")
+
+	output := scrapeMetrics(t)
+
+	// Both DB and WS lines must appear.
+	if !strings.Contains(output, `app_errors_total{category="DB_ERROR"}`) {
+		t.Error("expected DB_ERROR counter in output")
+	}
+	if !strings.Contains(output, `app_errors_total{category="WS_ERROR"}`) {
+		t.Error("expected WS_ERROR counter in output")
+	}
+
+	// Each category must appear exactly once (no cross-label pollution).
+	dbCount := strings.Count(output, `app_errors_total{category="DB_ERROR"}`)
+	wsCount := strings.Count(output, `app_errors_total{category="WS_ERROR"}`)
+	if dbCount != 1 {
+		t.Errorf("expected DB_ERROR line to appear exactly once, got %d", dbCount)
+	}
+	if wsCount != 1 {
+		t.Errorf("expected WS_ERROR line to appear exactly once, got %d", wsCount)
+	}
+}
+
+// TestTrackError_CounterValueGrows verifies that repeated calls increase the
+// numeric value in the Prometheus output (not just that the line is present).
+func TestTrackError_CounterValueGrows(t *testing.T) {
+	// Use a dedicated unique sub-test so the counter starts at a known state
+	// relative to whatever previous tests may have observed.
+	// We scrape before and after calling TrackError and compare the float values.
+	sentinel := errors.New("grow-test")
+
+	before := scrapeMetrics(t)
+
+	// Extract the current AUTH_ERROR value (may already be > 0 from earlier tests).
+	authBefore := extractCounterValue(before, `app_errors_total{category="AUTH_ERROR"}`)
+
+	metrics.TrackError(metrics.CategoryAuth, sentinel)
+
+	after := scrapeMetrics(t)
+	authAfter := extractCounterValue(after, `app_errors_total{category="AUTH_ERROR"}`)
+
+	if authAfter <= authBefore {
+		t.Errorf("AUTH_ERROR counter did not increase: before=%g after=%g", authBefore, authAfter)
+	}
+}
+
+// extractCounterValue parses the float value from a Prometheus text output line
+// matching the given label selector. Returns 0 if the line is not found.
+func extractCounterValue(output, labelSelector string) float64 {
+	for _, line := range strings.Split(output, "\n") {
+		if strings.Contains(line, labelSelector) && !strings.HasPrefix(line, "#") {
+			// Format: metric_name{labels} VALUE
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				var v float64
+				if _, err := fmt.Sscanf(fields[len(fields)-1], "%g", &v); err == nil {
+					return v
+				}
+			}
+		}
+	}
+	return 0
 }

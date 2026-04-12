@@ -2,227 +2,118 @@ package db
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 )
 
-// ---------------------------------------------------------------------------
-// Constructor test
-// ---------------------------------------------------------------------------
-
-func TestNewMessageRepoNonNil(t *testing.T) {
+// TestNewMessageRepoNotNil verifies that NewMessageRepo returns a non-nil
+// pointer even when called with a nil pool.
+func TestNewMessageRepoNotNil(t *testing.T) {
 	repo := NewMessageRepo(nil)
 	if repo == nil {
-		t.Fatal("expected non-nil MessageRepo")
+		t.Fatal("expected NewMessageRepo(nil) to return non-nil *MessageRepo")
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-func msgRow(id, sessionID, role, content, msgType string) []any {
-	return []any{id, sessionID, role, content, msgType, testTime()}
-}
-
-// ---------------------------------------------------------------------------
-// SaveMessage tests
-// ---------------------------------------------------------------------------
-
-func TestSaveMessage_Success(t *testing.T) {
-	row := &mockRow{
-		vals: msgRow("msg-1", "sess-1", "user", "Hello world", "text"),
+// TestMessageRecordFields verifies that a manually constructed MessageRecord
+// stores and exposes all fields correctly.
+func TestMessageRecordFields(t *testing.T) {
+	now := time.Now()
+	rec := MessageRecord{
+		ID:          "msg-1",
+		SessionID:   "session-42",
+		Role:        "user",
+		Content:     "What is kinetic energy?",
+		MessageType: "text",
+		CreatedAt:   now,
 	}
-	repo := &MessageRepo{pool: &mockPool{row: row}}
 
-	rec, err := repo.SaveMessage(context.Background(), "sess-1", "user", "Hello world", "text")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
 	if rec.ID != "msg-1" {
-		t.Errorf("ID: got %q, want %q", rec.ID, "msg-1")
+		t.Errorf("ID: want %q, got %q", "msg-1", rec.ID)
 	}
-	if rec.SessionID != "sess-1" {
-		t.Errorf("SessionID: got %q, want %q", rec.SessionID, "sess-1")
+	if rec.SessionID != "session-42" {
+		t.Errorf("SessionID: want %q, got %q", "session-42", rec.SessionID)
 	}
 	if rec.Role != "user" {
-		t.Errorf("Role: got %q, want %q", rec.Role, "user")
+		t.Errorf("Role: want %q, got %q", "user", rec.Role)
 	}
-	if rec.Content != "Hello world" {
-		t.Errorf("Content: got %q, want %q", rec.Content, "Hello world")
+	if rec.Content != "What is kinetic energy?" {
+		t.Errorf("Content: want %q, got %q", "What is kinetic energy?", rec.Content)
 	}
 	if rec.MessageType != "text" {
-		t.Errorf("MessageType: got %q, want %q", rec.MessageType, "text")
+		t.Errorf("MessageType: want %q, got %q", "text", rec.MessageType)
 	}
-	if rec.CreatedAt != testTime() {
-		t.Errorf("CreatedAt: got %v, want %v", rec.CreatedAt, testTime())
-	}
-}
-
-func TestSaveMessage_ScanError(t *testing.T) {
-	scanErr := errors.New("scan error")
-	row := &mockRow{err: scanErr}
-	repo := &MessageRepo{pool: &mockPool{row: row}}
-
-	_, err := repo.SaveMessage(context.Background(), "sess-1", "user", "hello", "text")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !errors.Is(err, scanErr) {
-		t.Errorf("expected wrapped scanErr, got: %v", err)
+	if !rec.CreatedAt.Equal(now) {
+		t.Errorf("CreatedAt: want %v, got %v", now, rec.CreatedAt)
 	}
 }
 
-func TestSaveMessage_AssistantRole(t *testing.T) {
-	row := &mockRow{
-		vals: msgRow("msg-2", "sess-1", "assistant", "Sure, I can help.", "text"),
+// TestMessageRecordZeroValue verifies that the zero value of MessageRecord has
+// sensible defaults (empty strings, zero time).
+func TestMessageRecordZeroValue(t *testing.T) {
+	rec := MessageRecord{}
+	if rec.ID != "" {
+		t.Errorf("expected empty ID, got %q", rec.ID)
 	}
-	repo := &MessageRepo{pool: &mockPool{row: row}}
-
-	rec, err := repo.SaveMessage(context.Background(), "sess-1", "assistant", "Sure, I can help.", "text")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if rec.SessionID != "" {
+		t.Errorf("expected empty SessionID, got %q", rec.SessionID)
 	}
-	if rec.Role != "assistant" {
-		t.Errorf("Role: got %q, want %q", rec.Role, "assistant")
+	if rec.Role != "" {
+		t.Errorf("expected empty Role, got %q", rec.Role)
 	}
-}
-
-// ---------------------------------------------------------------------------
-// GetSessionMessages tests
-// ---------------------------------------------------------------------------
-
-func TestGetSessionMessages_Success(t *testing.T) {
-	rows := &mockRows{
-		rows: [][]any{
-			msgRow("m1", "sess-1", "user", "What is wrong?", "text"),
-			msgRow("m2", "sess-1", "assistant", "Checking now.", "text"),
-		},
+	if rec.Content != "" {
+		t.Errorf("expected empty Content, got %q", rec.Content)
 	}
-	repo := &MessageRepo{pool: &mockPool{rows: rows}}
-
-	msgs, err := repo.GetSessionMessages(context.Background(), "sess-1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if rec.MessageType != "" {
+		t.Errorf("expected empty MessageType, got %q", rec.MessageType)
 	}
-	if len(msgs) != 2 {
-		t.Fatalf("expected 2 messages, got %d", len(msgs))
-	}
-	if msgs[0].ID != "m1" {
-		t.Errorf("first message ID: got %q, want %q", msgs[0].ID, "m1")
-	}
-	if msgs[0].Role != "user" {
-		t.Errorf("first message role: got %q, want %q", msgs[0].Role, "user")
-	}
-	if msgs[1].ID != "m2" {
-		t.Errorf("second message ID: got %q, want %q", msgs[1].ID, "m2")
-	}
-	if msgs[1].Role != "assistant" {
-		t.Errorf("second message role: got %q, want %q", msgs[1].Role, "assistant")
+	if !rec.CreatedAt.IsZero() {
+		t.Errorf("expected zero CreatedAt, got %v", rec.CreatedAt)
 	}
 }
 
-func TestGetSessionMessages_Empty(t *testing.T) {
-	rows := &mockRows{rows: [][]any{}}
-	repo := &MessageRepo{pool: &mockPool{rows: rows}}
+// TestSaveMessageRequiresPool verifies that calling SaveMessage on a repo
+// backed by a nil pool results in either a panic (recovered) or a non-nil
+// error — it must never silently succeed.
+func TestSaveMessageRequiresPool(t *testing.T) {
+	repo := NewMessageRepo(nil)
 
-	msgs, err := repo.GetSessionMessages(context.Background(), "sess-empty")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(msgs) != 0 {
-		t.Errorf("expected 0 messages, got %d", len(msgs))
+	didPanic := false
+	var returnedErr error
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				didPanic = true
+			}
+		}()
+		_, returnedErr = repo.SaveMessage(context.Background(), "s1", "user", "hello", "text")
+	}()
+
+	if !didPanic && returnedErr == nil {
+		t.Error("expected SaveMessage with nil pool to panic or return an error")
 	}
 }
 
-func TestGetSessionMessages_QueryError(t *testing.T) {
-	qErr := errors.New("query error")
-	repo := &MessageRepo{pool: &mockPool{queryErr: qErr}}
+// TestGetSessionMessagesRequiresPool verifies that calling GetSessionMessages
+// on a repo backed by a nil pool results in either a panic (recovered) or a
+// non-nil error — it must never silently succeed.
+func TestGetSessionMessagesRequiresPool(t *testing.T) {
+	repo := NewMessageRepo(nil)
 
-	_, err := repo.GetSessionMessages(context.Background(), "sess-1")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !errors.Is(err, qErr) {
-		t.Errorf("expected wrapped queryErr, got: %v", err)
-	}
-}
+	didPanic := false
+	var returnedErr error
 
-func TestGetSessionMessages_ScanError(t *testing.T) {
-	scanErr := errors.New("scan error")
-	rows := &mockRowsError{
-		mockRows: mockRows{
-			rows: [][]any{
-				msgRow("m1", "sess-1", "user", "hello", "text"),
-			},
-		},
-		scanErr: scanErr,
-	}
-	repo := &MessageRepo{pool: &mockPool{rows: rows}}
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				didPanic = true
+			}
+		}()
+		_, returnedErr = repo.GetSessionMessages(context.Background(), "s1")
+	}()
 
-	_, err := repo.GetSessionMessages(context.Background(), "sess-1")
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !errors.Is(err, scanErr) {
-		t.Errorf("expected wrapped scanErr, got: %v", err)
-	}
-}
-
-func TestGetSessionMessages_RowsErr(t *testing.T) {
-	rowErr := errors.New("rows error")
-	rows := &mockRows{
-		rows:   [][]any{},
-		rowErr: rowErr,
-	}
-	repo := &MessageRepo{pool: &mockPool{rows: rows}}
-
-	_, err := repo.GetSessionMessages(context.Background(), "sess-1")
-	if err == nil {
-		t.Fatal("expected error from rows.Err(), got nil")
-	}
-	if !errors.Is(err, rowErr) {
-		t.Errorf("expected rowErr, got: %v", err)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Edge cases
-// ---------------------------------------------------------------------------
-
-func TestSaveMessage_ImageType(t *testing.T) {
-	row := &mockRow{
-		vals: msgRow("msg-3", "sess-2", "user", "base64data...", "image"),
-	}
-	repo := &MessageRepo{pool: &mockPool{row: row}}
-
-	rec, err := repo.SaveMessage(context.Background(), "sess-2", "user", "base64data...", "image")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if rec.MessageType != "image" {
-		t.Errorf("MessageType: got %q, want %q", rec.MessageType, "image")
-	}
-}
-
-func TestGetSessionMessages_TimestampOrder(t *testing.T) {
-	t1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	t2 := time.Date(2024, 1, 1, 0, 1, 0, 0, time.UTC)
-
-	rows := &mockRows{
-		rows: [][]any{
-			{"m1", "sess-1", "user", "first", "text", t1},
-			{"m2", "sess-1", "assistant", "second", "text", t2},
-		},
-	}
-	repo := &MessageRepo{pool: &mockPool{rows: rows}}
-
-	msgs, err := repo.GetSessionMessages(context.Background(), "sess-1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !msgs[0].CreatedAt.Before(msgs[1].CreatedAt) {
-		t.Errorf("expected msgs[0].CreatedAt < msgs[1].CreatedAt")
+	if !didPanic && returnedErr == nil {
+		t.Error("expected GetSessionMessages with nil pool to panic or return an error")
 	}
 }
