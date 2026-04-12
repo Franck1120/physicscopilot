@@ -5,6 +5,7 @@ import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
 import '../widgets/progress_ring_widget.dart';
+import '../widgets/session_skeleton.dart';
 import '../../main.dart'
     show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
 
@@ -12,12 +13,29 @@ import '../../main.dart'
 
 /// Displays aggregated statistics derived from the persisted session history.
 ///
-/// Reads from [sessionHistoryProvider] — no local state required.
-class StatsScreen extends ConsumerWidget {
+/// Reads from [sessionHistoryProvider]. Shows a skeleton placeholder on the
+/// first frame while the SharedPreferences data loads from disk.
+class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends ConsumerState<StatsScreen> {
+  bool _initialLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show skeleton for one frame, then reveal real data.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _initialLoading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final sessions = ref.watch(sessionHistoryProvider);
 
     return Scaffold(
@@ -32,15 +50,17 @@ class StatsScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(sessionHistoryProvider);
         },
-        child: sessions.isEmpty
-            ? SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: 400,
-                  child: _EmptyStats(),
-                ),
-              )
-            : _StatsList(sessions: sessions),
+        child: _initialLoading
+            ? const SessionSkeleton(itemCount: 4)
+            : sessions.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400,
+                      child: _EmptyStats(),
+                    ),
+                  )
+                : _StatsList(sessions: sessions),
       ),
     );
   }
