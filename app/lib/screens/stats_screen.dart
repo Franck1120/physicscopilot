@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
+import '../widgets/achievement_badges.dart';
 import '../widgets/progress_ring_widget.dart';
 import '../../main.dart'
     show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
@@ -26,9 +27,15 @@ class StatsScreen extends ConsumerWidget {
         title: const Text('Statistiche'),
         backgroundColor: const Color(0xFF111111),
       ),
-      body: sessions.isEmpty
-          ? _EmptyStats()
-          : _StatsList(sessions: sessions),
+      body: RefreshIndicator(
+        color: kAccent,
+        onRefresh: () async {
+          ref.invalidate(sessionHistoryProvider);
+        },
+        child: sessions.isEmpty
+            ? _EmptyStats()
+            : _StatsList(sessions: sessions),
+      ),
     );
   }
 }
@@ -38,30 +45,45 @@ class StatsScreen extends ConsumerWidget {
 class _EmptyStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.bar_chart_rounded, size: 52, color: kTextMuted),
-          const SizedBox(height: 16),
-          Text(
-            AppStrings.historyEmpty,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: Colors.white),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          // Makes pull-to-refresh work even when the list is empty.
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: constraints.maxHeight,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.bar_chart_rounded,
+                    size: 52,
+                    color: kTextMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppStrings.historyEmpty,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppStrings.historyEmptySub,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: kTextMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            AppStrings.historyEmptySub,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: kTextMuted),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -117,6 +139,10 @@ class _StatsList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // ── Achievement badges ──────────────────────────────────────────────
+        AchievementBadgesWidget(sessionCount: _totalSessions),
+        const SizedBox(height: 12),
+
         // ── Top row: total sessions + avg duration ──────────────────────────
         Row(
           children: [
