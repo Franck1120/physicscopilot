@@ -37,7 +37,12 @@ final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
 });
 
 /// True if the user has already completed onboarding.
-final onboardingCompletedProvider = Provider<bool>((ref) {
+///
+/// [StateProvider] so that [OnboardingScreen] can update it directly via
+/// `ref.read(onboardingCompletedProvider.notifier).state = true` without
+/// needing to invalidate the cache manually — Riverpod propagates the change
+/// to all listeners (including the GoRouter redirect guard) immediately.
+final onboardingCompletedProvider = StateProvider<bool>((ref) {
   final prefs = ref.watch(sharedPrefsProvider);
   return prefs.getBool('onboarding_completed') ?? false;
 });

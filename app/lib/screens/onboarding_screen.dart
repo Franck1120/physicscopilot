@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../main.dart' show onboardingCompletedProvider, sharedPrefsProvider;
 
 /// Onboarding flow shown once on first launch.
 /// Calls [onComplete] after saving the completion flag so the router
 /// can navigate to the next screen.
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback onComplete;
 
   const OnboardingScreen({super.key, required this.onComplete});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   static const String _prefKey = 'onboarding_completed';
   static const int _pageCount = 3;
 
@@ -72,9 +74,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  /// Persists the completion flag to SharedPreferences and immediately
+  /// updates the Riverpod [StateProvider] so the GoRouter redirect guard
+  /// sees the new value without waiting for a provider recomputation.
   Future<void> _saveOnboardingCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = ref.read(sharedPrefsProvider);
     await prefs.setBool(_prefKey, true);
+    ref.read(onboardingCompletedProvider.notifier).state = true;
   }
 
   @override
