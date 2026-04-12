@@ -219,3 +219,88 @@ func TestScanSessionRow_Error(t *testing.T) {
 		t.Error("expected error from scanSessionRow on scan failure")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Connection pool config tests
+// ---------------------------------------------------------------------------
+
+func TestDBServicePoolConstants(t *testing.T) {
+	// Verify the tuning constants are set to the required values.
+	if poolMaxConns != 10 {
+		t.Errorf("poolMaxConns: want 10, got %d", poolMaxConns)
+	}
+	if poolMinConns != 2 {
+		t.Errorf("poolMinConns: want 2, got %d", poolMinConns)
+	}
+	if poolMaxConnLifetime != 1*time.Hour {
+		t.Errorf("poolMaxConnLifetime: want 1h, got %v", poolMaxConnLifetime)
+	}
+}
+
+func TestDBServicePoolConfig_RealDB(t *testing.T) {
+	connStr := os.Getenv("TEST_DATABASE_URL")
+	if connStr == "" {
+		t.Skip("TEST_DATABASE_URL not set — skipping real DB pool test")
+	}
+
+	ctx := context.Background()
+	svc, err := NewDBService(ctx, connStr)
+	if err != nil {
+		t.Fatalf("NewDBService: %v", err)
+	}
+	defer svc.Close()
+
+	stats := svc.PoolStats()
+
+	if stats.MaxConns != poolMaxConns {
+		t.Errorf("MaxConns: want %d, got %d", poolMaxConns, stats.MaxConns)
+	}
+	if stats.TotalConns < 1 {
+		t.Error("expected at least 1 total connection after ping")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Session expiry tests
+// ---------------------------------------------------------------------------
+
+func TestCleanupExpiredSessionsMarksDBExpired(t *testing.T) {
+	db := newMockDB()
+	svc := NewSessionService()
+	svc.SetDB(db)
+
+	// Create two sessions; make one look old by pushing LastActivity back.
+	old, _ := svc.CreateSession("Bambu", "A1", "")
+	fresh, _ := svc.CreateSession("Prusa", "MK4", "")
+
+	// Manipulate LastActivity directly via the in-memory pointer.
+	svc.mu.Lock()
+	svc.sessions[old.SessionID].LastActivity = time.Now().Add(-2 * time.Hour)
+	svc.mu.Unlock()
+
+	n := svc.CleanupExpiredSessions(1 * time.Hour)
+
+	if n != 1 {
+		t.Errorf("expected 1 session cleaned, got %d", n)
+	}
+	// Old session must be gone from memory and from mockDB.
+	if _, err := svc.GetSession(old.SessionID); err == nil {
+		t.Error("expired session should have been removed from memory")
+	}
+	if _, exists := db.sessions[old.SessionID]; exists {
+		t.Error("expired session should have been removed from mockDB")
+	}
+	// Fresh session must still be alive.
+	if _, err := svc.GetSession(fresh.SessionID); err != nil {
+		t.Errorf("fresh session should still be in memory: %v", err)
+	}
+}
+
+func TestCleanupExpiredSessionsNoOp(t *testing.T) {
+	svc := NewSessionService()
+	svc.CreateSession("Apple", "iPhone", "") //nolint:errcheck
+	n := svc.CleanupExpiredSessions(30 * time.Minute)
+	if n != 0 {
+		t.Errorf("expected 0 cleanups for fresh sessions, got %d", n)
+	}
+}

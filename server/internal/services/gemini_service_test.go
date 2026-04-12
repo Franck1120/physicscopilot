@@ -519,3 +519,136 @@ func TestNewGeminiServiceIntegrationEnvOverride(t *testing.T) {
 
 	// t.Setenv automatically restores env vars on test cleanup
 }
+
+// ---------------------------------------------------------------------------
+// Circuit breaker tests
+// ---------------------------------------------------------------------------
+
+// newTestCB returns a circuitBreaker with a configurable threshold and timeout,
+// useful for unit tests that need deterministic timing.
+func newTestCB(threshold int, timeout time.Duration) *circuitBreaker {
+	return &circuitBreaker{threshold: threshold, timeout: timeout}
+}
+
+func TestCircuitBreakerClosedByDefault(t *testing.T) {
+	cb := newTestCB(5, 30*time.Second)
+	if cb.isOpen() {
+		t.Error("circuit breaker should be closed (not open) by default")
+	}
+}
+
+func TestCircuitBreakerOpensAfterThreshold(t *testing.T) {
+	cb := newTestCB(5, 100*time.Millisecond)
+
+	for i := range 4 {
+		cb.recordFailure()
+		if cb.isOpen() {
+			t.Errorf("circuit should still be closed after %d failures", i+1)
+		}
+	}
+	cb.recordFailure() // 5th failure — opens the breaker
+	if !cb.isOpen() {
+		t.Error("circuit should be open after 5 consecutive failures")
+	}
+}
+
+func TestCircuitBreakerClosesAfterTimeout(t *testing.T) {
+	cb := newTestCB(1, 50*time.Millisecond)
+	cb.recordFailure()
+
+	if !cb.isOpen() {
+		t.Fatal("circuit should be open after 1 failure (threshold=1)")
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	if cb.isOpen() {
+		t.Error("circuit should be closed after timeout elapsed")
+	}
+}
+
+func TestCircuitBreakerResetOnSuccess(t *testing.T) {
+	cb := newTestCB(5, 30*time.Second)
+
+	for range 4 {
+		cb.recordFailure()
+	}
+	cb.recordSuccess() // resets the counter
+
+	// A 5th failure alone must not open the breaker (counter was reset to 0)
+	cb.recordFailure()
+	if cb.isOpen() {
+		t.Error("circuit should be closed after success reset the error counter")
+	}
+}
+
+func TestAnalyzeFrameCircuitBreakerOpen(t *testing.T) {
+	// The upstream server should never be called when the circuit is open.
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	cb := newTestCB(1, 30*time.Second)
+	cb.recordFailure() // open the breaker immediately
+
+	svc := &GeminiService{
+		apiKey:     "key",
+		baseURL:    server.URL,
+		httpClient: server.Client(),
+		cb:         cb,
+	}
+
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err == nil {
+		t.Fatal("expected error when circuit is open")
+	}
+	if err != ErrAIUnavailable {
+		t.Errorf("expected ErrAIUnavailable, got: %v", err)
+	}
+	if called {
+		t.Error("upstream server should not be called when circuit is open")
+	}
+}
+
+func TestAnalyzeFrameCircuitBreakerTripsOnErrors(t *testing.T) {
+	var callCount atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		callCount.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"boom"}`))
+	}))
+	defer server.Close()
+
+	cb := newTestCB(3, 30*time.Second) // trip after 3 errors
+	svc := &GeminiService{
+		apiKey: "key",
+		baseURL: server.URL,
+		httpClient: &http.Client{
+			Timeout:   5 * time.Second,
+			Transport: server.Client().Transport,
+		},
+		cb: cb,
+	}
+
+	// First 3 AnalyzeFrame calls hit the server and record failures.
+	// Each call exhausts maxRetries=3, so total HTTP calls = 3×3 = 9.
+	for range 3 {
+		svc.AnalyzeFrame(context.Background(), "img", "", "") //nolint:errcheck
+	}
+	if !cb.isOpen() {
+		t.Fatal("circuit should be open after 3 consecutive AnalyzeFrame errors")
+	}
+
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err != ErrAIUnavailable {
+		t.Errorf("expected ErrAIUnavailable on 4th call, got: %v", err)
+	}
+	// Upstream must not have been called a 4th time — circuit is open.
+	// 3 AnalyzeFrame calls × maxRetries=3 HTTP each = 9 total.
+	if n := callCount.Load(); n != int32(3*maxRetries) {
+		t.Errorf("expected %d upstream calls, got %d", 3*maxRetries, n)
+	}
+}
