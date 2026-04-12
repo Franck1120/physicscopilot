@@ -1463,7 +1463,8 @@
         Be first to fix things smarter. Drop your email and we'll reach out when your spot is ready.
       </p>
 
-      <!-- Replace YOUR_FORM_ID with your Formspree endpoint, or use the JS fake-submit below -->
+      <!-- REPLACE WITH YOUR FORMSPREE ID: set FORMSPREE_FORM_ID below in the JS block.
+           Until configured, the form shows a "Coming soon" message instead of submitting. -->
       <form class="waitlist-form" id="waitlistForm" onsubmit="handleWaitlist(event)">
         <input
           class="waitlist-input"
@@ -1537,8 +1538,10 @@
   }
 
   // ── Waitlist form ─────────────────────────────────────────────
-  // To use Formspree: replace action="#" with action="https://formspree.io/f/YOUR_FORM_ID"
-  // and change method to POST, removing the onsubmit handler.
+  // REPLACE WITH YOUR FORMSPREE ID: set this constant to your Formspree form ID
+  // (e.g. 'xpwzgkql'). Leave as null to show the "Coming soon" fallback.
+  const FORMSPREE_FORM_ID = null; // TODO: replace null with your form ID string
+
   async function handleWaitlist(e) {
     e.preventDefault();
     const btn = document.getElementById('waitlistBtn');
@@ -1546,20 +1549,27 @@
     const success = document.getElementById('formSuccess');
     const email = document.getElementById('waitlistEmail').value;
 
+    // If Formspree is not configured, show a "Coming soon" message.
+    if (!FORMSPREE_FORM_ID) {
+      form.style.display = 'none';
+      success.textContent = '⏳  Coming soon — check back shortly!';
+      success.style.display = 'flex';
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Joining…';
 
-    // Formspree submission — replace YOUR_FORM_ID
     try {
-      const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      await fetch(`https://formspree.io/f/${FORMSPREE_FORM_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email })
       });
-      // Show success regardless (works even if Formspree ID not configured, for demo)
-    } catch (_) { /* network error — still show success in demo */ }
+    } catch (_) { /* network error — still show success */ }
 
     form.style.display = 'none';
+    success.textContent = '✓  You\'re on the list! We\'ll be in touch soon.';
     success.style.display = 'flex';
   }
 

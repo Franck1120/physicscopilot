@@ -44,13 +44,13 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_DB:       physicscopilot
-      POSTGRES_USER:     postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../supabase/migrations/20260411000000_initial_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
