@@ -37,10 +37,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Warn loudly in production when SUPABASE_JWT_SECRET is absent — the
-	// WebSocket auth middleware falls back to dev mode (no authentication).
-	if os.Getenv("APP_ENV") == "production" && os.Getenv("SUPABASE_JWT_SECRET") == "" {
-		slog.Warn("SUPABASE_JWT_SECRET is not set — WebSocket connections are not authenticated; all clients can connect without a valid JWT")
+	// Refuse to start in production without a JWT secret — missing secret means
+	// zero authentication and any client can connect without a valid JWT.
+	if os.Getenv("SUPABASE_JWT_SECRET") == "" {
+		if os.Getenv("APP_ENV") == "production" {
+			slog.Error("SUPABASE_JWT_SECRET is not set in production — refusing to start")
+			os.Exit(1)
+		}
+		slog.Warn("⚠️  SUPABASE_JWT_SECRET is not set — running in UNAUTHENTICATED dev mode; all WebSocket clients can connect without a JWT")
 	}
 
 	// ── Services ────────────────────────────────────────────────────────────
@@ -118,9 +122,14 @@ func main() {
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
-		for range ticker.C {
-			if n := sessionSvc.CleanupExpiredSessions(30 * time.Minute); n > 0 {
-				slog.Info("expired sessions cleaned up", "count", n)
+		for {
+			select {
+			case <-ticker.C:
+				if n := sessionSvc.CleanupExpiredSessions(30 * time.Minute); n > 0 {
+					slog.Info("expired sessions cleaned up", "count", n)
+				}
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
