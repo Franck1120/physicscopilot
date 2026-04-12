@@ -100,6 +100,20 @@ func (rl *IPRateLimiter) cleanupLoop() {
 				delete(rl.limiters, ip)
 			}
 		}
+		// Remove expired violation windows — they will be reset on the next hit anyway,
+		// but cleaning them prevents unbounded growth for long-idle IPs.
+		for ip, v := range rl.violations {
+			if time.Since(v.windowStart) > banViolationWindow {
+				delete(rl.violations, ip)
+			}
+		}
+		// Remove bans that have already expired (isBanned also cleans on read,
+		// but IPs that stop connecting would never trigger that path).
+		for ip, until := range rl.bans {
+			if time.Now().After(until) {
+				delete(rl.bans, ip)
+			}
+		}
 		rl.mu.Unlock()
 	}
 }
