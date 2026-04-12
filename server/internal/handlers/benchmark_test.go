@@ -202,7 +202,7 @@ func BenchmarkStatsHandler(b *testing.B) {
 // measures Fiber routing and serialization overhead.
 func BenchmarkVersionHandler(b *testing.B) {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Get("/version", VersionHandler("0.1.0", "2026-04-12T00:00:00Z", "go1.25"))
+	app.Get("/version", VersionHandler("0.1.0", "2026-04-12T00:00:00Z", "go1.25", "dev"))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

@@ -14,7 +14,7 @@ import (
 // newVersionEdgeApp creates a Fiber app with VersionHandler using the given parameters.
 func newVersionEdgeApp(version, buildTime, goVersion string) *fiber.App {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Get("/api/version", VersionHandler(version, buildTime, goVersion))
+	app.Get("/api/version", VersionHandler(version, buildTime, goVersion, "dev"))
 	return app
 }
 
@@ -87,10 +87,9 @@ func TestVersionEdgeVersionMatchesSemver(t *testing.T) {
 	}
 }
 
-// TestVersionEdgeCacheControlIsPublic verifies that the response carries a
-// "public" Cache-Control header — version info is safe to cache in proxies
-// (it changes only on deployment).
-func TestVersionEdgeCacheControlIsPublic(t *testing.T) {
+// TestVersionEdgeContentTypeIsJSON verifies that the response carries a
+// Content-Type of application/json.
+func TestVersionEdgeContentTypeIsJSON(t *testing.T) {
 	t.Parallel()
 	app := newVersionEdgeApp("1.2.3", "2026-04-12T00:00:00Z", "go1.25")
 
@@ -100,21 +99,18 @@ func TestVersionEdgeCacheControlIsPublic(t *testing.T) {
 		t.Fatalf("test: %v", err)
 	}
 
-	cc := resp.Header.Get("Cache-Control")
-	if cc == "" {
-		t.Error("Cache-Control header is missing")
+	ct := resp.Header.Get("Content-Type")
+	if ct == "" {
+		t.Error("Content-Type header is missing")
 	}
-	if !strings.Contains(cc, "public") {
-		t.Errorf("Cache-Control: want 'public', got %q", cc)
-	}
-	if !strings.Contains(cc, "max-age=") {
-		t.Errorf("Cache-Control: expected a max-age directive, got %q", cc)
+	if !strings.Contains(ct, "application/json") {
+		t.Errorf("Content-Type: want 'application/json', got %q", ct)
 	}
 }
 
-// TestVersionEdgeAPIVersionIsAlwaysV1 verifies that the "api_version" field is
-// always "v1" regardless of the build version injected.
-func TestVersionEdgeAPIVersionIsAlwaysV1(t *testing.T) {
+// TestVersionEdgeCommitHashNeverEmpty verifies that the "commit_hash" field is
+// always present and non-empty regardless of build parameters.
+func TestVersionEdgeCommitHashNeverEmpty(t *testing.T) {
 	t.Parallel()
 	app := newVersionEdgeApp("99.0.0", "now", "go2.0")
 
@@ -128,8 +124,12 @@ func TestVersionEdgeAPIVersionIsAlwaysV1(t *testing.T) {
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if body["api_version"] != "v1" {
-		t.Errorf("api_version: want %q, got %v", "v1", body["api_version"])
+	hash, ok := body["commit_hash"]
+	if !ok {
+		t.Fatal("commit_hash field is missing from response")
+	}
+	if hash == "" {
+		t.Error("commit_hash must not be empty")
 	}
 }
 
