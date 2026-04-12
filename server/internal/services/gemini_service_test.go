@@ -704,6 +704,165 @@ func TestAnalyzeFrameCircuitBreakerOpen(t *testing.T) {
 	}
 }
 
+// TestGeminiServiceExtractsInstructionWhenAnalysisNil verifies that a Gemini
+// response carrying a JSON null for the "analysis" field does not prevent the
+// instruction field from being extracted correctly.
+func TestGeminiServiceExtractsInstructionWhenAnalysisNil(t *testing.T) {
+	// analysis is null/empty string — the JSON key is present but zero-valued.
+	structured := `"{\"analysis\":\"\",\"problem\":null,\"instruction\":\"check the nozzle\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(validGeminiJSON(structured)))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		apiKey:     "key",
+		baseURL:    server.URL,
+		httpClient: server.Client(),
+	}
+
+	resp, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Instruction != "check the nozzle" {
+		t.Errorf("expected instruction 'check the nozzle', got %q", resp.Instruction)
+	}
+	if resp.Analysis != "" {
+		t.Errorf("expected empty analysis, got %q", resp.Analysis)
+	}
+}
+
+// TestGeminiServiceExtractsBothAnalysisAndInstruction verifies that when both
+// analysis and instruction are present they are returned as separate fields
+// (not collapsed into a single string).
+func TestGeminiServiceExtractsBothAnalysisAndInstruction(t *testing.T) {
+	structured := `"{\"analysis\":\"printer bed visible\",\"problem\":null,\"instruction\":\"lower temp by 5C\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(validGeminiJSON(structured)))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		apiKey:     "key",
+		baseURL:    server.URL,
+		httpClient: server.Client(),
+	}
+
+	resp, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Analysis != "printer bed visible" {
+		t.Errorf("Analysis: want 'printer bed visible', got %q", resp.Analysis)
+	}
+	if resp.Instruction != "lower temp by 5C" {
+		t.Errorf("Instruction: want 'lower temp by 5C', got %q", resp.Instruction)
+	}
+	// Both fields must remain distinct — no concatenation.
+	combined := resp.Analysis + "\n\n" + resp.Instruction
+	if strings.Contains(resp.Analysis, resp.Instruction) {
+		t.Errorf("Analysis must not contain the Instruction text; combined would be %q", combined)
+	}
+}
+
+// TestGeminiServiceHTTP500ReturnsError verifies that a single 500 response from
+// the upstream server eventually surfaces as an error (after exhausting retries).
+// This duplicates the retry-exhaustion behaviour from TestAnalyzeFrameHTTP500RetriesExhausted
+// but focuses purely on the error being non-nil and containing "500".
+func TestGeminiServiceHTTP500ReturnsError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal server error"}`))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		apiKey:  "key",
+		baseURL: server.URL,
+		httpClient: &http.Client{
+			Timeout:   10 * time.Second,
+			Transport: server.Client().Transport,
+		},
+	}
+
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err == nil {
+		t.Fatal("expected error on HTTP 500 response")
+	}
+	if !strings.Contains(err.Error(), "500") {
+		t.Errorf("error should mention '500', got: %v", err)
+	}
+}
+
+// TestGeminiServiceRetryOn429 verifies that after one 429 response the service
+// retries and succeeds when the next attempt returns 200.
+func TestGeminiServiceRetryOn429(t *testing.T) {
+	var callCount atomic.Int32
+	structured := `"{\"analysis\":\"ok\",\"problem\":null,\"instruction\":\"all good\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		n := callCount.Add(1)
+		if n == 1 {
+			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write([]byte(`{"error":"rate limited"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(validGeminiJSON(structured)))
+	}))
+	defer server.Close()
+
+	svc := &GeminiService{
+		apiKey:  "key",
+		baseURL: server.URL,
+		httpClient: &http.Client{
+			Timeout:   10 * time.Second,
+			Transport: server.Client().Transport,
+		},
+	}
+
+	resp, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
+	if err != nil {
+		t.Fatalf("expected success after retry on 429, got: %v", err)
+	}
+	if resp.Instruction != "all good" {
+		t.Errorf("expected instruction 'all good', got %q", resp.Instruction)
+	}
+	if n := callCount.Load(); n < 2 {
+		t.Errorf("expected at least 2 calls (1 retry after 429), got %d", n)
+	}
+}
+
+// TestValidGeminiJSONHelper verifies that the validGeminiJSON test helper
+// produces a JSON envelope that can be parsed by parseAIResponse without error.
+func TestValidGeminiJSONHelper(t *testing.T) {
+	structured := `"{\"analysis\":\"test\",\"problem\":null,\"instruction\":\"do this\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"`
+	envelope := validGeminiJSON(structured)
+
+	// Must be valid JSON at the outer level.
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(envelope), &raw); err != nil {
+		t.Fatalf("validGeminiJSON produced invalid JSON: %v", err)
+	}
+
+	// Must be parseable by parseAIResponse without error.
+	resp, err := parseAIResponse([]byte(envelope))
+	if err != nil {
+		t.Fatalf("parseAIResponse failed on validGeminiJSON output: %v", err)
+	}
+	if resp.Analysis != "test" {
+		t.Errorf("expected analysis 'test', got %q", resp.Analysis)
+	}
+	if resp.Instruction != "do this" {
+		t.Errorf("expected instruction 'do this', got %q", resp.Instruction)
+	}
+}
+
 func TestAnalyzeFrameCircuitBreakerTripsOnErrors(t *testing.T) {
 	var callCount atomic.Int32
 
