@@ -1,3 +1,6 @@
+// Package logger configures structured logging for the PhysicsCopilot server
+// and provides security-audit helpers. Call Init() once at startup before
+// any handler runs; use SecurityLog and HashIP for security-event logging.
 package logger
 
 import (
