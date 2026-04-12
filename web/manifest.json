@@ -1,0 +1,14 @@
+{
+  "name": "PhysicsCopilot",
+  "short_name": "PhysicsCopilot",
+  "description": "AI-powered repair assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06090F",
+  "theme_color": "#06090F",
+  "icons": [
+    {"src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml"},
+    {"src": "/og-image.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ],
+  "categories": ["utilities", "productivity"]
+}
