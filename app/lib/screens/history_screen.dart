@@ -332,13 +332,27 @@ class _DismissibleCard extends StatelessWidget {
         direction: DismissDirection.endToStart,
         background: Container(
           alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
+          padding: const EdgeInsets.only(right: 24),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.redAccent.withAlpha(40),
+            color: const Color(0xFFB71C1C),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Icon(Icons.delete_outline, color: Colors.white, size: 22),
+              SizedBox(width: 6),
+              Text(
+                'Elimina',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
         ),
         onDismissed: (_) => onDismissed(),
         child: _SessionCard(session: session, onTap: onTap),
