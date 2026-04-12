@@ -50,19 +50,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
-  Uint8List? _lastFrame;
-
-  static const _kCachedResponseKey = 'offline_last_ai_response';
 
   final DateTime _sessionStart = DateTime.now();
   Duration _elapsed = Duration.zero;
   Timer? _ticker;
   String? _firstUserMessage;
-  bool _showTutorial = false;
   String? _lastVoiceText; // for play/pause replay
-  String? _cachedResponse; // last AI response from previous session (offline fallback)
-
-  static const _kTutorialKey = 'session_tutorial_shown';
 
   @override
   void initState() {
@@ -72,18 +65,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() => _elapsed = DateTime.now().difference(_sessionStart));
-      }
-    });
-    // Check after first frame so we don't call setState during build.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final prefs = ref.read(sharedPrefsProvider);
-      final shown = prefs.getBool(_kTutorialKey) ?? false;
-      if (!shown) setState(() => _showTutorial = true);
-      // Load last cached AI response for offline fallback.
-      final cached = prefs.getString(_kCachedResponseKey);
-      if (cached != null && cached.isNotEmpty) {
-        setState(() => _cachedResponse = cached);
       }
     });
   }
@@ -134,8 +115,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
       // Cache response for offline mode.
       final responseText = msg['text'] as String?;
       if (responseText != null && responseText.isNotEmpty) {
-        setState(() => _cachedResponse = responseText);
-        ref.read(sharedPrefsProvider).setString(_kCachedResponseKey, responseText);
+        ref.read(cachedResponseProvider.notifier).state = responseText;
+        ref.read(sharedPrefsProvider).setString('offline_last_ai_response', responseText);
       }
       // Auto-read voice_text if voice guidance is enabled.
       final voiceText = msg['voice_text'] as String?;
@@ -172,7 +153,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     try {
       final frame = await cameraService.captureFrame();
       if (frame != null) {
-        setState(() => _lastFrame = frame);
+        ref.read(lastFrameProvider.notifier).state = frame;
         wsService.sendFrame(frame);
       }
     } catch (_) {
@@ -240,9 +221,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   }
 
   void _dismissTutorial() {
-    setState(() => _showTutorial = false);
+    ref.read(showTutorialProvider.notifier).state = false;
     // Fire-and-forget; we don't need to await the write.
-    ref.read(sharedPrefsProvider).setBool(_kTutorialKey, true);
+    ref.read(sharedPrefsProvider).setBool('session_tutorial_shown', true);
   }
 
   void _resetSession() {
@@ -268,6 +249,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
 
   Widget _buildContent(BuildContext context) {
     final wsStatus = ref.watch(connectionStatusProvider);
+    final cachedResponse = ref.watch(cachedResponseProvider);
+    final showTutorial = ref.watch(showTutorialProvider);
+    final lastFrame = ref.watch(lastFrameProvider);
 
     return Scaffold(
       backgroundColor: kBgPrimary,
@@ -320,7 +304,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
               );
             },
           ),
-          if (_lastFrame != null)
+          if (lastFrame != null)
             IconButton(
               icon: const Icon(Icons.draw_outlined,
                   color: Colors.white54, size: 20),
@@ -328,7 +312,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
               onPressed: () => showDialog<void>(
                 context: context,
                 builder: (_) =>
-                    _ImageAnnotationDialog(frame: _lastFrame!),
+                    _ImageAnnotationDialog(frame: lastFrame),
               ),
             ),
           IconButton(
@@ -381,13 +365,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
                 child: GuidancePanel(
                   textController: _textController,
                   onSendText: _sendText,
-                  cachedResponse: _cachedResponse,
+                  cachedResponse: cachedResponse,
                   isOffline: wsStatus.value != ConnectionStatus.connected,
                 ),
               ),
             ],
           ),
-          if (_showTutorial)
+          if (showTutorial)
             TutorialOverlay(onDismiss: _dismissTutorial),
         ],
       ),
@@ -412,8 +396,6 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
   double _maxZoom = 1.0;
   double _baseZoom = 1.0;
   Offset? _focusPoint; // screen-space position for the focus ring
-  FrameQuality _quality = FrameQuality.ok;
-  StreamSubscription<FrameQuality>? _qualitySub;
 
   @override
   void initState() {
@@ -423,9 +405,6 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
 
   Future<void> _setup() async {
     final service = ref.read(cameraServiceProvider);
-    _qualitySub = service.quality.listen((q) {
-      if (mounted) setState(() => _quality = q);
-    });
     final controller = service.controller;
     if (controller == null || !controller.value.isInitialized) return;
     try {
@@ -437,7 +416,6 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
 
   @override
   void dispose() {
-    _qualitySub?.cancel();
     super.dispose();
   }
 
@@ -488,6 +466,8 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
   Widget build(BuildContext context) {
     final cameraInit = ref.watch(cameraInitProvider);
     final cameraService = ref.watch(cameraServiceProvider);
+    final qualityAsync = ref.watch(frameQualityProvider);
+    final quality = qualityAsync.valueOrNull ?? FrameQuality.ok;
 
     return Stack(
       fit: StackFit.expand,
@@ -549,12 +529,12 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
           ),
 
         // ── Frame quality badge ───────────────────────────────────────────
-        if (_quality != FrameQuality.ok)
+        if (quality != FrameQuality.ok)
           Positioned(
             top: 12,
             left: 0,
             right: 0,
-            child: Center(child: _QualityBadge(quality: _quality)),
+            child: Center(child: _QualityBadge(quality: quality)),
           ),
 
         // ── Zoom level indicator ──────────────────────────────────────────

@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'prefs_provider.dart';
 
 /// Immutable snapshot of the current AI session output.
 class SessionState {
@@ -118,3 +122,28 @@ final sessionProvider =
     StateNotifierProvider<SessionNotifier, SessionState>(
   (ref) => SessionNotifier(),
 );
+
+// ── Cached response (offline fallback) ───────────────────────────────────────
+
+const _kCachedResponseKey = 'offline_last_ai_response';
+
+/// Last AI response persisted to SharedPreferences for offline fallback.
+/// Initialised from storage; updated whenever a new response arrives.
+final cachedResponseProvider = StateProvider<String?>((ref) {
+  return ref.read(sharedPrefsProvider).getString(_kCachedResponseKey);
+});
+
+// ── Tutorial visibility ───────────────────────────────────────────────────────
+
+const _kTutorialKey = 'session_tutorial_shown';
+
+/// True when the session tutorial overlay should be displayed.
+final showTutorialProvider = StateProvider<bool>((ref) {
+  return !(ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false);
+});
+
+// ── Last captured frame ───────────────────────────────────────────────────────
+
+/// The most-recently captured camera frame; non-null once the user has
+/// tapped the capture button at least once.
+final lastFrameProvider = StateProvider<Uint8List?>((ref) => null);
