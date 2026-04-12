@@ -61,11 +61,12 @@ physicscopilot/
 │       ├── services/      # WebSocket client, Gemini proxy
 │       ├── providers/     # Riverpod providers
 │       ├── widgets/       # Shared widgets
+│       ├── providers/     # Riverpod providers (work context, session, WS…)
 │       └── utils/         # Constants, helpers
 ├── web/                   # Static landing page (HTML/CSS/JS)
 ├── supabase/              # Supabase migrations and seed data
-├── infra/                 # Docker Compose and deployment config
-└── kb/                    # Knowledge-base entries (3D printer failure modes)
+├── infra/                 # Deployment config (Fly.io)
+└── kb/                    # Knowledge-base entries (optional domain context modules)
 ```
 
 ---
@@ -85,7 +86,7 @@ make dev-server
 The server exposes:
 - `GET /health` — liveness check
 - `GET /metrics` — Prometheus metrics
-- `GET /ws` — WebSocket endpoint (camera frames in, repair guidance out)
+- `GET /ws` — WebSocket endpoint (camera frames in, AI guidance out)
 
 ### Flutter app
 
