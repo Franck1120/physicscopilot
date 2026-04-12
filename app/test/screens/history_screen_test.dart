@@ -221,4 +221,60 @@ void main() {
       expect(find.text(AppStrings.historyEmpty), findsOneWidget);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Swipe-to-delete and undo tests
+  // ---------------------------------------------------------------------------
+
+  group('HistoryScreen — swipe-delete and undo', () {
+    testWidgets('swiping a card shows the undo snackbar', (tester) async {
+      final sessions = [
+        _makeRecord(id: 'r1', equipmentName: 'Prusa MK4'),
+      ];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      // Verify the item is visible.
+      expect(find.text('Prusa MK4'), findsOneWidget);
+
+      // Swipe the Dismissible endToStart.
+      await tester.drag(
+        find.text('Prusa MK4'),
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // The item should be dismissed and a SnackBar with "Annulla" appears.
+      expect(find.text('Sessione eliminata'), findsOneWidget);
+      expect(find.text('Annulla'), findsOneWidget);
+    });
+
+    testWidgets('tapping undo restores the dismissed item', (tester) async {
+      final sessions = [
+        _makeRecord(id: 'r1', equipmentName: 'Undo Printer'),
+      ];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      // Swipe to dismiss.
+      await tester.drag(
+        find.text('Undo Printer'),
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Item should be gone.
+      expect(find.text('Undo Printer'), findsNothing);
+      expect(find.text('Annulla'), findsOneWidget);
+
+      // Tap Annulla.
+      await tester.tap(find.text('Annulla'));
+      await tester.pumpAndSettle();
+
+      // Item should be restored.
+      expect(find.text('Undo Printer'), findsOneWidget);
+    });
+  });
 }
