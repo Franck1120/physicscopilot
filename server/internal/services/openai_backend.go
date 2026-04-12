@@ -26,7 +26,7 @@ func NewOpenAIBackend() (*OpenAIBackend, error) {
 }
 
 // AnalyzeFrame is not yet implemented for the OpenAI backend.
-func (o *OpenAIBackend) AnalyzeFrame(_ context.Context, _, _ string) (*GeminiResponse, error) {
+func (o *OpenAIBackend) AnalyzeFrame(_ context.Context, _, _, _ string) (*GeminiResponse, error) {
 	return nil, fmt.Errorf("OpenAI backend: AnalyzeFrame not yet implemented")
 }
 
@@ -50,6 +50,6 @@ func NewClaudeBackend() (*ClaudeBackend, error) {
 }
 
 // AnalyzeFrame is not yet implemented for the Claude backend.
-func (b *ClaudeBackend) AnalyzeFrame(_ context.Context, _, _ string) (*GeminiResponse, error) {
+func (b *ClaudeBackend) AnalyzeFrame(_ context.Context, _, _, _ string) (*GeminiResponse, error) {
 	return nil, fmt.Errorf("Claude backend: AnalyzeFrame not yet implemented")
 }

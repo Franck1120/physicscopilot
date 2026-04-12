@@ -16,7 +16,8 @@ type AIBackend interface {
 	// AnalyzeFrame sends a camera frame (base64-encoded JPEG) and conversation
 	// context for analysis, returning structured guidance.
 	// frameBase64 may be empty for text-only turns.
-	AnalyzeFrame(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error)
+	// language is a BCP-47 code (e.g. "it", "en") controlling the response language.
+	AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error)
 }
 
 // NewAIBackend creates the AI backend selected by the AI_BACKEND env var.

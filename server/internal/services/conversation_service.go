@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -13,11 +14,12 @@ import (
 const frameSampleSize = 1024
 
 // ProcessResult holds the combined Gemini analysis, overlay annotations,
-// and current step position returned to the client.
+// current step position, and a TTS-optimised voice hint returned to the client.
 type ProcessResult struct {
-	Text    string   `json:"text"`
-	Overlay OverlayData `json:"overlay"`
-	Step    StepInfo    `json:"step"`
+	Text      string      `json:"text"`
+	VoiceText string      `json:"voice_text,omitempty"`
+	Overlay   OverlayData `json:"overlay"`
+	Step      StepInfo    `json:"step"`
 }
 
 // StepInfo represents the user's position in a guided repair flow.
@@ -98,8 +100,14 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 		}
 	}
 
-	// Call Gemini Vision API
-	response, err := c.ai.AnalyzeFrame(ctx, frameBase64, conversationCtx)
+	// Read session language for the Gemini prompt.
+	language := "it"
+	if snap, snapErr := c.sessions.GetSessionSnapshot(sessionID); snapErr == nil && snap.Language != "" {
+		language = snap.Language
+	}
+
+	// Call AI backend.
+	response, err := c.ai.AnalyzeFrame(ctx, frameBase64, conversationCtx, language)
 	if err != nil {
 		c.clearFrameHash(sessionID)
 		return nil, fmt.Errorf("analyze frame: %w", err)
@@ -127,8 +135,9 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 	}
 
 	return &ProcessResult{
-		Text:    responseText,
-		Overlay: response.Overlay,
+		Text:      responseText,
+		VoiceText: toVoiceText(response.Instruction),
+		Overlay:   response.Overlay,
 		Step: StepInfo{
 			Current: session.CurrentStep,
 			Total:   session.TotalSteps,
@@ -161,7 +170,13 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 		}
 	}
 
-	response, err := c.ai.AnalyzeFrame(ctx, "", conversationCtx)
+	// Read session language for the Gemini prompt.
+	language := "it"
+	if snap, snapErr := c.sessions.GetSessionSnapshot(sessionID); snapErr == nil && snap.Language != "" {
+		language = snap.Language
+	}
+
+	response, err := c.ai.AnalyzeFrame(ctx, "", conversationCtx, language)
 	if err != nil {
 		return nil, fmt.Errorf("analyze text message: %w", err)
 	}
@@ -179,8 +194,9 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 	}
 
 	return &ProcessResult{
-		Text:    responseText,
-		Overlay: response.Overlay,
+		Text:      responseText,
+		VoiceText: toVoiceText(response.Instruction),
+		Overlay:   response.Overlay,
 		Step: StepInfo{
 			Current: session.CurrentStep,
 			Total:   session.TotalSteps,
@@ -234,4 +250,17 @@ func (c *ConversationService) clearFrameHash(sessionID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.frameHashes, sessionID)
+}
+
+// toVoiceText converts an instruction string into a TTS-friendly version by
+// stripping Markdown syntax and collapsing excess whitespace.
+func toVoiceText(text string) string {
+	r := strings.NewReplacer(
+		"**", "", "*", "", "__", "", "_", "",
+		"```", "", "`", "",
+		"###", "", "##", "", "#", "",
+	)
+	v := r.Replace(text)
+	v = strings.Join(strings.Fields(v), " ")
+	return strings.TrimSpace(v)
 }

@@ -304,7 +304,8 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	)
 
 	// ── Session ───────────────────────────────────────────────────────────────
-	session, err := h.sessions.CreateSession("unknown", "unknown")
+	lang := c.Query("lang", "it")
+	session, err := h.sessions.CreateSession("unknown", "unknown", lang)
 	if err != nil {
 		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)
