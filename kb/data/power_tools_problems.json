@@ -1,0 +1,778 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "power_tools",
+  "total": 15,
+  "problems": [
+    {
+      "id": "drill_bit_slipping",
+      "name": "Drill Bit Slipping",
+      "category": "drill",
+      "severity": "warning",
+      "description": "Drill bit slips or spins inside the chuck during operation instead of rotating with the drill.",
+      "visual_symptoms": [
+        "Bit visibly rotating independently of chuck during drilling",
+        "Chuck jaws leave visible grip marks or flat spots on bit shank",
+        "Drilling progress stops while motor continues running",
+        "Scorch marks on bit shank from friction heat"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Chuck jaws worn or not fully tightened, providing insufficient clamping force",
+          "probability": 0.55,
+          "test": "Tighten chuck firmly with chuck key or by hand on keyless chuck; attempt to twist bit by hand — any movement indicates insufficient clamping"
+        },
+        {
+          "cause": "Round shank bit used in impact driver with hex-only chuck",
+          "probability": 0.25,
+          "test": "Check whether bit shank is round or 1/4-inch hex; impact driver chucks require hex shanks"
+        },
+        {
+          "cause": "Chuck jaws internally damaged or worn smooth and unable to grip",
+          "probability": 0.20,
+          "test": "Inspect chuck jaw teeth under magnification; worn or rounded teeth indicate chuck replacement needed"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Loosen chuck fully, insert bit shank all the way, and tighten chuck firmly in all three chuck key positions",
+              "verification": "Bit cannot be pulled out by hand; no rotation independent of chuck detectable",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "For keyless chuck, tighten by hand as hard as possible then give one quarter-turn with both hands gripping chuck",
+              "verification": "Chuck fully engaged; bit secure through full drilling cycle",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "If chuck teeth are worn, replace the chuck with a matching size and thread chuck; use chuck key adapter to remove old chuck from spindle",
+              "verification": "New chuck installed securely; bit held without slippage at maximum torque setting",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "circular_saw_blade_wobble",
+      "name": "Circular Saw Blade Wobble",
+      "category": "saw",
+      "severity": "error",
+      "description": "Circular saw blade wobbles laterally during cutting, causing inaccurate cuts, excessive kerf and potential kickback.",
+      "visual_symptoms": [
+        "Blade visibly oscillating side-to-side at operating speed",
+        "Kerf width wider than blade thickness specification",
+        "Vibration felt through saw handle at full speed",
+        "Wavy or rough cut surface on workpiece"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Arbor nut insufficiently tightened allowing blade to run off-centre",
+          "probability": 0.45,
+          "test": "Unplug saw and attempt to move blade laterally by hand — any play with nut not fully torqued confirms this"
+        },
+        {
+          "cause": "Arbor flange or blade hub bent from previous blade jam or impact",
+          "probability": 0.35,
+          "test": "Place a straight edge against blade at rest and rotate manually; deviation visible at any point indicates warp or bent flange"
+        },
+        {
+          "cause": "Blade itself warped from overheating during previous use",
+          "probability": 0.20,
+          "test": "Lay blade on known-flat surface — any rocking or gap indicates warped plate"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Unplug saw and tighten arbor nut with correct wrench using saw's shaft lock; torque to specification",
+              "verification": "No lateral blade movement by hand; nut fully seated against outer flange",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Remove blade and inspect arbor flanges for bending or damage; replace bent inner or outer flange",
+              "verification": "Both flanges flat and concentric; blade runs true after reinstallation",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Replace warped blade with a quality blade of correct diameter and arbor bore; never reuse a heat-warped blade",
+              "verification": "New blade lies flat on reference surface; saw runs without wobble at operating speed",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grinder_disc_crack",
+      "name": "Angle Grinder Disc Crack",
+      "category": "grinder",
+      "severity": "error",
+      "description": "Grinding or cutting disc develops a crack or shatters during use, posing a serious safety hazard.",
+      "visual_symptoms": [
+        "Visible crack radiating from centre hole or edge of disc",
+        "Disc vibrates abnormally at operating speed",
+        "Disc fragments missing after use indicating prior partial fracture",
+        "Chipping or crumbling at disc edge during cutting"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Disc used beyond expiry date — abrasive discs have a maximum storage life of 3 years from manufacture",
+          "probability": 0.40,
+          "test": "Check manufacture date stamp on disc blotter; any disc over 3 years old must be discarded regardless of appearance"
+        },
+        {
+          "cause": "Side loading a cutting disc designed only for axial cutting force",
+          "probability": 0.35,
+          "test": "Inspect disc type marking — Type 1 flat cutting discs are not rated for side grinding loads"
+        },
+        {
+          "cause": "Disc dropped on hard floor before use causing internal stress fracture not visible externally",
+          "probability": 0.25,
+          "test": "Ring test: suspend disc from arbor hole and tap with knuckle — a clear ring indicates intact disc; dull thud indicates internal crack"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "STOP immediately and unplug grinder; do not use cracked disc under any circumstances",
+              "verification": "Grinder unplugged and cracked disc removed; disc disposed of immediately",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Install a new disc within its use-by date; perform ring test before mounting; tighten flange nut with supplied spanner wrench",
+              "verification": "New disc passes ring test; flange nut fully tightened; safety guard re-installed and adjusted",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Run new disc at full speed behind shield or pointed away from body for 30 seconds before first use",
+              "verification": "No vibration or noise anomaly during run-in; disc appears undamaged at rest",
+              "time_seconds": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "battery_not_charging",
+      "name": "Battery Not Charging",
+      "category": "battery",
+      "severity": "warning",
+      "description": "Power tool battery pack does not charge or charger indicates fault, leaving tool unusable.",
+      "visual_symptoms": [
+        "Charger LED shows red fault light instead of charging indicator",
+        "Charger shows no activity when battery is inserted",
+        "Battery charges but shows full immediately and depletes in seconds",
+        "Charger LEDs blink error pattern rather than solid charging indicator"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Battery cells deeply discharged below charger minimum threshold and charger refuses to start",
+          "probability": 0.45,
+          "test": "Measure battery voltage across terminals — below 12V on an 18V pack indicates deep discharge requiring recovery charge"
+        },
+        {
+          "cause": "Battery thermal protection triggered — cells too hot or too cold for safe charging",
+          "probability": 0.35,
+          "test": "Allow battery to reach room temperature (15–40°C) and retry — charger should accept battery within 5 minutes"
+        },
+        {
+          "cause": "Charger contact pins dirty or corroded preventing communication with battery management system",
+          "probability": 0.20,
+          "test": "Inspect charger slot contacts and battery terminals for oxidation; clean with isopropyl alcohol and retry"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Store battery at room temperature for 2 hours if it has been in cold or hot environments, then retry charging",
+              "verification": "Charger indicator changes to charging mode within 60 seconds of insertion at room temperature",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Clean battery terminal contacts and charger slot contacts with isopropyl alcohol on a cotton swab",
+              "verification": "All contacts visually clean and shiny; charger accepts battery and charging light activates",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If battery is deeply discharged and charger refuses it, use a bench power supply to apply a gentle recovery charge at 0.1C rate until above minimum threshold voltage",
+              "verification": "Battery voltage above 14V on 18V pack; standard charger now accepts battery normally",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overheating_motor",
+      "name": "Overheating Motor",
+      "category": "motor",
+      "severity": "error",
+      "description": "Power tool motor overheats during use, triggering thermal cutout or causing permanent winding damage.",
+      "visual_symptoms": [
+        "Tool stops suddenly and will not restart until cooled",
+        "Burning smell from motor housing vents",
+        "Motor housing too hot to hold immediately after stopping",
+        "Performance degrades gradually then stops completely"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Continuous duty cycle exceeded — tool used beyond rated on-time without rest periods",
+          "probability": 0.50,
+          "test": "Review tool datasheet for duty cycle rating; compare with actual usage pattern — most tools require rest after 20–30 minutes"
+        },
+        {
+          "cause": "Motor ventilation slots blocked by sawdust, debris or improper grip",
+          "probability": 0.30,
+          "test": "Inspect all ventilation slots for debris blockage; compressed air reveals extent of obstruction"
+        },
+        {
+          "cause": "Motor overloaded by forcing tool through material beyond its capacity",
+          "probability": 0.20,
+          "test": "Current draw during use significantly above rated amperage indicates overload condition"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Stop tool immediately and allow to cool for at least 30 minutes with ventilation slots facing up in open air",
+              "verification": "Motor housing has returned to ambient temperature before resuming use",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Clear all ventilation slots with compressed air; inspect for debris obstruction around rotor area",
+              "verification": "All slots unobstructed; airflow felt through opposite slot when air is applied",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Adopt 20-minutes-on, 10-minutes-rest usage pattern and avoid stalling motor in material",
+              "verification": "Motor housing stays below 60°C measured by IR thermometer during standard duty-cycle use",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brush_wear",
+      "name": "Carbon Brush Wear",
+      "category": "motor",
+      "severity": "warning",
+      "description": "Carbon motor brushes wear down, causing power loss, sparking, intermittent operation or complete tool failure.",
+      "visual_symptoms": [
+        "Excessive sparking visible at brush access points on motor housing",
+        "Tool speed fluctuates without trigger change",
+        "Tool fails to start intermittently",
+        "Grinding or clicking sound from motor at low speed"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Normal brush wear through expected service life — most brushes last 50–200 hours of use",
+          "probability": 0.60,
+          "test": "Remove and measure brush length — below 6 mm (or less than 1/3 of original length) indicates replacement needed"
+        },
+        {
+          "cause": "Accelerated wear from running tool at high load or with dirty commutator",
+          "probability": 0.30,
+          "test": "Inspect commutator surface for grooves, blackening or uneven wear patterns"
+        },
+        {
+          "cause": "Wrong brush grade installed during previous service causing rapid wear",
+          "probability": 0.10,
+          "test": "Compare installed brush grade with manufacturer specification — wrong hardness or composition wears faster"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Unplug tool and locate brush caps on motor housing sides; unscrew and remove worn brush assemblies",
+              "verification": "Worn brushes removed; new brushes of correct grade and dimensions ready for installation",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Clean commutator surface with fine-grit sandpaper (400 grit) or a dedicated commutator stick to remove oxidation",
+              "verification": "Commutator surface copper-coloured and smooth with no deep grooves",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Install new brushes of the correct manufacturer-specified grade; run tool at no load for 5 minutes to bed in",
+              "verification": "Consistent tool speed; minimal sparking at brush access points; brush springs under correct tension",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trigger_switch_failure",
+      "name": "Trigger Switch Failure",
+      "category": "drill",
+      "severity": "error",
+      "description": "Power tool trigger switch fails to activate, stays permanently on, or provides erratic speed control.",
+      "visual_symptoms": [
+        "Trigger pressed fully but tool does not start",
+        "Tool runs continuously without trigger pressed",
+        "Tool speed jumps erratically with slight trigger pressure changes",
+        "Burning smell or discolouration at trigger mechanism housing"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Internal switch contacts burnt or welded from arcing under load",
+          "probability": 0.50,
+          "test": "Measure resistance across switch terminals with trigger fully pressed — above 1 ohm indicates burnt contacts"
+        },
+        {
+          "cause": "Dust and debris infiltration into switch mechanism causing mechanical obstruction",
+          "probability": 0.30,
+          "test": "Compressed air into trigger slot — if debris emerges and function temporarily improves, contamination confirmed"
+        },
+        {
+          "cause": "Variable resistor or Hall-effect element inside electronic trigger worn out",
+          "probability": 0.20,
+          "test": "Measure voltage output of trigger circuit across full press range; erratic or non-linear output indicates worn sensor"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Unplug tool and disassemble handle to access trigger switch assembly",
+              "verification": "Trigger switch module accessible and disconnected from power circuit",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Replace trigger switch with exact OEM replacement part — matching current and voltage rating is critical for safe operation",
+              "verification": "New switch installed; full range of trigger travel produces smooth speed control from 0 to full",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Reassemble and test at no-load through full trigger range before returning to use",
+              "verification": "No unintended run-on; full speed achieved at full trigger; switch not warm after 5 minutes use",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuck_worn_out",
+      "name": "Chuck Worn Out",
+      "category": "drill",
+      "severity": "warning",
+      "description": "Drill chuck jaws are worn and no longer grip bits consistently, causing slippage or inability to hold bits securely.",
+      "visual_symptoms": [
+        "Bits rotate inside chuck under load",
+        "Chuck jaws do not close evenly — one jaw stops before others",
+        "Drill bit wobbly or off-centre when spinning",
+        "Chuck key slots stripped, preventing proper tightening"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Jaw teeth worn smooth from extended use, no longer providing sufficient grip",
+          "probability": 0.55,
+          "test": "Inspect jaw face teeth under magnification — smooth or rounded teeth without sharp profile confirms wear"
+        },
+        {
+          "cause": "Chuck body cracked or jaw guide channels worn causing misalignment of jaws",
+          "probability": 0.25,
+          "test": "Open chuck fully and visually inspect jaw travel — jaws should move in perfect parallel tracks"
+        },
+        {
+          "cause": "Debris packed into jaw mechanism preventing full closure",
+          "probability": 0.20,
+          "test": "Clean jaw mechanism with compressed air and brush; test if full grip is restored after cleaning"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Clean chuck thoroughly with compressed air and a small brush to remove all metal shavings and debris from jaw tracks",
+              "verification": "All three jaws move freely and symmetrically through full travel range",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If grip is still insufficient after cleaning, replace chuck: open jaws fully, use reverse-threaded retaining screw clockwise to remove, and thread on new chuck",
+              "verification": "New chuck seats fully on spindle; bits held without slippage at maximum torque",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safety_guard_broken",
+      "name": "Safety Guard Broken",
+      "category": "safety",
+      "severity": "error",
+      "description": "Protective guard on grinder, saw or drill press is cracked, missing or does not return to position, creating a safety hazard.",
+      "visual_symptoms": [
+        "Guard cracked or has chunks missing from body",
+        "Guard does not spring back to closed position after tool contact",
+        "Guard bracket bent so guard rests at incorrect angle",
+        "Guard fixing screw stripped and guard rotates freely"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Physical impact from dropping tool or workpiece contact breaking the guard",
+          "probability": 0.55,
+          "test": "Inspect guard exterior for impact marks or fracture point; identify if crack propagated from impact zone"
+        },
+        {
+          "cause": "Return spring broken or dislodged inside guard pivot mechanism",
+          "probability": 0.30,
+          "test": "Manually push guard open and release — guard should snap back; slow or no return indicates spring failure"
+        },
+        {
+          "cause": "Guard bracket bent from kickback event, misaligning guard path",
+          "probability": 0.15,
+          "test": "Sight along guard bracket alignment; any deviation from parallel with blade/disc confirms bent bracket"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "STOP using tool immediately — never operate a power tool with missing or damaged safety guard",
+              "verification": "Tool unplugged and set aside; damaged guard noted for replacement",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Order OEM replacement guard assembly for the specific tool model; do not substitute with non-rated aftermarket parts",
+              "verification": "Replacement guard part number matches tool model number in manufacturer parts list",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Install replacement guard per manufacturer instructions; verify spring tension and auto-close function",
+              "verification": "Guard snaps to closed position when released; no cracking or binding throughout full travel",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gearbox_noise",
+      "name": "Gearbox Noise",
+      "category": "motor",
+      "severity": "warning",
+      "description": "Power tool gearbox produces abnormal grinding, whining or clicking noises during operation.",
+      "visual_symptoms": [
+        "Grinding noise proportional to output shaft speed",
+        "Clicking sound at regular intervals during operation",
+        "Vibration in tool handle increasing with load",
+        "Metal shavings visible in gearbox vent holes"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Gearbox grease dried out or displaced, causing metal-on-metal gear contact",
+          "probability": 0.50,
+          "test": "Open gearbox cover and inspect gear surfaces — dry or gunked grease with worn gear faces confirms lubrication failure"
+        },
+        {
+          "cause": "Gear tooth broken or chipped from overload event",
+          "probability": 0.35,
+          "test": "Remove gearbox cover and rotate output shaft manually; clicking at regular interval indicates broken tooth passing mesh point"
+        },
+        {
+          "cause": "Gearbox bearing worn causing gear misalignment and uneven meshing",
+          "probability": 0.15,
+          "test": "Check output shaft radial play by hand — more than 0.2 mm lateral movement indicates bearing wear"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Disassemble gearbox cover and clean all old grease from gear surfaces and bearing pockets with parts cleaner",
+              "verification": "All gear surfaces and bearing races clean and dry before relubrication",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Inspect all gear teeth for chips or breaks; replace any damaged gears with OEM replacements",
+              "verification": "All gear tooth profiles intact; no sharp edges or missing material on any tooth",
+              "time_seconds": 2400
+            },
+            {
+              "instruction": "Apply manufacturer-specified gear grease generously to all gear meshes and bearings; reassemble gearbox",
+              "verification": "No grinding or clicking during no-load test after reassembly; noise level returned to normal",
+              "time_seconds": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rpm_fluctuation",
+      "name": "RPM Fluctuation",
+      "category": "motor",
+      "severity": "warning",
+      "description": "Tool speed varies erratically without trigger position change, affecting cut quality and safety.",
+      "visual_symptoms": [
+        "Audible speed surges and drops during operation",
+        "Speed indicator gauge (if present) oscillating",
+        "Cut quality inconsistent — marks left on workpiece at speed dip points",
+        "Tool hesitates then surges on first trigger press"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Battery charge insufficient causing voltage sag under load, triggering speed controller protection",
+          "probability": 0.45,
+          "test": "Test with fully charged battery; if fluctuation disappears, battery capacity or charge level was the cause"
+        },
+        {
+          "cause": "Electronic speed controller module failing intermittently",
+          "probability": 0.35,
+          "test": "Monitor current draw with clamp meter during fluctuation — sudden current spikes without load change indicate controller failure"
+        },
+        {
+          "cause": "Worn carbon brushes causing intermittent motor circuit continuity",
+          "probability": 0.20,
+          "test": "Inspect brush length and commutator surface; excessive sparking at brushes confirms brush contact instability"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Charge battery to 100% and retest RPM consistency under identical load conditions",
+              "verification": "Speed remains stable within 5% of set RPM under consistent load with full battery",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Replace carbon brushes and clean commutator if brushes are below minimum length",
+              "verification": "Sparking at brush slots reduced; speed stable immediately after brush bedding-in period",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "If fluctuation persists with good battery and new brushes, replace the electronic speed controller module with OEM replacement",
+              "verification": "RPM stable across full load range; no surges during continuous operation test",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "power_cord_damage",
+      "name": "Power Cord Damage",
+      "category": "safety",
+      "severity": "error",
+      "description": "Mains power cord is cut, frayed, or has exposed conductors, creating an electrocution and fire hazard.",
+      "visual_symptoms": [
+        "Visible cut, nick or abrasion through outer jacket exposing inner insulation",
+        "Exposed bare copper conductor visible in damaged area",
+        "Cord insulation melted, discoloured or hardened at one location",
+        "Intermittent power loss when cord is flexed at damage point"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Cord run over by workpiece or tool blade during operation",
+          "probability": 0.50,
+          "test": "Inspect damage location relative to blade or wheel path; clean diagonal cuts indicate tool contact"
+        },
+        {
+          "cause": "Repeated sharp bending at strain relief causing conductor fatigue and insulation cracking",
+          "probability": 0.35,
+          "test": "Flex cord near tool entry point — crackling sound or intermittent power confirms conductor fatigue at strain relief"
+        },
+        {
+          "cause": "Cord kinked and crushed under a heavy object causing permanent deformation",
+          "probability": 0.15,
+          "test": "Inspect cord length for flattened or deformed sections with inner structure damage visible through jacket"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "STOP using tool immediately; unplug from mains — never use a tool with a damaged power cord",
+              "verification": "Tool unplugged; no voltage present at tool confirmed with non-contact voltage tester",
+              "time_seconds": 30
+            },
+            {
+              "instruction": "Replace entire power cord with identical gauge, length and plug configuration using OEM or certified replacement",
+              "verification": "New cord wire gauge matches original specification; all connections secure with no exposed conductors",
+              "time_seconds": 2400
+            },
+            {
+              "instruction": "Test insulation resistance of repaired cord with a megger between each conductor and earth at 500V — must exceed 1 MOhm",
+              "verification": "Insulation resistance above 1 MOhm on all conductor pairs; cord passes visual and electrical inspection",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cooling_fan_failure",
+      "name": "Cooling Fan Failure",
+      "category": "motor",
+      "severity": "error",
+      "description": "Internal cooling fan stops spinning or is obstructed, causing rapid motor overheating even during light use.",
+      "visual_symptoms": [
+        "No airflow felt from ventilation outlets during operation",
+        "Motor overheats faster than expected for workload",
+        "Rattling or scraping sound from inside motor housing",
+        "Fan blades visible through vents appear broken or jammed"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Fan blade cracked or broken from debris ingestion or age-related embrittlement",
+          "probability": 0.50,
+          "test": "Shine torch through vents to inspect fan blades for cracks or missing sections while tool is unplugged"
+        },
+        {
+          "cause": "Large debris (wood chip, fastener) jammed between fan blade and housing blocking rotation",
+          "probability": 0.35,
+          "test": "Insert thin tool through vent to feel for obstruction; attempt to manually rotate fan while tool is unplugged"
+        },
+        {
+          "cause": "Fan hub detached from armature shaft, spinning freely without driving airflow",
+          "probability": 0.15,
+          "test": "Open motor housing and attempt to rotate fan on shaft — slippage with shaft stationary confirms detached hub"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Unplug tool and use compressed air to blast debris through ventilation slots; check if fan rotates freely after clearing",
+              "verification": "Fan spins freely when tapped by finger through vent slot; airflow restored from outlet vents on startup",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If fan is cracked or hub is detached, disassemble motor housing and replace fan assembly with OEM part",
+              "verification": "New fan seated firmly on armature shaft with no wobble; rotates concentrically without rubbing housing",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Reassemble and run tool at no-load; verify airflow and temperature remain normal after 10 minutes",
+              "verification": "Consistent airflow from vents throughout 10-minute run; motor housing below 50°C",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "torque_clutch_slip",
+      "name": "Torque Clutch Slip",
+      "category": "drill",
+      "severity": "warning",
+      "description": "Drill-driver torque clutch slips at inappropriate torque levels, either over-tightening fasteners or disengaging too early.",
+      "visual_symptoms": [
+        "Clutch ratchet sound occurring before screw is fully driven",
+        "Screws either stripped or not fully seated at same clutch setting",
+        "Clutch collar slips freely even at maximum numbered setting",
+        "No audible click at any setting indicating clutch not engaging"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Clutch spring tension lost or spring broken, causing inconsistent slip point",
+          "probability": 0.50,
+          "test": "Set clutch to maximum and apply torque by hand — if clutch slips freely at maximum setting, spring is faulty"
+        },
+        {
+          "cause": "Clutch balls and detents worn from extensive use, reducing friction torque",
+          "probability": 0.35,
+          "test": "Disassemble clutch collar and inspect ball detents and ramp surfaces for wear or deformation"
+        },
+        {
+          "cause": "Clutch collar number markings misaligned with actual clutch positions after reassembly",
+          "probability": 0.15,
+          "test": "Compare clutch slip torque measured with a torque gauge versus expected torque for each setting"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Disassemble clutch collar by removing retaining ring and lifting off collar to access spring, balls and ramp plate",
+              "verification": "All clutch components accessible; spring, balls and ramp plate removed and inspected",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Replace worn clutch spring and ball detents with OEM components; clean all ramp surfaces with parts cleaner",
+              "verification": "New spring and balls installed; ramp surface smooth and undamaged",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Reassemble clutch collar and verify slip torque at setting 5 and maximum with torque gauge",
+              "verification": "Clutch slip torque within 10% of manufacturer specification at each tested setting",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuck_key_lost",
+      "name": "Chuck Key Lost",
+      "category": "drill",
+      "severity": "info",
+      "description": "Chuck key required to tighten or release a keyed drill chuck is missing, preventing bit changes.",
+      "visual_symptoms": [
+        "Chuck key absent from tool holder or dedicated storage clip",
+        "Bit cannot be tightened fully by hand on keyed chuck",
+        "Previous bit left in chuck because it could not be released",
+        "Chuck key socket teeth visible but no matching key available"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Chuck key misplaced or lost during use in workshop or on site",
+          "probability": 0.70,
+          "test": "Search tool bag, bench and last work area for key; confirm key is absent from all likely locations"
+        },
+        {
+          "cause": "Chuck key originally included fell off integrated clip on drill body from wear",
+          "probability": 0.30,
+          "test": "Inspect drill body for key retention clip; check if clip is intact or broken off"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Identify the chuck key size needed by measuring the chuck key socket hole diameter and noting the chuck size marked on the tool",
+              "verification": "Chuck size confirmed (typically 3/8-inch or 1/2-inch for drills); correct key size identified",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Obtain a replacement chuck key of the correct size from a hardware store or online; mount it securely in a new retainer clip attached to the cord",
+              "verification": "Replacement key fits chuck socket securely; chuck tightens and loosens fully with new key",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Consider replacing keyed chuck with a keyless chuck of the same thread and arbor size for future convenience",
+              "verification": "Keyless chuck installed and tightens bit securely by hand without additional tools",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
