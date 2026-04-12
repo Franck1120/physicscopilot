@@ -15,6 +15,14 @@ const (
 	apiLimiterBurst = 10
 	// limiterExpiry removes idle per-IP limiters to prevent memory growth.
 	limiterExpiry = 5 * time.Minute
+
+	// banViolationThreshold is the number of rate-limit violations within
+	// banViolationWindow that triggers a temporary IP ban.
+	banViolationThreshold = 10
+	// banViolationWindow is the sliding window over which violations are counted.
+	banViolationWindow = 1 * time.Minute
+	// banDuration is how long a banned IP is blocked before being retried.
+	banDuration = 5 * time.Minute
 )
 
 type ipEntry struct {
@@ -22,12 +30,23 @@ type ipEntry struct {
 	lastSeen time.Time
 }
 
+// violationEntry tracks how many times an IP exceeded the rate limit within
+// the current banViolationWindow.
+type violationEntry struct {
+	count       int
+	windowStart time.Time
+}
+
 // IPRateLimiter enforces per-IP request rate limits on REST endpoints.
 // Each IP gets a token-bucket limiter refilling at ratePerMin/min
-// with a burst allowance of burst tokens.
+// with a burst allowance of burst tokens. IPs that exceed the rate limit
+// banViolationThreshold times within banViolationWindow are temporarily
+// banned for banDuration (HTTP 403 instead of 429).
 type IPRateLimiter struct {
 	mu         sync.Mutex
 	limiters   map[string]*ipEntry
+	violations map[string]*violationEntry
+	bans       map[string]time.Time
 	ratePerMin int
 	burst      int
 }
@@ -43,6 +62,8 @@ func NewIPRateLimiter() *IPRateLimiter {
 func newIPRateLimiterWith(perMin, burst int) *IPRateLimiter {
 	rl := &IPRateLimiter{
 		limiters:   make(map[string]*ipEntry),
+		violations: make(map[string]*violationEntry),
+		bans:       make(map[string]time.Time),
 		ratePerMin: perMin,
 		burst:      burst,
 	}
@@ -82,15 +103,55 @@ func (rl *IPRateLimiter) cleanupLoop() {
 }
 
 // Middleware returns a Fiber handler that enforces the per-IP rate limit.
-// Returns HTTP 429 when the limit is exceeded.
+// Returns HTTP 403 when the IP is temporarily banned, HTTP 429 otherwise.
 func (rl *IPRateLimiter) Middleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if !rl.getLimiter(c.IP()).Allow() {
+		ip := c.IP()
+		if rl.isBanned(ip) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "temporarily blocked due to repeated rate limit abuse — retry after 5 minutes",
+			})
+		}
+		if !rl.getLimiter(ip).Allow() {
+			rl.recordViolation(ip)
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 				"error": "rate limit exceeded — try again in a moment",
 			})
 		}
 		return c.Next()
+	}
+}
+
+// isBanned returns true if ip is currently under a temporary ban.
+func (rl *IPRateLimiter) isBanned(ip string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	until, ok := rl.bans[ip]
+	if !ok {
+		return false
+	}
+	if time.Now().After(until) {
+		delete(rl.bans, ip)
+		return false
+	}
+	return true
+}
+
+// recordViolation increments the violation counter for ip. If the counter
+// reaches banViolationThreshold within banViolationWindow, the IP is banned
+// for banDuration.
+func (rl *IPRateLimiter) recordViolation(ip string) {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	v, ok := rl.violations[ip]
+	if !ok || time.Since(v.windowStart) > banViolationWindow {
+		rl.violations[ip] = &violationEntry{count: 1, windowStart: time.Now()}
+		return
+	}
+	v.count++
+	if v.count >= banViolationThreshold {
+		rl.bans[ip] = time.Now().Add(banDuration)
+		delete(rl.violations, ip)
 	}
 }
 

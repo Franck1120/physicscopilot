@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -232,5 +233,121 @@ func TestNewUserRateLimiterUsesProductionDefaults(t *testing.T) {
 	}
 	if userLimiterBurst != 5 {
 		t.Errorf("userLimiterBurst: want 5, got %d", userLimiterBurst)
+	}
+}
+
+// ── IP Ban Tests ──────────────────────────────────────────────────────────────
+
+// TestIPBanAfterRepeatedViolations verifies that an IP which exceeds the rate
+// limit banViolationThreshold times within banViolationWindow is banned for
+// banDuration and receives 403 Forbidden (not 429 Too Many Requests).
+func TestIPBanAfterRepeatedViolations(t *testing.T) {
+	// rate=1/min, burst=1: every request after the first is a violation.
+	rl := newIPRateLimiterWith(1, 1)
+	app := testRateLimitApp(rl)
+
+	ip := "10.99.0.1"
+
+	// Consume the one available token.
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = ip + ":9999"
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("first request: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200 for first request, got %d", resp.StatusCode)
+	}
+
+	// Trigger banViolationThreshold violations so the IP is banned.
+	for i := 0; i < banViolationThreshold; i++ {
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.RemoteAddr = ip + ":9999"
+		if _, err := app.Test(r); err != nil {
+			t.Fatalf("violation request %d: %v", i+1, err)
+		}
+	}
+
+	// Next request must be banned: 403, not 429.
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = ip + ":9999"
+	resp, err = app.Test(req)
+	if err != nil {
+		t.Fatalf("banned request: %v", err)
+	}
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("want 403 after %d violations, got %d", banViolationThreshold, resp.StatusCode)
+	}
+}
+
+// TestIPBanDoesNotAffectOtherIPs verifies that banning one IP does not
+// affect other IPs. Tested at the method level because app.Test() resolves
+// c.IP() from the underlying fasthttpConn (not req.RemoteAddr).
+func TestIPBanDoesNotAffectOtherIPs(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+
+	bannedIP := "10.99.0.2"
+	safeIP := "10.99.0.3"
+
+	// Trigger enough violations for bannedIP to be banned.
+	for i := 0; i < banViolationThreshold; i++ {
+		rl.recordViolation(bannedIP)
+	}
+
+	if !rl.isBanned(bannedIP) {
+		t.Fatal("bannedIP should be banned after threshold violations")
+	}
+	if rl.isBanned(safeIP) {
+		t.Error("safeIP must not be banned when a different IP was banned")
+	}
+}
+
+// TestIPBanResponseIsForbiddenJSON verifies the ban response body is JSON
+// with an "error" key and status 403.
+func TestIPBanResponseIsForbiddenJSON(t *testing.T) {
+	rl := newIPRateLimiterWith(1, 1)
+	app := testRateLimitApp(rl)
+
+	ip := "10.99.0.4"
+
+	// Exhaust token then trigger enough violations to ban.
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.RemoteAddr = ip + ":1"
+	app.Test(r) //nolint:errcheck
+	for i := 0; i < banViolationThreshold; i++ {
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.RemoteAddr = ip + ":1"
+		app.Test(r) //nolint:errcheck
+	}
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.RemoteAddr = ip + ":1"
+	resp, err := app.Test(r)
+	if err != nil {
+		t.Fatalf("banned request: %v", err)
+	}
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("want 403, got %d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var payload map[string]string
+	if err := json.Unmarshal(body, &payload); err != nil {
+		t.Fatalf("ban response is not JSON: %v", err)
+	}
+	if _, ok := payload["error"]; !ok {
+		t.Error("ban response JSON must have 'error' key")
+	}
+}
+
+// TestBanConstants verifies the production ban constants have sensible values.
+func TestBanConstants(t *testing.T) {
+	if banViolationThreshold != 10 {
+		t.Errorf("banViolationThreshold: want 10, got %d", banViolationThreshold)
+	}
+	if banViolationWindow != 1*time.Minute {
+		t.Errorf("banViolationWindow: want 1m, got %v", banViolationWindow)
+	}
+	if banDuration != 5*time.Minute {
+		t.Errorf("banDuration: want 5m, got %v", banDuration)
 	}
 }
