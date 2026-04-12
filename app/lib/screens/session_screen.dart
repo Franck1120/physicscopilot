@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
@@ -21,9 +22,6 @@ import '../services/websocket_service.dart';
 ///   - Connection banner (shown only when WS is not connected)
 ///   - Top 60 %: live camera preview with manual capture button
 ///   - Bottom 40 %: AI guidance panel (response text + text input)
-///
-/// Frames are forwarded automatically; the capture button forces an
-/// immediate analysis of the current frame.
 class SessionScreen extends ConsumerStatefulWidget {
   const SessionScreen({super.key});
 
@@ -37,47 +35,33 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   final TextEditingController _textController = TextEditingController();
 
   final DateTime _sessionStart = DateTime.now();
+  Duration _elapsed = Duration.zero;
+  Timer? _ticker;
   String? _firstUserMessage;
 
   @override
   void initState() {
     super.initState();
     _startListening();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _elapsed = DateTime.now().difference(_sessionStart));
+      }
+    });
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _frameSubscription?.cancel();
     _messageSubscription?.cancel();
     _textController.dispose();
     super.dispose();
   }
 
-  /// Saves the session to history if at least one AI response was received.
-  void _saveSessionIfNeeded() {
-    final sessionState = ref.read(sessionProvider);
-    final summary = sessionState.responseText;
-    if (summary == null || summary.isEmpty) return;
-
-    final equipment = ref.read(equipmentProvider);
-    final duration = DateTime.now().difference(_sessionStart);
-
-    final record = SessionRecord(
-      id: _sessionStart.millisecondsSinceEpoch.toString(),
-      date: _sessionStart,
-      equipmentName: equipment?.name ?? '',
-      problemDescription: _firstUserMessage ?? '',
-      summary: summary,
-      status: SessionStatus.resolved,
-      duration: duration,
-    );
-    ref.read(sessionHistoryProvider.notifier).add(record);
-  }
-
   void _startListening() {
     final wsService = ref.read(webSocketServiceProvider);
     final cameraService = ref.read(cameraServiceProvider);
-
     _frameSubscription = cameraService.frames.listen(wsService.sendFrame);
     _messageSubscription = wsService.messages.listen(_onServerMessage);
   }
@@ -93,7 +77,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  /// Returns true if the WebSocket is currently connected.
   bool get _isConnected {
     final status = ref.read(connectionStatusProvider).value;
     return status == ConnectionStatus.connected;
@@ -114,7 +97,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       final frame = await cameraService.captureFrame();
       if (frame != null) wsService.sendFrame(frame);
     } catch (_) {
-      ref.read(sessionProvider.notifier).setError('Impossibile acquisire il frame');
+      ref
+          .read(sessionProvider.notifier)
+          .setError('Impossibile acquisire il frame');
     }
   }
 
@@ -133,6 +118,31 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     wsService.sendText(text);
     _textController.clear();
     FocusScope.of(context).unfocus();
+  }
+
+  void _saveSessionIfNeeded() {
+    final sessionState = ref.read(sessionProvider);
+    final summary = sessionState.responseText;
+    if (summary == null || summary.isEmpty) return;
+
+    final equipment = ref.read(equipmentProvider);
+    final duration = DateTime.now().difference(_sessionStart);
+    final record = SessionRecord(
+      id: _sessionStart.millisecondsSinceEpoch.toString(),
+      date: _sessionStart,
+      equipmentName: equipment?.name ?? '',
+      problemDescription: _firstUserMessage ?? '',
+      summary: summary,
+      status: SessionStatus.resolved,
+      duration: duration,
+    );
+    ref.read(sessionHistoryProvider.notifier).add(record);
+  }
+
+  String _formatElapsed(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '${d.inHours > 0 ? '${d.inHours}:' : ''}$m:$s';
   }
 
   @override
@@ -160,20 +170,34 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Navigator.of(context).pop();
           },
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Text(
+                _formatElapsed(_elapsed),
+                style: const TextStyle(
+                  color: kAccent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Connection banner — shown only when WS is not fully connected.
           wsStatus.when(
             data: (s) => s != ConnectionStatus.connected
                 ? _ConnectionBanner(status: s)
                 : const SizedBox.shrink(),
-            loading: () => const _ConnectionBanner(
-              status: ConnectionStatus.connecting,
-            ),
-            error: (_, __) => const _ConnectionBanner(
-              status: ConnectionStatus.disconnected,
-            ),
+            loading: () =>
+                const _ConnectionBanner(status: ConnectionStatus.connecting),
+            error: (_, __) =>
+                const _ConnectionBanner(status: ConnectionStatus.disconnected),
           ),
           Expanded(
             flex: 6,
@@ -196,7 +220,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
 class _ConnectionBanner extends StatelessWidget {
   const _ConnectionBanner({required this.status});
-
   final ConnectionStatus status;
 
   @override
@@ -217,14 +240,9 @@ class _ConnectionBanner extends StatelessWidget {
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            child: Text(message,
+                style: TextStyle(
+                    color: color, fontSize: 12, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -236,7 +254,6 @@ class _ConnectionBanner extends StatelessWidget {
 
 class _CameraSection extends ConsumerWidget {
   const _CameraSection({required this.onCapture});
-
   final VoidCallback onCapture;
 
   @override
@@ -289,50 +306,40 @@ class _CameraSection extends ConsumerWidget {
 
 class _CameraPlaceholder extends StatelessWidget {
   const _CameraPlaceholder();
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF0D0D0D),
-      child: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: kAccent),
-            SizedBox(height: 16),
-            Text(
-              'Inizializzazione camera…',
-              style: TextStyle(color: kTextMuted, fontSize: 13),
-            ),
-          ],
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFF0D0D0D),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: kAccent),
+              SizedBox(height: 16),
+              Text('Inizializzazione camera…',
+                  style: TextStyle(color: kTextMuted, fontSize: 13)),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _CameraError extends StatelessWidget {
   const _CameraError();
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF0D0D0D),
-      child: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.camera_alt_outlined, color: kTextMuted, size: 48),
-            SizedBox(height: 12),
-            Text(
-              'Camera non disponibile',
-              style: TextStyle(color: kTextMuted, fontSize: 13),
-            ),
-          ],
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFF0D0D0D),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.camera_alt_outlined, color: kTextMuted, size: 48),
+              SizedBox(height: 12),
+              Text('Camera non disponibile',
+                  style: TextStyle(color: kTextMuted, fontSize: 13)),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 // ── Guidance panel ──────────────────────────────────────────────────────────
@@ -342,14 +349,12 @@ class _GuidancePanel extends ConsumerWidget {
     required this.textController,
     required this.onSendText,
   });
-
   final TextEditingController textController;
   final VoidCallback onSendText;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
-
     return Container(
       decoration: const BoxDecoration(
         color: kBgCard,
@@ -365,31 +370,21 @@ class _GuidancePanel extends ConsumerWidget {
   }
 }
 
+// ── Response area with animations ───────────────────────────────────────────
+
 class _ResponseArea extends StatelessWidget {
   const _ResponseArea({required this.session});
-
   final SessionState session;
 
   @override
   Widget build(BuildContext context) {
-    if (session.isProcessing) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: kAccent, strokeWidth: 2),
-            SizedBox(height: 10),
-            Text(
-              'Analisi in corso…',
-              style: TextStyle(color: kTextMuted, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
+    Widget child;
 
-    if (session.errorText != null) {
-      return Padding(
+    if (session.isProcessing) {
+      child = const _ThinkingIndicator();
+    } else if (session.errorText != null) {
+      child = Padding(
+        key: const ValueKey('error'),
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,19 +393,16 @@ class _ResponseArea extends StatelessWidget {
                 color: Colors.orangeAccent, size: 18),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                session.errorText!,
-                style: const TextStyle(
-                    color: Colors.orangeAccent, fontSize: 13),
-              ),
+              child: Text(session.errorText!,
+                  style: const TextStyle(
+                      color: Colors.orangeAccent, fontSize: 13)),
             ),
           ],
         ),
       );
-    }
-
-    if (session.responseText != null) {
-      return SingleChildScrollView(
+    } else if (session.responseText != null) {
+      child = SingleChildScrollView(
+        key: ValueKey(session.responseText),
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,30 +413,128 @@ class _ResponseArea extends StatelessWidget {
               child: Text(
                 session.responseText!,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
+                    color: Colors.white, fontSize: 14, height: 1.5),
               ),
             ),
           ],
         ),
       );
+    } else {
+      child = const Center(
+        key: ValueKey('idle'),
+        child: Text(
+          'Punta la camera sull\'oggetto\nper avviare l\'analisi AI.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: kTextMuted, fontSize: 13, height: 1.5),
+        ),
+      );
     }
 
-    return const Center(
-      child: Text(
-        'Punta la camera sull\'oggetto\nper avviare l\'analisi AI.',
-        textAlign: TextAlign.center,
-        style: TextStyle(color: kTextMuted, fontSize: 13, height: 1.5),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 350),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+      child: child,
+    );
+  }
+}
+
+// ── Thinking indicator — three pulsing dots ──────────────────────────────────
+
+class _ThinkingIndicator extends StatefulWidget {
+  const _ThinkingIndicator();
+  @override
+  State<_ThinkingIndicator> createState() => _ThinkingIndicatorState();
+}
+
+class _ThinkingIndicatorState extends State<_ThinkingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(3, (i) => _Dot(ctrl: _ctrl, index: i)),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'L\'AI sta analizzando…',
+            style: TextStyle(color: kTextMuted, fontSize: 13),
+          ),
+        ],
       ),
     );
   }
 }
 
+class _Dot extends StatelessWidget {
+  const _Dot({required this.ctrl, required this.index});
+  final AnimationController ctrl;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    // Each dot is offset by 0.2 of the animation cycle.
+    final offsetAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: ctrl,
+        curve: Interval(
+          index * 0.2,
+          math.min(index * 0.2 + 0.6, 1.0),
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+    return AnimatedBuilder(
+      animation: offsetAnimation,
+      builder: (_, __) {
+        final t = offsetAnimation.value;
+        final dy = -6.0 * math.sin(t * math.pi);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: kAccent.withValues(alpha: 0.4 + 0.6 * (1 - (dy / -6).abs())),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Text input row ───────────────────────────────────────────────────────────
+
 class _TextInputRow extends StatelessWidget {
   const _TextInputRow({required this.controller, required this.onSend});
-
   final TextEditingController controller;
   final VoidCallback onSend;
 
@@ -463,8 +553,7 @@ class _TextInputRow extends StatelessWidget {
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Descrivi il problema…',
-                hintStyle:
-                    const TextStyle(color: kTextMuted, fontSize: 14),
+                hintStyle: const TextStyle(color: kTextMuted, fontSize: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: const BorderSide(color: kBgCardBorder),
@@ -477,8 +566,8 @@ class _TextInputRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   borderSide: const BorderSide(color: kAccent),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 filled: true,
                 fillColor: const Color(0xFF111111),
               ),
