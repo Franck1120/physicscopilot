@@ -10,6 +10,7 @@ import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import 'history_screen.dart';
+import 'settings_screen.dart' show showAboutAppDialog;
 
 
 // ---------------------------------------------------------------------------
@@ -679,7 +680,7 @@ class _ProfileTileList extends StatelessWidget {
           context,
           icon: Icons.info_outline,
           label: 'Informazioni app',
-          onTap: null,
+          onTap: () => showAboutAppDialog(context),
         ),
       ],
     );

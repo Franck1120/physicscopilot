@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart'
@@ -38,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _saveUrl() async {
+    HapticFeedback.lightImpact();
     await ref
         .read(settingsProvider.notifier)
         .setServerUrl(_urlController.text);
@@ -53,6 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _resetUrl() async {
+    HapticFeedback.lightImpact();
     _urlController.clear();
     await ref.read(settingsProvider.notifier).setServerUrl(null);
     setState(() => _urlEdited = false);
@@ -233,18 +236,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── Info versione ─────────────────────────────────────────────────
-          _SectionHeader(label: 'INFORMAZIONI'),
+          _SectionHeader(label: 'CONNESSIONE SERVER'),
           const SizedBox(height: 10),
           _Card(
             child: Column(
               children: [
                 _InfoRow(
-                  label: 'Versione',
-                  value: '1.0.0 (build 1)',
-                ),
-                const Divider(color: kBgCardBorder, height: 20),
-                _InfoRow(
-                  label: 'Server URL compilato',
+                  label: 'URL compilato',
                   value: AppConstants.wsBaseUrl,
                 ),
                 if (settings.serverUrlOverride != null) ...[
@@ -258,10 +256,131 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // ── About ─────────────────────────────────────────────────────────
+          _SectionHeader(label: 'INFORMAZIONI APP'),
+          const SizedBox(height: 10),
+          _Card(
+            child: Column(
+              children: [
+                _InfoRow(label: 'App', value: 'PhysicsCopilot'),
+                const Divider(color: kBgCardBorder, height: 20),
+                _InfoRow(label: 'Versione', value: '1.0.0 (build 1)'),
+                const Divider(color: kBgCardBorder, height: 20),
+                _InfoRow(label: 'Motore AI', value: 'Google Gemini'),
+                const Divider(color: kBgCardBorder, height: 20),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      showAboutAppDialog(context);
+                    },
+                    icon: const Icon(Icons.info_outline, size: 16),
+                    label: const Text('Dettagli e licenze'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: kAccent,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// About dialog — shared between SettingsScreen and ProfileTab
+// ---------------------------------------------------------------------------
+
+/// Shows the app's About dialog with version, credits, and policy links.
+void showAboutAppDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: kBgCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: kBgCardBorder, width: 1),
+      ),
+      title: const Row(
+        children: [
+          Icon(Icons.science_rounded, color: kAccent, size: 22),
+          SizedBox(width: 10),
+          Text(
+            'PhysicsCopilot',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Versione 1.0.0 (build 1)',
+            style: TextStyle(color: kTextMuted, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Powered by',
+            style: TextStyle(color: kTextMuted, fontSize: 11, letterSpacing: 0.4),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Google Gemini AI',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: kBgCardBorder, height: 1),
+          const SizedBox(height: 16),
+          const Text(
+            'Privacy Policy',
+            style: TextStyle(
+              color: kAccent,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const SelectableText(
+            'https://physicscopilot.app/privacy',
+            style: TextStyle(color: kTextMuted, fontSize: 12),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Termini di Servizio',
+            style: TextStyle(
+              color: kAccent,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const SelectableText(
+            'https://physicscopilot.app/terms',
+            style: TextStyle(color: kTextMuted, fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Chiudi', style: TextStyle(color: kAccent)),
+        ),
+      ],
+    ),
+  );
 }
 
 // ── Shared sub-widgets ────────────────────────────────────────────────────────
