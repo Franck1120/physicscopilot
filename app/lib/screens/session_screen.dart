@@ -7,7 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../models/session_record.dart';
 import '../providers/camera_provider.dart';
+import '../providers/equipment_provider.dart';
+import '../providers/session_history_provider.dart';
 import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/websocket_service.dart';
@@ -33,6 +36,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
 
+  final DateTime _sessionStart = DateTime.now();
+  String? _firstUserMessage;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +51,27 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _messageSubscription?.cancel();
     _textController.dispose();
     super.dispose();
+  }
+
+  /// Saves the session to history if at least one AI response was received.
+  void _saveSessionIfNeeded() {
+    final sessionState = ref.read(sessionProvider);
+    final summary = sessionState.responseText;
+    if (summary == null || summary.isEmpty) return;
+
+    final equipment = ref.read(equipmentProvider);
+    final duration = DateTime.now().difference(_sessionStart);
+
+    final record = SessionRecord(
+      id: _sessionStart.millisecondsSinceEpoch.toString(),
+      date: _sessionStart,
+      equipmentName: equipment?.name ?? '',
+      problemDescription: _firstUserMessage ?? '',
+      summary: summary,
+      status: SessionStatus.resolved,
+      duration: duration,
+    );
+    ref.read(sessionHistoryProvider.notifier).add(record);
   }
 
   void _startListening() {
@@ -100,6 +127,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+    _firstUserMessage ??= text;
     final wsService = ref.read(webSocketServiceProvider);
     ref.read(sessionProvider.notifier).setProcessing();
     wsService.sendText(text);
@@ -127,7 +155,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
               color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            _saveSessionIfNeeded();
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: Column(

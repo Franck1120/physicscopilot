@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/session_record.dart';
+import '../providers/session_history_provider.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // No sessions until backend persistence is wired up — show empty state.
-    const List<SessionRecord> sessions = [];
+    final sessions = ref.watch(sessionHistoryProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -16,22 +17,33 @@ class HistoryScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text(
           'Sessioni',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         elevation: 0,
+        actions: sessions.isEmpty
+            ? null
+            : [
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep_outlined,
+                      color: Colors.white54),
+                  tooltip: 'Cancella tutto',
+                  onPressed: () => _confirmClearAll(context, ref),
+                ),
+              ],
       ),
       body: sessions.isEmpty
           ? const _EmptyState()
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: sessions.length,
               itemBuilder: (context, index) {
-                return _SessionCard(
-                  session: sessions[index],
-                  onTap: () => _showDetailSheet(context, sessions[index]),
+                final session = sessions[index];
+                return _DismissibleCard(
+                  session: session,
+                  onDismissed: () =>
+                      ref.read(sessionHistoryProvider.notifier).remove(session.id),
+                  onTap: () => _showDetailSheet(context, session),
                 );
               },
             ),
@@ -49,13 +61,76 @@ class HistoryScreen extends ConsumerWidget {
       builder: (_) => _SessionDetailSheet(session: session),
     );
   }
+
+  void _confirmClearAll(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Cancella tutto',
+            style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Eliminare tutta la cronologia delle sessioni?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annulla',
+                style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(sessionHistoryProvider.notifier).clearAll();
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Elimina',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _SessionCard extends StatelessWidget {
-  const _SessionCard({
+// ── Dismissible card ─────────────────────────────────────────────────────────
+
+class _DismissibleCard extends StatelessWidget {
+  const _DismissibleCard({
     required this.session,
+    required this.onDismissed,
     required this.onTap,
   });
+
+  final SessionRecord session;
+  final VoidCallback onDismissed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey(session.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withAlpha(40),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.redAccent),
+      ),
+      onDismissed: (_) => onDismissed(),
+      child: _SessionCard(session: session, onTap: onTap),
+    );
+  }
+}
+
+// ── Session card ─────────────────────────────────────────────────────────────
+
+class _SessionCard extends StatelessWidget {
+  const _SessionCard({required this.session, required this.onTap});
 
   final SessionRecord session;
   final VoidCallback onTap;
@@ -79,7 +154,9 @@ class _SessionCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      session.printerName,
+                      session.equipmentName.isEmpty
+                          ? 'Sessione'
+                          : session.equipmentName,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -90,46 +167,42 @@ class _SessionCard extends StatelessWidget {
                   _StatusBadge(status: session.status),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                session.problemDescription,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 13,
-                  height: 1.4,
+              if (session.summary.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  session.summary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 13,
-                    color: Colors.white.withValues(alpha: 0.45),
-                  ),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 13,
+                      color: Colors.white.withValues(alpha: 0.45)),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(session.date),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      fontSize: 12,
-                    ),
+                        color: Colors.white.withValues(alpha: 0.45),
+                        fontSize: 12),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.timer_outlined,
-                    size: 13,
-                    color: Colors.white.withValues(alpha: 0.45),
-                  ),
+                  Icon(Icons.timer_outlined,
+                      size: 13,
+                      color: Colors.white.withValues(alpha: 0.45)),
                   const SizedBox(width: 4),
                   Text(
                     _formatDuration(session.duration),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      fontSize: 12,
-                    ),
+                        color: Colors.white.withValues(alpha: 0.45),
+                        fontSize: 12),
                   ),
                 ],
               ),
@@ -140,6 +213,8 @@ class _SessionCard extends StatelessWidget {
     );
   }
 }
+
+// ── Status badge ─────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
@@ -177,6 +252,8 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+// ── Detail sheet ─────────────────────────────────────────────────────────────
+
 class _SessionDetailSheet extends StatelessWidget {
   const _SessionDetailSheet({required this.session});
 
@@ -205,7 +282,9 @@ class _SessionDetailSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  session.printerName,
+                  session.equipmentName.isEmpty
+                      ? 'Sessione'
+                      : session.equipmentName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -228,30 +307,34 @@ class _SessionDetailSheet extends StatelessWidget {
             label: 'Durata',
             value: _formatDuration(session.duration),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Descrizione problema',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
+          if (session.summary.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Analisi AI',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            session.problemDescription,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.5,
+            const SizedBox(height: 8),
+            Text(
+              session.summary,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
+
+// ── Detail row ────────────────────────────────────────────────────────────────
 
 class _DetailRow extends StatelessWidget {
   const _DetailRow({
@@ -270,22 +353,19 @@ class _DetailRow extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: Colors.white54),
         const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: const TextStyle(color: Colors.white54, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text('$label: ',
+            style: const TextStyle(color: Colors.white54, fontSize: 13)),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500)),
       ],
     );
   }
 }
+
+// ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -296,25 +376,29 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.2),
-          ),
+          Icon(Icons.history,
+              size: 80, color: Colors.white.withValues(alpha: 0.2)),
           const SizedBox(height: 16),
           Text(
             'Nessuna sessione',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.4),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+                color: Colors.white.withValues(alpha: 0.4),
+                fontSize: 16,
+                fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Le sessioni completate appariranno qui.',
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
           ),
         ],
       ),
     );
   }
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 String _formatDate(DateTime date) {
   const months = [
