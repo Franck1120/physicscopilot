@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package models contains the domain types that map directly to Supabase
 // database tables. These types are shared across the handlers and services
 // layers and are used as DTOs when serialising to/from JSON.

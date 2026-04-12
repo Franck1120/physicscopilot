@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package sentry provides a thin wrapper around the Sentry Go SDK.
 // It initialises Sentry from SENTRY_DSN and exposes helpers used by the
 // server's error handler.

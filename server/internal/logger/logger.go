@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package logger configures structured logging for the PhysicsCopilot server
 // and provides security-audit helpers. Call Init() once at startup before
 // any handler runs; use SecurityLog and HashIP for security-event logging.

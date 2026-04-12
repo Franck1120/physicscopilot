@@ -1,12 +1,16 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../main.dart'
+    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
 import '../widgets/progress_ring_widget.dart';
-import '../../main.dart'
-    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
 
 // ── StatsScreen ───────────────────────────────────────────────────────────────
 
@@ -27,7 +31,7 @@ class StatsScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF111111),
       ),
       body: sessions.isEmpty
-          ? _EmptyStats()
+          ? const _EmptyStats()
           : _StatsList(sessions: sessions),
     );
   }
@@ -36,6 +40,8 @@ class StatsScreen extends ConsumerWidget {
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyStats extends StatelessWidget {
+  const _EmptyStats();
+
   @override
   Widget build(BuildContext context) {
     return Center(

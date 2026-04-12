@@ -1,13 +1,17 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../widgets/safe_screen.dart';
 import '../providers/settings_provider.dart';
 import '../providers/voice_provider.dart';
 import '../utils/constants.dart';
+import '../widgets/safe_screen.dart';
 
 // ThemeMode is imported via flutter/material.dart above.
 

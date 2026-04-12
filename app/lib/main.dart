@@ -3,27 +3,28 @@
 
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:app_links/app_links.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
+
+import 'providers/equipment_provider.dart';
 import 'providers/prefs_provider.dart';
+import 'providers/settings_provider.dart';
+import 'screens/camera_screen.dart';
+import 'screens/equipment_selection_screen.dart';
+import 'screens/history_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/session_screen.dart';
+import 'screens/settings_screen.dart';
+import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'utils/strings.dart';
-import 'screens/equipment_selection_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/camera_screen.dart';
-import 'screens/session_screen.dart';
-import 'screens/history_screen.dart';
-import 'screens/settings_screen.dart';
-import 'providers/equipment_provider.dart';
-import 'providers/settings_provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
-import 'screens/login_screen.dart';
-import 'services/auth_service.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens

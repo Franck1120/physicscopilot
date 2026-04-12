@@ -8,6 +8,7 @@ linters:
     - bodyclose       # ensure HTTP response bodies are closed
     - contextcheck    # check context.Context is passed correctly
     - errcheck        # check error return values
+    - gosec           # security-oriented static analysis
     - errorlint       # detect common error wrapping mistakes
     - exhaustruct     # ensure structs are fully initialised (optional fields tagged)
     - gocognit        # cognitive complexity threshold
@@ -42,6 +43,21 @@ linters:
     - wrapcheck       # too verbose for internal packages
 
 linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gosec:
+    excludes:
+      - G104   # unhandled errors on deferred Close — covered by errcheck
+
+  govet:
+    enable-all: true
+
+  staticcheck:
+    checks:
+      - all
+
   gocognit:
     min-complexity: 20
 

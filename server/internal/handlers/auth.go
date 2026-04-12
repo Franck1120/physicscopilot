@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package handlers implements the HTTP and WebSocket handlers for the
 // PhysicsCopilot server. Each handler is a thin layer that validates input,
 // delegates to the service layer, and writes a structured JSON response.
