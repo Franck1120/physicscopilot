@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
 import 'providers/prefs_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/notification_service.dart';
@@ -103,6 +104,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   late final GoRouter _router;
   late final ProviderSubscription<bool> _onboardingSub;
   late final ProviderSubscription<EquipmentProfile?> _equipmentSub;
+  StreamSubscription<Uri>? _deepLinkSub;
 
   @override
   void initState() {
@@ -195,10 +197,28 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         if (prev?.id != next?.id) _router.refresh();
       },
     );
+
+    // Handle deep links: physicscopilot://session/new → navigate to /session
+    _deepLinkSub = AppLinks().uriLinkStream.listen(_handleDeepLink);
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme != 'physicscopilot') return;
+    final path = uri.pathSegments;
+    if (path.isEmpty) return;
+    switch (path.first) {
+      case 'session':
+        _router.go('/session');
+      case 'history':
+        _router.go('/history');
+      default:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    _deepLinkSub?.cancel();
     _onboardingSub.close();
     _equipmentSub.close();
     _router.dispose();
