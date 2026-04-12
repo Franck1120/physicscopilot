@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'dart:async';
 
 import 'package:flutter_tts/flutter_tts.dart';
