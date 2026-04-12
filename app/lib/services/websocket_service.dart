@@ -44,9 +44,15 @@ class WebSocketService {
   final _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  WebSocketService(this._baseUrl, {String? token, String language = 'it'})
+  /// Optional domain identifier forwarded to the server as `?domain=` so the
+  /// RAG service restricts knowledge-base lookups to a single problem domain
+  /// (e.g. `"hvac"`, `"printer"`). Empty string means global search.
+  final String _domain;
+
+  WebSocketService(this._baseUrl, {String? token, String language = 'it', String domain = ''})
       : _token = token,
-        _language = language;
+        _language = language,
+        _domain = domain;
 
   /// Connection status changes (connecting → connected → disconnected → …).
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
@@ -63,6 +69,7 @@ class WebSocketService {
       final token = _token; // local copy for Dart type promotion
       final queryParams = <String, String>{'lang': _language};
       if (token != null) queryParams['token'] = token;
+      if (_domain.isNotEmpty) queryParams['domain'] = _domain;
       final wsUri =
           Uri.parse('$_baseUrl/ws').replace(queryParameters: queryParams);
       _channel = WebSocketChannel.connect(wsUri);
