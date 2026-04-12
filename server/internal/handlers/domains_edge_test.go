@@ -19,6 +19,8 @@ func (l *largeMockDomainsService) KBDomains() []string {
 	return domains
 }
 
+func (l *largeMockDomainsService) DomainEntryCount(_ string) int { return 0 }
+
 // TestDomainsEdgeLargeListReturns100Entries verifies that a service returning
 // 100 domains is correctly forwarded to the client — no truncation or error.
 func TestDomainsEdgeLargeListReturns100Entries(t *testing.T) {
