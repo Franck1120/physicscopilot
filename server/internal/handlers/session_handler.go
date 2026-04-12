@@ -1,11 +1,22 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/fiber/v2"
+)
+
+const (
+	defaultPage     = 1
+	defaultPageSize = 20
+	maxPageSize     = 100
 )
 
 const maxDeviceFieldLen = 100
@@ -48,6 +59,21 @@ type sessionResponse struct {
 	LastActivity    time.Time     `json:"last_activity"`
 }
 
+// sessionETag computes a weak ETag over a single sessionResponse by hashing
+// the first 8 bytes of its SHA-256 JSON digest.
+func sessionETag(s sessionResponse) string {
+	b, _ := json.Marshal(s)
+	h := sha256.Sum256(b)
+	return fmt.Sprintf(`W/"%x"`, h[:8])
+}
+
+// sessionListETag computes a weak ETag over a slice of sessionResponse values.
+func sessionListETag(dtos []sessionResponse) string {
+	b, _ := json.Marshal(dtos)
+	h := sha256.Sum256(b)
+	return fmt.Sprintf(`W/"%x"`, h[:8])
+}
+
 // toResponse converts an internal SessionState to the public DTO.
 func toResponse(s services.SessionState) sessionResponse {
 	return sessionResponse{
@@ -85,6 +111,9 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	metrics.SessionCreatedTotal.Inc()
+	metrics.SessionsActive.Set(float64(len(h.sessions.ListSessions())))
+	c.Set("Cache-Control", "no-store")
 	return c.Status(fiber.StatusCreated).JSON(toResponse(*session))
 }
 
@@ -107,24 +136,162 @@ func validateSessionRequest(req createSessionRequest) error {
 	return nil
 }
 
+// parsePagination parses the page and page_size query parameters from the
+// request context and applies defaults and clamps. page defaults to 1 (min 1),
+// page_size defaults to 20 (min 1, max 100).
+func parsePagination(c *fiber.Ctx) (page, pageSize int) {
+	page = c.QueryInt("page", defaultPage)
+	if page < 1 {
+		page = 1
+	}
+	pageSize = c.QueryInt("page_size", defaultPageSize)
+	if pageSize < 1 {
+		pageSize = 1
+	}
+	if pageSize > maxPageSize {
+		pageSize = maxPageSize
+	}
+	return page, pageSize
+}
+
+// paginateSessions returns the sub-slice for the requested page together with
+// the total count of entries before slicing.
+func paginateSessions(dtos []sessionResponse, page, pageSize int) (paged []sessionResponse, total int) {
+	total = len(dtos)
+	start := (page - 1) * pageSize
+	if start >= total {
+		return []sessionResponse{}, total
+	}
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+	return dtos[start:end], total
+}
+
+// totalPages computes the number of pages required to hold total entries at
+// pageSize items per page. Returns at least 1 when total is 0.
+func totalPages(total, pageSize int) int {
+	if total == 0 {
+		return 1
+	}
+	pages := total / pageSize
+	if total%pageSize != 0 {
+		pages++
+	}
+	return pages
+}
+
+// filterSessions returns a new slice containing only the entries that match
+// all non-empty filter parameters. Comparisons are case-insensitive.
+func filterSessions(dtos []sessionResponse, status, deviceBrand, problem string) []sessionResponse {
+	if status == "" && deviceBrand == "" && problem == "" {
+		return dtos
+	}
+	statusLower := strings.ToLower(status)
+	brandLower := strings.ToLower(deviceBrand)
+	problemLower := strings.ToLower(problem)
+
+	out := make([]sessionResponse, 0, len(dtos))
+	for _, d := range dtos {
+		if status != "" && strings.ToLower(d.Status) != statusLower {
+			continue
+		}
+		if deviceBrand != "" && strings.ToLower(d.Device.Brand) != brandLower {
+			continue
+		}
+		if problem != "" && !strings.Contains(strings.ToLower(d.ProblemDetected), problemLower) {
+			continue
+		}
+		out = append(out, d)
+	}
+	return out
+}
+
+// sortSessions sorts the provided slice in-place according to sortBy and
+// sortOrder. Supported sortBy values: "created_at", "last_activity", "status".
+// sortOrder must be "asc" or "desc" (default "desc").
+func sortSessions(dtos []sessionResponse, sortBy, sortOrder string) {
+	if sortBy == "" {
+		sortBy = "last_activity"
+	}
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	asc := sortOrder == "asc"
+
+	sort.Slice(dtos, func(i, j int) bool {
+		var less bool
+		switch sortBy {
+		case "created_at":
+			less = dtos[i].CreatedAt.Before(dtos[j].CreatedAt)
+		case "status":
+			less = dtos[i].Status < dtos[j].Status
+		default: // "last_activity"
+			less = dtos[i].LastActivity.Before(dtos[j].LastActivity)
+		}
+		if asc {
+			return less
+		}
+		return !less
+	})
+}
+
 // ListSessions handles GET /api/sessions.
 //
-// Response 200: {"sessions": [...], "count": N}
+// Query parameters:
+//   - page (int, default 1): 1-based page number
+//   - page_size (int, default 20, max 100): items per page
+//   - sort_by (string): "created_at" | "last_activity" | "status" (default "last_activity")
+//   - sort_order (string): "asc" | "desc" (default "desc")
+//   - status (string): exact match on session status (case-insensitive)
+//   - device_brand (string): exact match on device brand (case-insensitive)
+//   - problem (string): substring match on problem_detected (case-insensitive)
+//
+// Response 200: {"sessions":[...],"count":N,"page":P,"page_size":S,"total":T,"total_pages":TP} with ETag header.
+// Response 304: when If-None-Match matches the current ETag.
 func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 	all := h.sessions.ListSessions()
 	dtos := make([]sessionResponse, len(all))
 	for i, s := range all {
 		dtos[i] = toResponse(s)
 	}
+
+	// 1. Filter
+	dtos = filterSessions(dtos,
+		c.Query("status"),
+		c.Query("device_brand"),
+		c.Query("problem"),
+	)
+
+	// 2. Sort
+	sortSessions(dtos, c.Query("sort_by"), c.Query("sort_order"))
+
+	etag := sessionListETag(dtos)
+	if c.Get("If-None-Match") == etag {
+		return c.SendStatus(fiber.StatusNotModified)
+	}
+
+	// 3. Paginate
+	page, pageSize := parsePagination(c)
+	paged, total := paginateSessions(dtos, page, pageSize)
+
+	c.Set("ETag", etag)
+	c.Set("Cache-Control", "private, no-cache")
 	return c.JSON(fiber.Map{
-		"sessions": dtos,
-		"count":    len(dtos),
+		"sessions":    paged,
+		"count":       len(paged),
+		"page":        page,
+		"page_size":   pageSize,
+		"total":       total,
+		"total_pages": totalPages(total, pageSize),
 	})
 }
 
 // GetSession handles GET /api/sessions/:id.
 //
-// Response 200: session JSON.
+// Response 200: session JSON with ETag and Cache-Control headers.
+// Response 304: when If-None-Match matches the current ETag.
 // Response 404: session not found.
 func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -132,7 +299,50 @@ func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
-	return c.JSON(toResponse(*session))
+	dto := toResponse(*session)
+	etag := sessionETag(dto)
+	if c.Get("If-None-Match") == etag {
+		return c.SendStatus(fiber.StatusNotModified)
+	}
+	c.Set("ETag", etag)
+	c.Set("Cache-Control", "private, max-age=0, must-revalidate")
+	return c.JSON(dto)
+}
+
+// sessionStepsResponse is the payload for GET /api/sessions/:id/steps.
+type sessionStepsResponse struct {
+	SessionID   string  `json:"session_id"`
+	CurrentStep int     `json:"current_step"`
+	TotalSteps  int     `json:"total_steps"`
+	ProgressPct float64 `json:"progress_pct"`
+}
+
+// GetSessionSteps handles GET /api/sessions/:id/steps.
+//
+// Response 200: {"session_id":"…","current_step":N,"total_steps":M,"progress_pct":P}
+// Response 404: session not found.
+func (h *SessionHandler) GetSessionSteps(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusNotFound, "session id is required")
+	}
+	session, err := h.sessions.GetSessionSnapshot(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, err.Error())
+	}
+
+	var pct float64
+	if session.TotalSteps > 0 {
+		pct = float64(session.CurrentStep) / float64(session.TotalSteps) * 100
+	}
+
+	c.Set("Cache-Control", "private, no-cache")
+	return c.JSON(sessionStepsResponse{
+		SessionID:   session.SessionID,
+		CurrentStep: session.CurrentStep,
+		TotalSteps:  session.TotalSteps,
+		ProgressPct: pct,
+	})
 }
 
 // DeleteSession handles DELETE /api/sessions/:id.
@@ -144,5 +354,7 @@ func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 	if err := h.sessions.DeleteSession(id); err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
+	metrics.SessionsActive.Set(float64(len(h.sessions.ListSessions())))
+	c.Set("Cache-Control", "no-store")
 	return c.SendStatus(fiber.StatusNoContent)
 }

@@ -53,6 +53,24 @@ docker-up: ## Start Supabase local stack (docker compose)
 docker-down: ## Stop Supabase local stack
 	docker compose down
 
+# ── Coverage ─────────────────────────────────────────────────────────────────
+
+coverage: test-coverage ## Alias: run tests with HTML coverage report
+
+# ── Release ──────────────────────────────────────────────────────────────────
+
+APP_VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILD_DATE  ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+release: ## Build release binaries for linux/amd64 with version injection
+	mkdir -p bin
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+		go build \
+		-ldflags="-s -w -X main.version=$(APP_VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
+		-o ../bin/server-linux-amd64 \
+		./cmd/server/
+	@echo "Release binary: bin/server-linux-amd64 (version=$(APP_VERSION) built=$(BUILD_DATE))"
+
 # ── Clean ─────────────────────────────────────────────────────────────────────
 
 clean: ## Remove build artefacts
