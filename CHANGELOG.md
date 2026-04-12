@@ -9,6 +9,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Wave 3: CI workflows (`flutter.yml`, `security.yml`), Dependabot config, CODEOWNERS, PR template
+- Wave 3: `scripts/setup.sh` and `scripts/test.sh` for dev onboarding
+- Wave 3: `.editorconfig`, `.golangci.yml`, `.gitattributes` for consistent tooling
+- Wave 3: `Dockerfile.dev` with Air hot-reload for development
+- Wave 3: `infra/nginx.conf` with TLS, WebSocket proxy, security headers
+- Wave 3: `infra/k8s/deployment.yaml` and `service.yaml` with HPA and Ingress
+- Wave 3: Comprehensive documentation: DEPLOYMENT, DEVELOPMENT, TESTING, MONITORING, SECURITY_AUDIT, PERFORMANCE, MOBILE_BUILD, KB_FORMAT, FAQ, ROADMAP, GLOSSARY
+- Wave 3: GoDoc comments on all Go source files
+- Wave 3: Dartdoc comments on all Dart public APIs
+- Wave 3: Stricter `analysis_options.yaml` with `prefer_const_constructors` and additional lint rules
 - `POST /api/feedback` endpoint — per-step thumbs-up/down with optional comment; persists to Postgres when `DATABASE_URL` is set, otherwise logs the event
 - `feedback` Supabase table with UUID PK, FK to sessions, CHECK constraint on rating, RLS enabled
 - `SaveFeedback` on the `DBBackend` interface and `DBService` implementation
