@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
+import '../screens/session_detail_screen.dart';
 import '../services/api_service.dart';
 import '../utils/strings.dart';
 import '../widgets/safe_screen.dart';
@@ -269,14 +270,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   void _showDetailSheet(BuildContext context, SessionRecord session) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            SessionDetailScreen(session: session),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final tween = Tween(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeInOut));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
-      isScrollControlled: true,
-      builder: (_) => _SessionDetailSheet(session: session),
     );
   }
 
