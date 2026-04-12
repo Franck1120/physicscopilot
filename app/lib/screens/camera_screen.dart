@@ -28,6 +28,10 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
+/// State for [CameraScreen].
+///
+/// Bridges camera frames to the WebSocket, handles STT forwarding, manages the
+/// AI response timeout, and controls the slide-in chat panel animation.
 class _CameraScreenState extends ConsumerState<CameraScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   StreamSubscription<Uint8List>? _frameSubscription;
