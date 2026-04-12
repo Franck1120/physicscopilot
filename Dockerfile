@@ -11,7 +11,7 @@ ARG APP_VERSION=dev
 ARG BUILD_DATE=unknown
 
 # ── Build stage ───────────────────────────────────────────────────────────────
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
