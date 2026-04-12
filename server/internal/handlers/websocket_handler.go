@@ -353,18 +353,29 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	lang := c.Query("lang", "it")
 	session, err := h.sessions.CreateSession("unknown", "unknown", lang)
 	if err != nil {
-		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
+		metrics.TrackError(metrics.CategoryDB, err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)
 		h.ipConns.remove(ip)
 		h.deregister(sc)
 		return
 	}
 	sessionID := session.SessionID
+	sessionStart := time.Now()
+	metrics.SessionStartedTotal.Inc()
 
 	// Track active sessions per language.
 	metrics.WsActiveSessionsByLanguage.WithLabelValues(lang).Inc()
 
+	// abandoned is set to true when the read loop exits due to an unexpected
+	// error; false means the client sent a normal or server-initiated close.
+	abandoned := false
+
 	defer func() {
+		if abandoned {
+			metrics.SessionAbandonedTotal.Inc()
+		} else {
+			metrics.SessionCompletedTotal.Inc()
+		}
 		metrics.WsActiveSessionsByLanguage.WithLabelValues(lang).Dec()
 		if delErr := h.sessions.DeleteSession(sessionID); delErr != nil {
 			slog.Warn("failed to delete session", "session_id", sessionID, "err", delErr)
@@ -390,12 +401,14 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	// ── Message loop ──────────────────────────────────────────────────────────
 	rateLimiter := &frameRateLimiter{max: h.maxFPS, windowStart: time.Now()}
+	firstResponseSent := false
 
 	for {
 		var msg IncomingMessage
 		if err := c.ReadJSON(&msg); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				slog.Warn("unexpected WebSocket close", "err", err, "session_id", sessionID)
+				abandoned = true
 			}
 			break
 		}
@@ -408,9 +421,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(sc, sessionID, userID, msg, rateLimiter)
+			h.handleFrame(sc, sessionID, userID, msg, rateLimiter, sessionStart, &firstResponseSent)
 		case "text":
-			h.handleText(sc, sessionID, userID, msg)
+			h.handleText(sc, sessionID, userID, msg, sessionStart, &firstResponseSent)
 		case "ping":
 			h.handlePing(sc)
 		default:
@@ -444,7 +457,7 @@ func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID strin
 
 // handleFrame processes a camera frame through the conversation service.
 // Frames that exceed the per-connection FPS cap or the per-user API budget are dropped.
-func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter) {
+func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter, sessionStart time.Time, firstResponseSent *bool) {
 	if !rl.allow() {
 		return
 	}
@@ -465,7 +478,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
-		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
+		metrics.TrackError(metrics.CategoryAI, err, "session_id", sessionID, "user_id", userID, "msg_type", "frame")
 		metrics.GeminiErrorsTotal.WithLabelValues("frame").Inc()
 		writeError(sc, err.Error())
 		return
@@ -477,11 +490,15 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 	}
 
 	metrics.WsFramesProcessedTotal.Inc()
+	if !*firstResponseSent {
+		metrics.TimeToFirstResponseSeconds.Observe(time.Since(sessionStart).Seconds())
+		*firstResponseSent = true
+	}
 	writeResponse(sc, result)
 }
 
 // handleText processes a text-only conversation turn.
-func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg IncomingMessage) {
+func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg IncomingMessage, sessionStart time.Time, firstResponseSent *bool) {
 	if !h.userRL.Allow(userID) {
 		writeError(sc, "rate limit exceeded — slow down")
 		return
@@ -499,7 +516,7 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg Incom
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, content)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
-		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
+		metrics.TrackError(metrics.CategoryAI, err, "session_id", sessionID, "user_id", userID, "msg_type", "text")
 		metrics.GeminiErrorsTotal.WithLabelValues("text").Inc()
 		writeError(sc, err.Error())
 		return
@@ -509,6 +526,10 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg Incom
 		return
 	}
 
+	if !*firstResponseSent {
+		metrics.TimeToFirstResponseSeconds.Observe(time.Since(sessionStart).Seconds())
+		*firstResponseSent = true
+	}
 	writeResponse(sc, result)
 }
 

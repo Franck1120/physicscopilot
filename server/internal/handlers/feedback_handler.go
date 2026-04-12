@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -66,9 +67,9 @@ func (h *FeedbackHandler) Submit(c *fiber.Ctx) error {
 		ctx, cancel := context.WithTimeout(c.UserContext(), 5*time.Second)
 		defer cancel()
 		if err := h.db.SaveFeedback(ctx, entry); err != nil {
-			// Non-fatal: log at WARN and still return 202 so the client is not
+			// Non-fatal: track and still return 202 so the client is not
 			// blocked by a transient DB failure.
-			slog.Warn("feedback DB save failed", "session_id", req.SessionID, "err", err)
+			metrics.TrackError(metrics.CategoryDB, err, "session_id", req.SessionID)
 		}
 	} else {
 		slog.Info("feedback received (no DB configured)",
