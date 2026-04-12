@@ -1,0 +1,369 @@
+openapi: "3.0.3"
+info:
+  title: PhysicsCopilot API
+  version: "0.1.0"
+  description: |
+    REST and WebSocket API for the PhysicsCopilot AI repair-assistant server.
+
+    **Authentication:**
+    - `/api/*` — Bearer JWT via `Authorization: Bearer <token>` header or `?token=<jwt>` query param.
+      When `SUPABASE_JWT_SECRET` is not set the server runs in dev mode and skips validation.
+    - `/metrics` — HTTP Basic Auth (username `admin`, password from `METRICS_PASSWORD` env var).
+
+    **Rate limiting:** 60 requests/min per IP, burst 10, applied to `/health` and all `/api/*` routes.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://your-server.example.com
+    description: Production (replace with your actual host)
+
+tags:
+  - name: Monitoring
+    description: Health and observability endpoints
+  - name: Sessions
+    description: Session lifecycle management
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT. Pass via Authorization header or ?token= query param.
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Auth for /metrics (username "admin", password from METRICS_PASSWORD).
+
+  schemas:
+    Device:
+      type: object
+      required: [brand, model]
+      properties:
+        brand:
+          type: string
+          example: "Prusa"
+        model:
+          type: string
+          example: "MK4"
+
+    Session:
+      type: object
+      required: [id, status, device, current_step, total_steps, created_at, last_activity]
+      properties:
+        id:
+          type: string
+          example: "a1b2c3d4e5f6"
+        status:
+          type: string
+          enum: [active]
+          example: "active"
+        device:
+          $ref: '#/components/schemas/Device'
+        problem_detected:
+          type: string
+          nullable: true
+          description: Detected problem description, omitted when null.
+          example: "Stringing detected near the extruder"
+        current_step:
+          type: integer
+          minimum: 0
+          example: 2
+        total_steps:
+          type: integer
+          minimum: 0
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-04-12T14:30:00Z"
+        last_activity:
+          type: string
+          format: date-time
+          example: "2026-04-12T14:35:00Z"
+
+    SessionList:
+      type: object
+      required: [sessions, count]
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        count:
+          type: integer
+          minimum: 0
+          example: 3
+
+    CreateSessionRequest:
+      type: object
+      properties:
+        device_brand:
+          type: string
+          maxLength: 100
+          example: "Prusa"
+          description: Must not contain '<' or '>'. Max 100 characters.
+        device_model:
+          type: string
+          maxLength: 100
+          example: "MK4"
+          description: Must not contain '<' or '>'. Max 100 characters.
+
+    HealthResponse:
+      type: object
+      required: [status, service, version, uptime, active_connections, memory_mb, db_status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          example: "ok"
+        service:
+          type: string
+          example: "physicscopilot"
+        version:
+          type: string
+          example: "0.1.0"
+        uptime:
+          type: string
+          description: Duration since server start in Go duration format.
+          example: "3h14m22s"
+        active_connections:
+          type: integer
+          minimum: 0
+          example: 2
+        memory_mb:
+          type: integer
+          minimum: 0
+          description: Heap memory allocated in MB.
+          example: 18
+        db_status:
+          type: string
+          enum: [ok, unavailable, not_configured]
+          description: |
+            - `ok` — Postgres is reachable.
+            - `unavailable` — DATABASE_URL set but Postgres unreachable.
+            - `not_configured` — DATABASE_URL not set.
+          example: "not_configured"
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: "session \"xyz\" not found"
+
+paths:
+  /health:
+    get:
+      summary: Server health check
+      description: |
+        Returns server liveness, build version, uptime, open WebSocket connections,
+        heap memory usage, and optional Postgres reachability.
+        Rate-limited to 60 req/min per IP.
+      tags: [Monitoring]
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "ok"
+                service: "physicscopilot"
+                version: "0.1.0"
+                uptime: "3h14m22s"
+                active_connections: 2
+                memory_mb: 18
+                db_status: "not_configured"
+
+  /metrics:
+    get:
+      summary: Prometheus metrics scrape endpoint
+      description: |
+        Exposes Prometheus metrics in the standard text exposition format.
+        Requires HTTP Basic Auth. If `METRICS_PASSWORD` is not set the endpoint
+        returns 503 (disabled) regardless of credentials.
+      tags: [Monitoring]
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Prometheus text format metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP http_requests_total Total number of HTTP requests.
+                # TYPE http_requests_total counter
+                http_requests_total{method="GET",path="/health",status="200"} 142
+        '401':
+          description: Missing or invalid Basic Auth credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Endpoint disabled — METRICS_PASSWORD env var not set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/docs:
+    get:
+      summary: OpenAPI specification (this document)
+      description: Serves the OpenAPI 3.0 YAML specification for this API.
+      tags: [Monitoring]
+      responses:
+        '200':
+          description: OpenAPI YAML spec
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/sessions:
+    post:
+      summary: Create a new session
+      description: |
+        Creates an in-memory session associated with the given device.
+        The session is also persisted to Postgres if `DATABASE_URL` is set.
+        Input validation: each field max 100 chars, no `<` or `>` characters.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+            example:
+              device_brand: "Prusa"
+              device_model: "MK4"
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Malformed request body or invalid field values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List all sessions
+      description: Returns all active in-memory sessions with total count.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionList'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sessions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Session ID returned by POST /api/sessions
+        example: "a1b2c3d4e5f6"
+
+    get:
+      summary: Get a session by ID
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a session by ID
+      description: |
+        Removes the session from in-memory store and soft-deletes it in Postgres
+        (status set to `completed`) if DATABASE_URL is configured.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Session deleted — no response body
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+# ---------------------------------------------------------------------------
+# WebSocket endpoint — documented as a note (not natively supported by OAS 3.0)
+# ---------------------------------------------------------------------------
+# Endpoint:  GET /ws  (upgrade to WebSocket)
+# Auth:      Bearer JWT via ?token=<jwt> query param or Authorization header.
+#            Skipped when SUPABASE_JWT_SECRET is not set (dev mode).
+# Limits:
+#   - Max 10 concurrent connections per source IP
+#   - Max message size: 10 MB per frame
+#   - Frame rate: 5 camera frames/sec per connection (excess silently dropped)
+#   - Server heartbeat: Ping every 30 s, connection closed if no Pong in 40 s
+#
+# Client → Server message types: frame | text | ping
+# Server → Client message types: response | pong | error
+#
+# See docs/API.md for the full WebSocket protocol documentation including
+# message schemas, sequence diagrams, and close codes.

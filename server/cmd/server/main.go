@@ -120,7 +120,9 @@ func newFiberApp(
 	db handlers.DBPinger, // nil when DATABASE_URL not set
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName: "PhysicsCopilot Server v" + ver,
+		AppName:     "PhysicsCopilot Server v" + ver,
+		// Reject request bodies larger than 1 MB to prevent memory exhaustion.
+		BodyLimit:   1 * 1024 * 1024,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
@@ -158,6 +160,22 @@ func newFiberApp(
 
 	app.Use(middleware.StructuredLogger())
 
+	// Request timeout — abort handlers that take longer than 30 s.
+	app.Use(func(c *fiber.Ctx) error {
+		ctx, cancel := context.WithTimeout(c.UserContext(), 30*time.Second)
+		defer cancel()
+		c.SetUserContext(ctx)
+		return c.Next()
+	})
+
+	// HSTS — only in production to avoid breaking local HTTP dev.
+	if os.Getenv("APP_ENV") == "production" {
+		app.Use(func(c *fiber.Ctx) error {
+			c.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+			return c.Next()
+		})
+	}
+
 	app.Use(func(c *fiber.Ctx) error {
 		if c.Path() == "/metrics" {
 			return c.Next()
@@ -177,6 +195,7 @@ func newFiberApp(
 	app.Get("/health", handlers.NewHealthHandler(ver, startTime, wsHandler, db))
 
 	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
+	api.Get("/docs", handlers.OpenAPIHandler())
 	api.Post("/sessions", sessionHandler.CreateSession)
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)
