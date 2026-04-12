@@ -12,6 +12,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// newVersionAPITestApp returns a minimal Fiber application with VersionHandler
+// mounted at GET /api/version using fixed, deterministic build metadata.
+// Shared by all test functions in this file to avoid repeated setup boilerplate.
 func newVersionAPITestApp(t *testing.T) *fiber.App {
 	t.Helper()
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
