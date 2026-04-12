@@ -38,7 +38,7 @@ func setupConversationTest(t *testing.T, structuredJSON string) (*ConversationSe
 	server := geminiStubServer(structuredJSON)
 
 	sessions := NewSessionService()
-	session, err := sessions.CreateSession("Prusa", "MK4", "")
+	session, err := sessions.CreateSession("Prusa", "MK4", "", "")
 	if err != nil {
 		server.Close()
 		t.Fatalf("create session: %v", err)
@@ -269,7 +269,7 @@ func TestProcessTextMessageNonexistentSession(t *testing.T) {
 
 func TestGetSessionStep(t *testing.T) {
 	sessions := NewSessionService()
-	session, _ := sessions.CreateSession("Bambu", "X1C", "")
+	session, _ := sessions.CreateSession("Bambu", "X1C", "", "")
 	_ = sessions.UpdateStep(session.SessionID, 5, 12)
 
 	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
@@ -337,7 +337,7 @@ func TestProcessFrameGeminiError(t *testing.T) {
 	defer server.Close()
 
 	sessions := NewSessionService()
-	session, _ := sessions.CreateSession("Creality", "Ender 3", "")
+	session, _ := sessions.CreateSession("Creality", "Ender 3", "", "")
 	gemini := newTestGeminiService(server.URL)
 	svc := NewConversationService(sessions, gemini, nil)
 
@@ -370,7 +370,7 @@ func TestProcessFrameClearsHashOnGeminiError(t *testing.T) {
 	defer server.Close()
 
 	sessions := NewSessionService()
-	session, _ := sessions.CreateSession("Creality", "Ender 3", "")
+	session, _ := sessions.CreateSession("Creality", "Ender 3", "", "")
 	gemini := newTestGeminiService(server.URL)
 	svc := NewConversationService(sessions, gemini, nil)
 

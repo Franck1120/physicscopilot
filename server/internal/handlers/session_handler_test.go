@@ -110,8 +110,8 @@ func TestListSessionsEmpty(t *testing.T) {
 
 func TestListSessionsAfterCreate(t *testing.T) {
 	app, sessions := newSessionTestApp(t)
-	sessions.CreateSession("Bambu", "X1C", "") //nolint:errcheck
-	sessions.CreateSession("Prusa", "MK4", "") //nolint:errcheck
+	sessions.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+	sessions.CreateSession("Prusa", "MK4", "", "") //nolint:errcheck
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
 	resp, err := app.Test(req)
@@ -128,7 +128,7 @@ func TestListSessionsAfterCreate(t *testing.T) {
 
 func TestGetSessionReturnsState(t *testing.T) {
 	app, sessions := newSessionTestApp(t)
-	sess, _ := sessions.CreateSession("Bambu", "X1C", "")
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
 	resp, err := app.Test(req)
@@ -167,7 +167,7 @@ func TestGetSessionNotFoundReturns404(t *testing.T) {
 
 func TestDeleteSessionReturns204(t *testing.T) {
 	app, sessions := newSessionTestApp(t)
-	sess, _ := sessions.CreateSession("Prusa", "MK4", "")
+	sess, _ := sessions.CreateSession("Prusa", "MK4", "", "")
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/sessions/"+sess.SessionID, nil)
 	resp, err := app.Test(req)
@@ -194,7 +194,7 @@ func TestDeleteSessionNotFoundReturns404(t *testing.T) {
 
 func TestDeleteSessionThenGetReturns404(t *testing.T) {
 	app, sessions := newSessionTestApp(t)
-	sess, _ := sessions.CreateSession("Prusa", "MK4", "")
+	sess, _ := sessions.CreateSession("Prusa", "MK4", "", "")
 
 	// Delete
 	delReq := httptest.NewRequest(http.MethodDelete, "/api/sessions/"+sess.SessionID, nil)

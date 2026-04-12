@@ -18,6 +18,10 @@ const maxConversationHistory = 20
 // maxContextMessages is how many recent messages BuildContextForGemini includes.
 const maxContextMessages = 10
 
+// maxActiveSessionsPerUser is the maximum number of concurrent active
+// in-memory sessions allowed for a single authenticated user.
+const maxActiveSessionsPerUser = 5
+
 // DeviceInfo holds identifying information about the device being repaired.
 type DeviceInfo struct {
 	Brand string `json:"brand"`
@@ -35,6 +39,7 @@ type ConversationMessage struct {
 // SessionState holds the in-memory state of an active repair session.
 type SessionState struct {
 	SessionID           string                `json:"session_id"`
+	UserID              string                `json:"user_id,omitempty"`
 	DeviceInfo          DeviceInfo            `json:"device_info"`
 	Language            string                `json:"language,omitempty"` // BCP-47 code; defaults to "it"
 	ConversationHistory []ConversationMessage `json:"conversation_history"`
@@ -93,6 +98,23 @@ func (s *SessionService) HydrateFromDB(ctx context.Context) error {
 	return nil
 }
 
+// ActiveSessionCount returns how many in-memory sessions are associated
+// with the given userID. Returns 0 for empty userID.
+func (s *SessionService) ActiveSessionCount(userID string) int {
+	if userID == "" {
+		return 0
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	count := 0
+	for _, sess := range s.sessions {
+		if sess.UserID == userID {
+			count++
+		}
+	}
+	return count
+}
+
 // ListSessions returns a snapshot of every in-memory session, ordered
 // arbitrarily. Each entry is a shallow copy safe for concurrent reads.
 func (s *SessionService) ListSessions() []SessionState {
@@ -107,17 +129,22 @@ func (s *SessionService) ListSessions() []SessionState {
 }
 
 // CreateSession initializes a new repair session for the given device.
+// userID identifies the authenticated user (empty in dev/anonymous mode).
 // language is a BCP-47 code (e.g. "it", "en") controlling the AI response language;
 // defaults to "it" when empty.
 // If a DB backend is attached, the session is also persisted to Postgres
 // (best-effort: a DB error is logged but does not fail the in-memory create).
-func (s *SessionService) CreateSession(deviceBrand, deviceModel, language string) (*SessionState, error) {
+func (s *SessionService) CreateSession(deviceBrand, deviceModel, userID, language string) (*SessionState, error) {
+	if userID != "" && s.ActiveSessionCount(userID) >= maxActiveSessionsPerUser {
+		return nil, fmt.Errorf("user %q has reached the maximum of %d active sessions", userID, maxActiveSessionsPerUser)
+	}
 	if language == "" {
 		language = "it"
 	}
 	now := time.Now()
 	session := &SessionState{
 		SessionID: uuid.New().String(),
+		UserID:    userID,
 		DeviceInfo: DeviceInfo{
 			Brand: deviceBrand,
 			Model: deviceModel,

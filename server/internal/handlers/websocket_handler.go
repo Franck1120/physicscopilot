@@ -352,7 +352,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	// ── Session ───────────────────────────────────────────────────────────────
 	lang := c.Query("lang", "it")
-	session, err := h.sessions.CreateSession("unknown", "unknown", lang)
+	session, err := h.sessions.CreateSession("unknown", "unknown", userID, lang)
 	if err != nil {
 		metrics.TrackError(metrics.CategoryDB, err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)

@@ -72,7 +72,7 @@ func TestSessionServiceSyncsCreateToDB(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, err := svc.CreateSession("Apple", "iPhone 15", "")
+	sess, err := svc.CreateSession("Apple", "iPhone 15", "", "")
 	if err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}
@@ -87,7 +87,7 @@ func TestSessionServiceSyncsDeleteToDB(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, _ := svc.CreateSession("Samsung", "Galaxy S24", "")
+	sess, _ := svc.CreateSession("Samsung", "Galaxy S24", "", "")
 	if err := svc.DeleteSession(sess.SessionID); err != nil {
 		t.Fatalf("DeleteSession: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestSessionServiceDBWriteErrorDoesNotFailInMemory(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, err := svc.CreateSession("Google", "Pixel 9", "")
+	sess, err := svc.CreateSession("Google", "Pixel 9", "", "")
 	if err != nil {
 		t.Fatalf("expected in-memory create to succeed despite DB error, got: %v", err)
 	}
@@ -274,8 +274,8 @@ func TestCleanupExpiredSessionsMarksDBExpired(t *testing.T) {
 	svc.SetDB(db)
 
 	// Create two sessions; make one look old by pushing LastActivity back.
-	old, _ := svc.CreateSession("Bambu", "A1", "")
-	fresh, _ := svc.CreateSession("Prusa", "MK4", "")
+	old, _ := svc.CreateSession("Bambu", "A1", "", "")
+	fresh, _ := svc.CreateSession("Prusa", "MK4", "", "")
 
 	// Manipulate LastActivity directly via the in-memory pointer.
 	svc.mu.Lock()
@@ -302,7 +302,7 @@ func TestCleanupExpiredSessionsMarksDBExpired(t *testing.T) {
 
 func TestCleanupExpiredSessionsNoOp(t *testing.T) {
 	svc := NewSessionService()
-	svc.CreateSession("Apple", "iPhone", "") //nolint:errcheck
+	svc.CreateSession("Apple", "iPhone", "", "") //nolint:errcheck
 	n := svc.CleanupExpiredSessions(30 * time.Minute)
 	if n != 0 {
 		t.Errorf("expected 0 cleanups for fresh sessions, got %d", n)

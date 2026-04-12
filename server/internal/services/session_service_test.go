@@ -22,7 +22,7 @@ func TestNewSessionService(t *testing.T) {
 func TestCreateSession(t *testing.T) {
 	svc := NewSessionService()
 
-	session, err := svc.CreateSession("Creality", "Ender 3", "")
+	session, err := svc.CreateSession("Creality", "Ender 3", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestCreateSession(t *testing.T) {
 func TestGetSession(t *testing.T) {
 	svc := NewSessionService()
 
-	session, _ := svc.CreateSession("Prusa", "MK4", "")
+	session, _ := svc.CreateSession("Prusa", "MK4", "", "")
 
 	retrieved, err := svc.GetSession(session.SessionID)
 	if err != nil {
@@ -87,7 +87,7 @@ func TestGetSessionNotFound(t *testing.T) {
 
 func TestAddMessage(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Bambu", "X1C", "")
+	session, _ := svc.CreateSession("Bambu", "X1C", "", "")
 
 	err := svc.AddMessage(session.SessionID, "user", "My printer is making a clicking noise", false)
 	if err != nil {
@@ -116,7 +116,7 @@ func TestAddMessage(t *testing.T) {
 
 func TestAddMessageWithImage(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Bambu", "X1C", "")
+	session, _ := svc.CreateSession("Bambu", "X1C", "", "")
 
 	err := svc.AddMessage(session.SessionID, "user", "Here is a photo of the issue", true)
 	if err != nil {
@@ -131,7 +131,7 @@ func TestAddMessageWithImage(t *testing.T) {
 
 func TestAddMessageRollingWindow(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Creality", "Ender 3", "")
+	session, _ := svc.CreateSession("Creality", "Ender 3", "", "")
 
 	// Add 25 messages — only the last 20 should remain
 	for i := 0; i < 25; i++ {
@@ -162,7 +162,7 @@ func TestAddMessageNonexistentSession(t *testing.T) {
 
 func TestAddMessageUpdatesLastActivity(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Prusa", "MK4", "")
+	session, _ := svc.CreateSession("Prusa", "MK4", "", "")
 
 	before := session.LastActivity
 
@@ -179,7 +179,7 @@ func TestAddMessageUpdatesLastActivity(t *testing.T) {
 
 func TestUpdateStep(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Creality", "Ender 3", "")
+	session, _ := svc.CreateSession("Creality", "Ender 3", "", "")
 
 	err := svc.UpdateStep(session.SessionID, 3, 10)
 	if err != nil {
@@ -206,7 +206,7 @@ func TestUpdateStepNonexistentSession(t *testing.T) {
 
 func TestSetProblemDetected(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Bambu", "X1C", "")
+	session, _ := svc.CreateSession("Bambu", "X1C", "", "")
 
 	err := svc.SetProblemDetected(session.SessionID, "Clogged nozzle detected")
 	if err != nil {
@@ -230,7 +230,7 @@ func TestSetProblemDetectedNonexistentSession(t *testing.T) {
 
 func TestBuildContextForGemini(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Prusa", "MK4", "")
+	session, _ := svc.CreateSession("Prusa", "MK4", "", "")
 
 	_ = svc.AddMessage(session.SessionID, "user", "My printer is clicking", false)
 	_ = svc.AddMessage(session.SessionID, "assistant", "Can you show the extruder?", false)
@@ -254,7 +254,7 @@ func TestBuildContextForGemini(t *testing.T) {
 
 func TestBuildContextForGeminiLimitsTen(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Creality", "Ender 3", "")
+	session, _ := svc.CreateSession("Creality", "Ender 3", "", "")
 
 	// Add 15 messages
 	for i := 0; i < 15; i++ {
@@ -279,7 +279,7 @@ func TestBuildContextForGeminiLimitsTen(t *testing.T) {
 
 func TestBuildContextForGeminiEmptyHistory(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Bambu", "X1C", "")
+	session, _ := svc.CreateSession("Bambu", "X1C", "", "")
 
 	context, err := svc.BuildContextForGemini(session.SessionID)
 	if err != nil {
@@ -301,7 +301,7 @@ func TestBuildContextForGeminiNonexistentSession(t *testing.T) {
 
 func TestDeleteSession(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Creality", "Ender 3", "")
+	session, _ := svc.CreateSession("Creality", "Ender 3", "", "")
 
 	err := svc.DeleteSession(session.SessionID)
 	if err != nil {
@@ -327,8 +327,8 @@ func TestCleanupExpiredSessions(t *testing.T) {
 	svc := NewSessionService()
 
 	// Create two sessions
-	session1, _ := svc.CreateSession("Prusa", "MK4", "")
-	session2, _ := svc.CreateSession("Bambu", "X1C", "")
+	session1, _ := svc.CreateSession("Prusa", "MK4", "", "")
+	session2, _ := svc.CreateSession("Bambu", "X1C", "", "")
 
 	// Manually set session1's LastActivity to 2 hours ago
 	svc.mu.Lock()
@@ -353,7 +353,7 @@ func TestCleanupExpiredSessions(t *testing.T) {
 
 func TestCleanupExpiredSessionsKeepsActive(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Creality", "Ender 3", "")
+	session, _ := svc.CreateSession("Creality", "Ender 3", "", "")
 
 	// Cleanup with very large maxAge — nothing should be removed
 	svc.CleanupExpiredSessions(24 * time.Hour)
@@ -366,7 +366,7 @@ func TestCleanupExpiredSessionsKeepsActive(t *testing.T) {
 
 func TestGetSessionSnapshot(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Prusa", "MK4", "")
+	session, _ := svc.CreateSession("Prusa", "MK4", "", "")
 	_ = svc.UpdateStep(session.SessionID, 3, 10)
 
 	snapshot, err := svc.GetSessionSnapshot(session.SessionID)
@@ -405,7 +405,7 @@ func TestGetSessionSnapshotNotFound(t *testing.T) {
 
 func TestConcurrentAccess(t *testing.T) {
 	svc := NewSessionService()
-	session, _ := svc.CreateSession("Prusa", "MK4", "")
+	session, _ := svc.CreateSession("Prusa", "MK4", "", "")
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, 100)
@@ -457,7 +457,7 @@ func TestSessionServiceDBSaveError(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, err := svc.CreateSession("Prusa", "MK4", "it")
+	sess, err := svc.CreateSession("Prusa", "MK4", "", "it")
 	if err != nil {
 		t.Fatalf("CreateSession must succeed even when DB save fails: %v", err)
 	}
@@ -481,7 +481,7 @@ func TestSessionServiceDBDeleteError(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, _ := svc.CreateSession("Bambu", "X1C", "it")
+	sess, _ := svc.CreateSession("Bambu", "X1C", "", "it")
 	if err := svc.DeleteSession(sess.SessionID); err != nil {
 		t.Fatalf("DeleteSession must succeed even when DB delete fails: %v", err)
 	}
@@ -513,7 +513,7 @@ func TestSessionServiceHydrateFromDBError(t *testing.T) {
 
 func TestSessionServiceConcurrentMixedAccess(t *testing.T) {
 	svc := NewSessionService()
-	sess, _ := svc.CreateSession("Creality", "K1", "it")
+	sess, _ := svc.CreateSession("Creality", "K1", "", "it")
 	sessionID := sess.SessionID
 
 	const goroutines = 20
