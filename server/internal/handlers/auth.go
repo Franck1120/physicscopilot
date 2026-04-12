@@ -19,6 +19,7 @@ func WSAuthMiddleware() fiber.Handler {
 	secret := os.Getenv("SUPABASE_JWT_SECRET")
 	if secret == "" {
 		// Dev mode: no secret configured → skip validation.
+		// main() already logs a warning and exits in production before reaching here.
 		return func(c *fiber.Ctx) error { return c.Next() }
 	}
 
