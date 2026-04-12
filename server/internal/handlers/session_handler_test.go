@@ -23,6 +23,7 @@ func newSessionTestApp(t *testing.T) (*fiber.App, *services.SessionService) {
 	app.Post("/api/sessions", h.CreateSession)
 	app.Get("/api/sessions", h.ListSessions)
 	app.Get("/api/sessions/:id", h.GetSession)
+	app.Get("/api/sessions/:id/steps", h.GetSessionSteps)
 	app.Delete("/api/sessions/:id", h.DeleteSession)
 	return app, sessions
 }
@@ -613,6 +614,91 @@ func TestGetSessionIfNoneMatchMismatchReturns200(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("want 200 on ETag mismatch, got %d", resp.StatusCode)
+	}
+}
+
+// ── GetSessionSteps tests ─────────────────────────────────────────────────────
+
+func TestGetSessionStepsReturns200WithCorrectFields(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+	sessions.UpdateStep(sess.SessionID, 2, 5) //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID+"/steps", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		t.Fatalf("want 200, got %d: %s", resp.StatusCode, b)
+	}
+
+	var dto sessionStepsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if dto.SessionID != sess.SessionID {
+		t.Errorf("session_id: want %q, got %q", sess.SessionID, dto.SessionID)
+	}
+	if dto.CurrentStep != 2 {
+		t.Errorf("current_step: want 2, got %d", dto.CurrentStep)
+	}
+	if dto.TotalSteps != 5 {
+		t.Errorf("total_steps: want 5, got %d", dto.TotalSteps)
+	}
+	if dto.ProgressPct != 40.0 {
+		t.Errorf("progress_pct: want 40.0, got %f", dto.ProgressPct)
+	}
+}
+
+func TestGetSessionStepsNotFoundReturns404(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/nonexistent-id/steps", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("want 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetSessionStepsZeroTotalStepsProgressIsZero(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID+"/steps", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("want 200, got %d", resp.StatusCode)
+	}
+
+	var dto sessionStepsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if dto.ProgressPct != 0.0 {
+		t.Errorf("progress_pct with 0 total steps: want 0.0, got %f", dto.ProgressPct)
+	}
+}
+
+func TestGetSessionStepsCacheControlHeader(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID+"/steps", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "private, no-cache" {
+		t.Errorf("Cache-Control: want %q, got %q", "private, no-cache", cc)
 	}
 }
 

@@ -309,6 +309,42 @@ func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	return c.JSON(dto)
 }
 
+// sessionStepsResponse is the payload for GET /api/sessions/:id/steps.
+type sessionStepsResponse struct {
+	SessionID   string  `json:"session_id"`
+	CurrentStep int     `json:"current_step"`
+	TotalSteps  int     `json:"total_steps"`
+	ProgressPct float64 `json:"progress_pct"`
+}
+
+// GetSessionSteps handles GET /api/sessions/:id/steps.
+//
+// Response 200: {"session_id":"…","current_step":N,"total_steps":M,"progress_pct":P}
+// Response 404: session not found.
+func (h *SessionHandler) GetSessionSteps(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusNotFound, "session id is required")
+	}
+	session, err := h.sessions.GetSessionSnapshot(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, err.Error())
+	}
+
+	var pct float64
+	if session.TotalSteps > 0 {
+		pct = float64(session.CurrentStep) / float64(session.TotalSteps) * 100
+	}
+
+	c.Set("Cache-Control", "private, no-cache")
+	return c.JSON(sessionStepsResponse{
+		SessionID:   session.SessionID,
+		CurrentStep: session.CurrentStep,
+		TotalSteps:  session.TotalSteps,
+		ProgressPct: pct,
+	})
+}
+
 // DeleteSession handles DELETE /api/sessions/:id.
 //
 // Response 204: session deleted.
