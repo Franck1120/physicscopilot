@@ -43,6 +43,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   bool _hasMore = true;
   bool _isLoadingMore = false;
   String _searchQuery = '';
+  // null = all, 'resolved', 'unresolved'
+  String? _statusFilter;
+  // null = all domains
+  String? _domainFilter;
 
   @override
   void initState() {
@@ -116,15 +120,36 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
     final isSyncing = serverAsync.isLoading;
 
-    // Apply search filter (case-insensitive, matches device name or problem).
-    final filteredSessions = _searchQuery.isEmpty
-        ? allSessions
-        : allSessions.where((s) {
-            final q = _searchQuery.toLowerCase();
-            return s.equipmentName.toLowerCase().contains(q) ||
-                s.problemDescription.toLowerCase().contains(q) ||
-                s.summary.toLowerCase().contains(q);
-          }).toList();
+    // Collect unique domain names for the domain filter chips.
+    final domains = allSessions
+        .map((s) => s.equipmentName)
+        .where((n) => n.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    // Apply search + status + domain filters.
+    final filteredSessions = allSessions.where((s) {
+      // Search query
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final matches = s.equipmentName.toLowerCase().contains(q) ||
+            s.problemDescription.toLowerCase().contains(q) ||
+            s.summary.toLowerCase().contains(q);
+        if (!matches) return false;
+      }
+      // Status filter
+      if (_statusFilter != null) {
+        final isResolved = s.status == SessionStatus.resolved;
+        if (_statusFilter == 'resolved' && !isResolved) return false;
+        if (_statusFilter == 'unresolved' && isResolved) return false;
+      }
+      // Domain filter
+      if (_domainFilter != null && s.equipmentName != _domainFilter) {
+        return false;
+      }
+      return true;
+    }).toList();
 
     // Paginate locally: show up to _page * _pageSize items.
     final visibleCount = (_page * _pageSize).clamp(0, filteredSessions.length);
@@ -175,6 +200,19 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       body: Column(
         children: [
           _SearchBar(controller: _searchController),
+          _FilterChipsRow(
+            statusFilter: _statusFilter,
+            domainFilter: _domainFilter,
+            domains: domains,
+            onStatusChanged: (v) => setState(() {
+              _statusFilter = v;
+              _resetPagination();
+            }),
+            onDomainChanged: (v) => setState(() {
+              _domainFilter = v;
+              _resetPagination();
+            }),
+          ),
           Expanded(
             child: RefreshIndicator(
         color: const Color(0xFF10B981),
@@ -636,6 +674,99 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Filter chips ──────────────────────────────────────────────────────────────
+
+class _FilterChipsRow extends StatelessWidget {
+  const _FilterChipsRow({
+    required this.statusFilter,
+    required this.domainFilter,
+    required this.domains,
+    required this.onStatusChanged,
+    required this.onDomainChanged,
+  });
+
+  final String? statusFilter;
+  final String? domainFilter;
+  final List<String> domains;
+  final ValueChanged<String?> onStatusChanged;
+  final ValueChanged<String?> onDomainChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const chipColor = Color(0xFF1E1E1E);
+    const selectedColor = Color(0xFF10B981);
+
+    Widget statusChip(String label, String? value) {
+      final selected = statusFilter == value;
+      return Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: FilterChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => onStatusChanged(selected ? null : value),
+          backgroundColor: chipColor,
+          selectedColor: selectedColor.withAlpha(40),
+          checkmarkColor: selectedColor,
+          labelStyle: TextStyle(
+            color: selected ? selectedColor : Colors.white70,
+            fontSize: 12,
+          ),
+          side: BorderSide(
+            color: selected ? selectedColor : Colors.white24,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          statusChip('Tutti', null),
+          statusChip('Risolti', 'resolved'),
+          statusChip('Non risolti', 'unresolved'),
+          if (domains.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            const VerticalDivider(width: 1, color: Colors.white24, indent: 4, endIndent: 4),
+            const SizedBox(width: 8),
+            for (final domain in domains.take(5))
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: FilterChip(
+                  label: Text(domain, overflow: TextOverflow.ellipsis),
+                  selected: domainFilter == domain,
+                  onSelected: (_) =>
+                      onDomainChanged(domainFilter == domain ? null : domain),
+                  backgroundColor: chipColor,
+                  selectedColor: selectedColor.withAlpha(40),
+                  checkmarkColor: selectedColor,
+                  labelStyle: TextStyle(
+                    color: domainFilter == domain ? selectedColor : Colors.white70,
+                    fontSize: 12,
+                  ),
+                  side: BorderSide(
+                    color: domainFilter == domain ? selectedColor : Colors.white24,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  visualDensity: VisualDensity.compact,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
