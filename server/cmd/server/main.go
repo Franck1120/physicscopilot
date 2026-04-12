@@ -59,9 +59,16 @@ func main() {
 	}
 }
 
-// run contains the server lifecycle: service init, background goroutines,
-// HTTP server start, and graceful shutdown. Extracted from main() so that
-// tests can exercise the startup and shutdown paths without os.Exit.
+// run orchestrates the full server lifecycle:
+//  1. Validates required environment variables (checkJWTSecret).
+//  2. Initialises all services (SessionService, AIBackend, RAGService, DBService).
+//  3. Starts background goroutines for memory metrics and session cleanup.
+//  4. Builds the Fiber application and begins listening.
+//  5. Blocks until ctx is cancelled (OS signal or test teardown).
+//  6. Drains WebSocket connections and shuts down the HTTP server gracefully.
+//
+// Extracted from main() so that integration tests can exercise the full
+// startup and shutdown path without calling os.Exit.
 func run(ctx context.Context) error {
 	if err := checkJWTSecret(); err != nil {
 		return err
@@ -164,9 +171,11 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-// checkJWTSecret validates the SUPABASE_JWT_SECRET environment variable.
-// Returns a non-nil error when production mode is active and the secret is
-// missing. In dev mode it logs a warning and returns nil.
+// checkJWTSecret validates that SUPABASE_JWT_SECRET is set when APP_ENV is
+// "production". In production mode a missing secret is a fatal configuration
+// error because all WebSocket connections would be accepted without JWT
+// verification. In other environments the function logs a warning and returns
+// nil, enabling unauthenticated local development without env configuration.
 func checkJWTSecret() error {
 	if os.Getenv("SUPABASE_JWT_SECRET") != "" {
 		return nil
@@ -178,7 +187,9 @@ func checkJWTSecret() error {
 	return nil
 }
 
-// resolvePort reads PORT from the environment, defaulting to "8080".
+// resolvePort returns the TCP port for the HTTP listener. It reads the PORT
+// environment variable, which cloud platforms (Render, Railway, Fly.io) set
+// automatically. Falls back to "8080" for local development.
 func resolvePort() string {
 	if p := os.Getenv("PORT"); p != "" {
 		return p
@@ -186,8 +197,12 @@ func resolvePort() string {
 	return "8080"
 }
 
-// collectMemoryMetrics reads runtime memory stats, updates Prometheus gauges,
-// and warns when heap usage exceeds 80% of GOMEMLIMIT.
+// collectMemoryMetrics samples Go runtime memory statistics, updates the
+// three Prometheus gauges (mem_heap_alloc_bytes, mem_sys_bytes,
+// mem_num_gc_total), and logs a slog.Warn entry when heap allocation exceeds
+// 80 % of the configured GOMEMLIMIT. Called every 30 seconds by a background
+// goroutine in run(). Safe to call concurrently; runtime.ReadMemStats
+// triggers a stop-the-world, so calls are intentionally infrequent.
 func collectMemoryMetrics() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -210,9 +225,16 @@ func collectMemoryMetrics() {
 	}
 }
 
-// newFiberApp builds and returns the configured Fiber application.
-// Extracted from main() so tests can construct the app without starting a
-// listener or requiring env vars beyond the test's control.
+// newFiberApp builds and returns the fully configured Fiber application.
+// It registers all global middleware (request ID, API version header, panic
+// recovery, CORS, security headers, gzip compression, structured logging,
+// request timeout, HSTS in production, Prometheus counters, and rate limiting)
+// before mounting the route groups.
+//
+// Extracted from main() so integration tests can construct the app without
+// starting a network listener or requiring environment variables beyond those
+// the test controls. Passing db=nil disables the DB health check and is the
+// expected state when DATABASE_URL is unset.
 func newFiberApp(
 	ver string,
 	sessionHandler *handlers.SessionHandler,
