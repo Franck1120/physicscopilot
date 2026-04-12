@@ -402,3 +402,186 @@ func TestComputeFrameFingerprintNonJPEGFallsBackToSHA256(t *testing.T) {
 		t.Error("expected hasPHash=false for non-JPEG input")
 	}
 }
+
+// ── toVoiceText ────────────────────────────────────────────────────────────────
+
+func TestToVoiceTextStripsMarkdownBold(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"**bold text**", "bold text"},
+		{"__also bold__", "also bold"},
+		{"*italic*", "italic"},
+		{"_italic_", "italic"},
+		{"```code block```", "code block"},
+		{"`inline code`", "inline code"},
+		{"### heading 3", "heading 3"},
+		{"## heading 2", "heading 2"},
+		{"# heading 1", "heading 1"},
+	}
+
+	for _, tc := range cases {
+		got := toVoiceText(tc.input)
+		if got != tc.want {
+			t.Errorf("toVoiceText(%q) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestToVoiceTextCollapsesWhitespace(t *testing.T) {
+	input := "  turn   the   screw   clockwise  "
+	want := "turn the screw clockwise"
+	got := toVoiceText(input)
+	if got != want {
+		t.Errorf("toVoiceText(%q) = %q, want %q", input, got, want)
+	}
+}
+
+func TestToVoiceTextEmptyInputReturnsEmpty(t *testing.T) {
+	if got := toVoiceText(""); got != "" {
+		t.Errorf("toVoiceText(\"\") = %q, want empty", got)
+	}
+}
+
+func TestToVoiceTextPlainTextUnchanged(t *testing.T) {
+	input := "Remove the nozzle and clean it with a wire brush."
+	got := toVoiceText(input)
+	if got != input {
+		t.Errorf("toVoiceText plain text changed: got %q, want %q", got, input)
+	}
+}
+
+func TestToVoiceTextMixedMarkdown(t *testing.T) {
+	input := "**Step 1**: remove the `nozzle`\n### Clean it\n*carefully*"
+	got := toVoiceText(input)
+
+	// No markdown syntax must remain.
+	for _, token := range []string{"**", "__", "*", "_", "`", "###", "##", "#"} {
+		if strings.Contains(got, token) {
+			t.Errorf("toVoiceText result still contains %q: %q", token, got)
+		}
+	}
+	// Collapsed to single line with single spaces.
+	if strings.Contains(got, "\n") {
+		t.Errorf("toVoiceText result contains newline: %q", got)
+	}
+	if strings.Contains(got, "  ") {
+		t.Errorf("toVoiceText result contains consecutive spaces: %q", got)
+	}
+}
+
+// ── BuildContextForGemini ────────────────────────────────────────────────────
+
+func TestBuildContextForGeminiEmpty(t *testing.T) {
+	sessions := NewSessionService()
+	session, err := sessions.CreateSession("Brand", "Model", "", "")
+	if err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	ctx, err := sessions.BuildContextForGemini(session.SessionID)
+	if err != nil {
+		t.Fatalf("BuildContextForGemini: %v", err)
+	}
+	if ctx != "" {
+		t.Errorf("expected empty context for fresh session, got %q", ctx)
+	}
+}
+
+func TestBuildContextForGeminiFormatsRoleContent(t *testing.T) {
+	sessions := NewSessionService()
+	session, err := sessions.CreateSession("Brand", "Model", "", "")
+	if err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	_ = sessions.AddMessage(session.SessionID, "user", "hello", false)
+	_ = sessions.AddMessage(session.SessionID, "assistant", "hi there", false)
+
+	ctx, err := sessions.BuildContextForGemini(session.SessionID)
+	if err != nil {
+		t.Fatalf("BuildContextForGemini: %v", err)
+	}
+
+	if !strings.Contains(ctx, "user: hello") {
+		t.Errorf("expected 'user: hello' in context, got: %q", ctx)
+	}
+	if !strings.Contains(ctx, "assistant: hi there") {
+		t.Errorf("expected 'assistant: hi there' in context, got: %q", ctx)
+	}
+}
+
+func TestBuildContextForGeminiTruncatesToMaxMessages(t *testing.T) {
+	sessions := NewSessionService()
+	session, err := sessions.CreateSession("Brand", "Model", "", "")
+	if err != nil {
+		t.Fatalf("CreateSession: %v", err)
+	}
+
+	// Add more messages than maxContextMessages (10).
+	for i := range 15 {
+		role := "user"
+		if i%2 == 1 {
+			role = "assistant"
+		}
+		_ = sessions.AddMessage(session.SessionID, role, strings.Repeat("x", i+1), false)
+	}
+
+	ctx, err := sessions.BuildContextForGemini(session.SessionID)
+	if err != nil {
+		t.Fatalf("BuildContextForGemini: %v", err)
+	}
+
+	// The context must contain exactly maxContextMessages lines (10).
+	lines := strings.Split(strings.TrimSpace(ctx), "\n")
+	if len(lines) != maxContextMessages {
+		t.Errorf("expected %d lines in context (max), got %d", maxContextMessages, len(lines))
+	}
+}
+
+func TestBuildContextForGeminiNonexistentSession(t *testing.T) {
+	sessions := NewSessionService()
+
+	_, err := sessions.BuildContextForGemini("no-such-session")
+	if err == nil {
+		t.Fatal("expected error for nonexistent session")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected 'not found' in error, got: %v", err)
+	}
+}
+
+// ── CleanupSession / clearFrameHash ──────────────────────────────────────────
+
+func TestCleanupSessionRemovesFrameHash(t *testing.T) {
+	structured := `{\"analysis\":\"ok\",\"problem\":null,\"instruction\":\"continue\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}`
+	svc, sessionID, cleanup := setupConversationTest(t, structured)
+	defer cleanup()
+
+	// Process a frame to populate the hash map.
+	_, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	if err != nil {
+		t.Fatalf("ProcessFrame: %v", err)
+	}
+
+	// Same frame should now be a duplicate.
+	dup, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	if err != nil {
+		t.Fatalf("second ProcessFrame: %v", err)
+	}
+	if dup != nil {
+		t.Fatal("expected nil (duplicate) on second ProcessFrame before cleanup")
+	}
+
+	// After cleanup, the same frame should be processed again.
+	svc.CleanupSession(sessionID)
+
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	if err != nil {
+		t.Fatalf("ProcessFrame after cleanup: %v", err)
+	}
+	if result == nil {
+		t.Error("expected non-nil result after CleanupSession (hash was cleared)")
+	}
+}
