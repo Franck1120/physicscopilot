@@ -73,6 +73,8 @@ func newIPRateLimiterWith(perMin, burst int) *IPRateLimiter {
 	return rl
 }
 
+// getLimiter returns the token-bucket limiter for ip, creating one on first use
+// and refreshing its last-seen timestamp to delay cleanup eviction.
 func (rl *IPRateLimiter) getLimiter(ip string) *rate.Limiter {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
@@ -90,6 +92,9 @@ func (rl *IPRateLimiter) getLimiter(ip string) *rate.Limiter {
 	return e.limiter
 }
 
+// cleanupLoop periodically removes expired limiters, violation windows, and
+// ban entries from memory. Runs as a background goroutine for the lifetime of
+// the limiter.
 func (rl *IPRateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(limiterExpiry)
 	defer ticker.Stop()
@@ -241,6 +246,8 @@ func (ul *UserRateLimiter) Allow(userID string) bool {
 	return e.limiter.Allow()
 }
 
+// cleanupLoop periodically removes per-user limiters that have been idle for
+// longer than userLimiterExpiry. Runs as a background goroutine.
 func (ul *UserRateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(userLimiterExpiry)
 	defer ticker.Stop()

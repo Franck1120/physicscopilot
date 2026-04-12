@@ -57,6 +57,8 @@ func (u *UserFrameLimiter) Allow(userID string) bool {
 	return e.limiter.Allow()
 }
 
+// cleanupLoop periodically removes per-user frame limiters that have been idle
+// for longer than userSessionLimiterExpiry. Runs as a background goroutine.
 func (u *UserFrameLimiter) cleanupLoop() {
 	ticker := time.NewTicker(userSessionLimiterExpiry)
 	defer ticker.Stop()
