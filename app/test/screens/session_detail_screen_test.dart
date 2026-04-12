@@ -211,5 +211,17 @@ void main() {
       await tester.pump();
       expect(find.byIcon(Icons.share_rounded), findsOneWidget);
     });
+
+    testWidgets('shows share/copy button in AppBar', (tester) async {
+      final session = _makeRecord();
+      await tester.pumpWidget(_wrap(session));
+      await tester.pump();
+
+      // Verify that an IconButton with the share icon is present in the AppBar.
+      expect(
+        find.widgetWithIcon(IconButton, Icons.share_rounded),
+        findsOneWidget,
+      );
+    });
   });
 }
