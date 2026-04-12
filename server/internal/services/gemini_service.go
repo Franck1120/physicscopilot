@@ -29,9 +29,9 @@ const geminiMaxOutputTokens = 1024
 // httpTimeout is the deadline for each individual HTTP request.
 const httpTimeout = 30 * time.Second
 
-// systemPrompt instructs Gemini to behave as a 3D printing technician
-// and return structured JSON analysis of camera frames.
-const systemPrompt = `You are PhysicsCopilot, an expert 3D printing technician. You see what the user's camera shows in real-time. Analyze the image, identify any 3D printing issues (stringing, warping, layer shifting, under-extrusion, etc.), and provide step-by-step guidance. Respond ONLY with valid JSON with these fields: {"analysis": "what you see", "problem": "identified issue or null", "instruction": "next step for user", "overlay": {"boxes": [{"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4, "label": "stringing"}], "arrows": [{"x1": 0.1, "y1": 0.2, "x2": 0.3, "y2": 0.4}]}}`
+// systemPrompt instructs Gemini to behave as a generic field technician
+// assistant and return structured JSON analysis of camera frames.
+const systemPrompt = `You are PhysicsCopilot, an expert field technician assistant. You see what the user's camera shows in real-time. Analyze the image, identify any issues (damaged components, wear, misalignment, failure signs, incorrect assembly, etc.), and provide clear step-by-step repair or maintenance guidance. Respond ONLY with valid JSON with these fields: {"analysis": "what you see", "problem": "identified issue or null", "instruction": "next step for user", "overlay": {"boxes": [{"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4, "label": "damage"}], "arrows": [{"x1": 0.1, "y1": 0.2, "x2": 0.3, "y2": 0.4}]}}`
 
 // GeminiResponse is the structured analysis returned by AnalyzeFrame.
 type GeminiResponse struct {
@@ -65,8 +65,8 @@ type Arrow struct {
 }
 
 // GeminiService communicates with the Google Gemini Vision API or a local
-// CLIProxyAPI Docker container to analyze 3D printer camera frames and return
-// structured repair instructions.
+// CLIProxyAPI Docker container to analyze camera frames and return
+// structured repair or maintenance instructions.
 //
 // When GEMINI_API_KEY is set, the service calls the Gemini REST API directly.
 // When it is absent, the service falls back to the CLIProxyAPI container
@@ -400,7 +400,7 @@ func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, c
 func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext string) (openAIRequest, error) {
 	userText := conversationContext
 	if userText == "" {
-		userText = "Analyze the current 3D printing state"
+		userText = "Analyze the current state and identify any issues"
 	}
 
 	model := os.Getenv("GEMINI_MODEL")

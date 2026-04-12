@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/printer_selection_screen.dart';
+import 'screens/equipment_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/history_screen.dart';
-import 'providers/printer_provider.dart';
+import 'providers/equipment_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -87,7 +87,7 @@ class PhysicsCopilotApp extends ConsumerStatefulWidget {
 class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   late final GoRouter _router;
   late final ProviderSubscription<bool> _onboardingSub;
-  late final ProviderSubscription<PrinterProfile?> _printerSub;
+  late final ProviderSubscription<EquipmentProfile?> _equipmentSub;
 
   @override
   void initState() {
@@ -98,7 +98,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
       redirect: (BuildContext ctx, GoRouterState state) {
         // Read current values; safe because refresh() is called on changes.
         final onboardingDone = ref.read(onboardingCompletedProvider);
-        final selectedPrinter = ref.read(printerProvider);
+        final selectedEquipment = ref.read(equipmentProvider);
         final location = state.matchedLocation;
 
         if (location == '/splash') return null;
@@ -107,8 +107,8 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
           return location == '/onboarding' ? null : '/onboarding';
         }
 
-        if (selectedPrinter == null) {
-          return location == '/printer-select' ? null : '/printer-select';
+        if (selectedEquipment == null) {
+          return location == '/equipment-select' ? null : '/equipment-select';
         }
 
         return null;
@@ -122,14 +122,14 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
           path: '/onboarding',
           pageBuilder: (ctx, state) => _fadePage(
             state,
-            OnboardingScreen(onComplete: () => ctx.go('/printer-select')),
+            OnboardingScreen(onComplete: () => ctx.go('/equipment-select')),
           ),
         ),
         GoRoute(
-          path: '/printer-select',
+          path: '/equipment-select',
           pageBuilder: (ctx, state) => _fadePage(
             state,
-            PrinterSelectionScreen(onComplete: () => ctx.go('/home')),
+            EquipmentSelectionScreen(onComplete: () => ctx.go('/home')),
           ),
         ),
         GoRoute(
@@ -137,7 +137,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
           pageBuilder: (ctx, state) => _fadePage(
             state,
             HomeScreen(
-              onChangePrinter: () => ctx.push('/printer-select'),
+              onChangeEquipment: () => ctx.push('/equipment-select'),
               onStartCamera: () => ctx.push('/session'),
             ),
           ),
@@ -164,8 +164,8 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         if (prev != next) _router.refresh();
       },
     );
-    _printerSub = ref.listenManual(
-      printerProvider,
+    _equipmentSub = ref.listenManual(
+      equipmentProvider,
       (prev, next) {
         if (prev?.id != next?.id) _router.refresh();
       },
@@ -175,7 +175,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   @override
   void dispose() {
     _onboardingSub.close();
-    _printerSub.close();
+    _equipmentSub.close();
     _router.dispose();
     super.dispose();
   }

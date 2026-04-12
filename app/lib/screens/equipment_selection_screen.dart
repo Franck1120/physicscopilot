@@ -4,27 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/printer_provider.dart';
+import '../providers/equipment_provider.dart';
 
 const _kAccent = Color(0xFF1B4F72);
 const _kBackground = Color(0xFF0D1B2A);
 const _kSurface = Color(0xFF1A2B3C);
 const _kOnSurface = Color(0xFFE0E8F0);
 
-class PrinterSelectionScreen extends ConsumerStatefulWidget {
+class EquipmentSelectionScreen extends ConsumerStatefulWidget {
   final VoidCallback onComplete;
 
-  const PrinterSelectionScreen({super.key, required this.onComplete});
+  const EquipmentSelectionScreen({super.key, required this.onComplete});
 
   @override
-  ConsumerState<PrinterSelectionScreen> createState() =>
-      _PrinterSelectionScreenState();
+  ConsumerState<EquipmentSelectionScreen> createState() =>
+      _EquipmentSelectionScreenState();
 }
 
-class _PrinterSelectionScreenState
-    extends ConsumerState<PrinterSelectionScreen> {
-  List<PrinterProfile> _allProfiles = [];
-  List<PrinterProfile> _filtered = [];
+class _EquipmentSelectionScreenState
+    extends ConsumerState<EquipmentSelectionScreen> {
+  List<EquipmentProfile> _allProfiles = [];
+  List<EquipmentProfile> _filtered = [];
   final TextEditingController _searchController = TextEditingController();
   bool _loading = true;
 
@@ -46,7 +46,7 @@ class _PrinterSelectionScreenState
         await rootBundle.loadString('assets/data/printer_profiles.json');
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final list = (decoded['profiles'] as List<dynamic>)
-        .map((e) => PrinterProfile.fromJson(e as Map<String, dynamic>))
+        .map((e) => EquipmentProfile.fromJson(e as Map<String, dynamic>))
         .toList();
     setState(() {
       _allProfiles = list;
@@ -64,8 +64,8 @@ class _PrinterSelectionScreenState
     });
   }
 
-  void _selectPrinter(PrinterProfile printer) {
-    ref.read(printerProvider.notifier).select(printer);
+  void _selectEquipment(EquipmentProfile profile) {
+    ref.read(equipmentProvider.notifier).select(profile);
     widget.onComplete();
   }
 
@@ -76,7 +76,7 @@ class _PrinterSelectionScreenState
       builder: (context) => AlertDialog(
         backgroundColor: _kSurface,
         title: const Text(
-          'Nome stampante',
+          'Nome dispositivo',
           style: TextStyle(color: _kOnSurface),
         ),
         content: TextField(
@@ -85,7 +85,7 @@ class _PrinterSelectionScreenState
           style: const TextStyle(color: _kOnSurface),
           cursorColor: _kAccent,
           decoration: const InputDecoration(
-            hintText: 'Es. Ender 3 custom modded',
+            hintText: 'Es. Trapano Makita, Caldaia Vaillant…',
             hintStyle: TextStyle(color: Colors.white38),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: _kAccent),
@@ -106,9 +106,7 @@ class _PrinterSelectionScreenState
               final name = controller.text.trim();
               if (name.isNotEmpty) {
                 Navigator.of(context).pop();
-                ref
-                    .read(printerProvider.notifier)
-                    .selectCustom(name);
+                ref.read(equipmentProvider.notifier).selectCustom(name);
                 widget.onComplete();
               }
             },
@@ -128,7 +126,7 @@ class _PrinterSelectionScreenState
         backgroundColor: _kBackground,
         elevation: 0,
         title: const Text(
-          'Seleziona stampante',
+          'Seleziona dispositivo',
           style: TextStyle(color: _kOnSurface, fontWeight: FontWeight.w600),
         ),
         iconTheme: const IconThemeData(color: _kOnSurface),
@@ -145,12 +143,12 @@ class _PrinterSelectionScreenState
                     itemCount: _filtered.length + 1,
                     itemBuilder: (context, index) {
                       if (index < _filtered.length) {
-                        return _PrinterCard(
+                        return _EquipmentCard(
                           profile: _filtered[index],
-                          onTap: () => _selectPrinter(_filtered[index]),
+                          onTap: () => _selectEquipment(_filtered[index]),
                         );
                       }
-                      return _CustomPrinterCard(onTap: _showCustomDialog);
+                      return _CustomEquipmentCard(onTap: _showCustomDialog);
                     },
                   ),
                 ),
@@ -174,7 +172,7 @@ class _SearchBar extends StatelessWidget {
         style: const TextStyle(color: _kOnSurface),
         cursorColor: _kAccent,
         decoration: InputDecoration(
-          hintText: 'Cerca stampante...',
+          hintText: 'Cerca dispositivo…',
           hintStyle: const TextStyle(color: Colors.white38),
           prefixIcon: const Icon(Icons.search, color: Colors.white38),
           filled: true,
@@ -191,11 +189,11 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _PrinterCard extends StatelessWidget {
-  final PrinterProfile profile;
+class _EquipmentCard extends StatelessWidget {
+  final EquipmentProfile profile;
   final VoidCallback onTap;
 
-  const _PrinterCard({required this.profile, required this.onTap});
+  const _EquipmentCard({required this.profile, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -208,32 +206,25 @@ class _PrinterCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.name,
-                      style: const TextStyle(
-                        color: _kOnSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      profile.manufacturer,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+              Text(
+                profile.name,
+                style: const TextStyle(
+                  color: _kOnSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
                 ),
               ),
-              _ExtruderBadge(extruderType: profile.extruderType),
+              const SizedBox(height: 4),
+              Text(
+                profile.manufacturer,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
         ),
@@ -242,40 +233,10 @@ class _PrinterCard extends StatelessWidget {
   }
 }
 
-class _ExtruderBadge extends StatelessWidget {
-  final String extruderType;
-
-  const _ExtruderBadge({required this.extruderType});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDirect = extruderType == 'direct_drive';
-    final label = isDirect ? 'Direct' : 'Bowden';
-    final color = isDirect ? _kAccent : const Color(0xFF2E6B4E);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withAlpha(51),
-        border: Border.all(color: color.withAlpha(128)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isDirect ? const Color(0xFF5DADE2) : const Color(0xFF58D68D),
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomPrinterCard extends StatelessWidget {
+class _CustomEquipmentCard extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _CustomPrinterCard({required this.onTap});
+  const _CustomEquipmentCard({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -296,7 +257,7 @@ class _CustomPrinterCard extends StatelessWidget {
               Icon(Icons.add_circle_outline, color: _kAccent, size: 22),
               SizedBox(width: 12),
               Text(
-                'Altra stampante',
+                'Altro dispositivo',
                 style: TextStyle(
                   color: _kAccent,
                   fontWeight: FontWeight.w600,

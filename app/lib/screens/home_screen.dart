@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../providers/printer_provider.dart';
+import '../providers/equipment_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/websocket_service.dart';
 import 'history_screen.dart';
@@ -15,11 +15,11 @@ import 'history_screen.dart';
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
     super.key,
-    required this.onChangePrinter,
+    required this.onChangeEquipment,
     required this.onStartCamera,
   });
 
-  final VoidCallback onChangePrinter;
+  final VoidCallback onChangeEquipment;
   final VoidCallback onStartCamera;
 
   @override
@@ -52,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           _HomeTab(
             onGoToCamera: () => _onItemTapped(1),
-            onChangePrinter: widget.onChangePrinter,
+            onChangeEquipment: widget.onChangeEquipment,
           ),
           // Tab 1 — Camera: never rendered; handled by onStartCamera callback.
           const SizedBox.shrink(),
@@ -101,15 +101,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _HomeTab extends ConsumerWidget {
   const _HomeTab({
     required this.onGoToCamera,
-    required this.onChangePrinter,
+    required this.onChangeEquipment,
   });
 
   final VoidCallback onGoToCamera;
-  final VoidCallback onChangePrinter;
+  final VoidCallback onChangeEquipment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final printer = ref.watch(printerProvider);
+    final equipment = ref.watch(equipmentProvider);
     final connectionStatus = ref.watch(connectionStatusProvider);
 
     return Scaffold(
@@ -138,9 +138,9 @@ class _HomeTab extends ConsumerWidget {
           children: [
             _NewSessionCard(onTap: onGoToCamera),
             const SizedBox(height: 24),
-            _PrinterSection(
-              printerName: printer?.name,
-              onChangePrinter: onChangePrinter,
+            _EquipmentSection(
+              equipmentName: equipment?.name,
+              onChangeEquipment: onChangeEquipment,
             ),
             const SizedBox(height: 24),
             const _RecentSessionsSection(),
@@ -228,27 +228,27 @@ class _NewSessionCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Printer Section
+// Equipment Section
 // ---------------------------------------------------------------------------
 
-class _PrinterSection extends StatelessWidget {
-  const _PrinterSection({
-    required this.printerName,
-    required this.onChangePrinter,
+class _EquipmentSection extends StatelessWidget {
+  const _EquipmentSection({
+    required this.equipmentName,
+    required this.onChangeEquipment,
   });
 
-  final String? printerName;
-  final VoidCallback onChangePrinter;
+  final String? equipmentName;
+  final VoidCallback onChangeEquipment;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasPrinter = printerName != null;
+    final bool hasEquipment = equipmentName != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'STAMPANTE ATTIVA',
+          'DISPOSITIVO ATTIVO',
           style: TextStyle(
             color: kTextMuted,
             fontSize: 11,
@@ -268,28 +268,26 @@ class _PrinterSection extends StatelessWidget {
           child: Row(
             children: [
               const Icon(
-                Icons.print_outlined,
+                Icons.build_outlined,
                 color: kAccent,
                 size: 22,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  printerName ?? 'Nessuna stampante selezionata',
+                  equipmentName ?? 'Nessun dispositivo selezionato',
                   style: TextStyle(
-                    color: hasPrinter
-                        ? Colors.white
-                        : kTextMuted,
+                    color: hasEquipment ? Colors.white : kTextMuted,
                     fontSize: 15,
                     fontWeight:
-                        hasPrinter ? FontWeight.w500 : FontWeight.normal,
+                        hasEquipment ? FontWeight.w500 : FontWeight.normal,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: onChangePrinter,
+                onTap: onChangeEquipment,
                 child: Chip(
                   label: const Text(
                     'Cambia',
