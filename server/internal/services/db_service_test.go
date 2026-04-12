@@ -13,11 +13,12 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockDB struct {
-	sessions map[string]*SessionState
-	steps    []struct{ sid string; num int; instr string }
-	pingErr  error
-	saveErr  error
+	sessions  map[string]*SessionState
+	steps     []struct{ sid string; num int; instr string }
+	pingErr   error
+	saveErr   error
 	deleteErr error
+	listErr   error
 }
 
 func newMockDB() *mockDB {
@@ -42,6 +43,9 @@ func (m *mockDB) DeleteSession(_ context.Context, id string) error {
 }
 
 func (m *mockDB) ListSessions(_ context.Context) ([]SessionState, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
 	out := make([]SessionState, 0, len(m.sessions))
 	for _, s := range m.sessions {
 		out = append(out, *s)

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -442,4 +444,105 @@ func TestConcurrentAccess(t *testing.T) {
 	if len(retrieved.ConversationHistory) > maxConversationHistory {
 		t.Errorf("expected at most %d messages, got %d", maxConversationHistory, len(retrieved.ConversationHistory))
 	}
+}
+
+// ---------------------------------------------------------------------------
+// DB error path tests
+// ---------------------------------------------------------------------------
+
+func TestSessionServiceDBSaveError(t *testing.T) {
+	// A DB save error must not fail the in-memory CreateSession.
+	db := newMockDB()
+	db.saveErr = fmt.Errorf("db unavailable")
+	svc := NewSessionService()
+	svc.SetDB(db)
+
+	sess, err := svc.CreateSession("Prusa", "MK4", "it")
+	if err != nil {
+		t.Fatalf("CreateSession must succeed even when DB save fails: %v", err)
+	}
+	if sess == nil {
+		t.Fatal("expected non-nil session")
+	}
+	// Session must be retrievable from the in-memory store.
+	got, err := svc.GetSession(sess.SessionID)
+	if err != nil {
+		t.Fatalf("session not found in memory: %v", err)
+	}
+	if got.SessionID != sess.SessionID {
+		t.Errorf("expected %s, got %s", sess.SessionID, got.SessionID)
+	}
+}
+
+func TestSessionServiceDBDeleteError(t *testing.T) {
+	// A DB delete error must not fail the in-memory DeleteSession.
+	db := newMockDB()
+	db.deleteErr = fmt.Errorf("db unavailable")
+	svc := NewSessionService()
+	svc.SetDB(db)
+
+	sess, _ := svc.CreateSession("Bambu", "X1C", "it")
+	if err := svc.DeleteSession(sess.SessionID); err != nil {
+		t.Fatalf("DeleteSession must succeed even when DB delete fails: %v", err)
+	}
+	// Session must be gone from memory.
+	_, err := svc.GetSession(sess.SessionID)
+	if err == nil {
+		t.Fatal("expected error: session should have been deleted from memory")
+	}
+}
+
+func TestSessionServiceHydrateFromDBError(t *testing.T) {
+	db := newMockDB()
+	db.listErr = fmt.Errorf("connection refused")
+	svc := NewSessionService()
+	svc.SetDB(db)
+
+	err := svc.HydrateFromDB(context.Background())
+	if err == nil {
+		t.Fatal("expected error when DB ListSessions fails")
+	}
+	if !strings.Contains(err.Error(), "hydrate sessions from DB") {
+		t.Errorf("expected 'hydrate sessions from DB' in error, got: %v", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Concurrent access: mixed operations on the same session
+// ---------------------------------------------------------------------------
+
+func TestSessionServiceConcurrentMixedAccess(t *testing.T) {
+	svc := NewSessionService()
+	sess, _ := svc.CreateSession("Creality", "K1", "it")
+	sessionID := sess.SessionID
+
+	const goroutines = 20
+	var wg sync.WaitGroup
+	wg.Add(goroutines * 3)
+
+	// Concurrent AddMessage
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			_ = svc.AddMessage(sessionID, "user", fmt.Sprintf("msg %d", i), false)
+		}(i)
+	}
+
+	// Concurrent GetSessionSnapshot
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_, _ = svc.GetSessionSnapshot(sessionID)
+		}()
+	}
+
+	// Concurrent UpdateStep
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			_ = svc.UpdateStep(sessionID, i, goroutines)
+		}(i)
+	}
+
+	wg.Wait()
 }
