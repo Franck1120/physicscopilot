@@ -54,9 +54,10 @@ func (m *mockDB) SaveSessionStep(_ context.Context, sid string, num int, instr s
 	return nil
 }
 
-func (m *mockDB) SaveFeedback(_ context.Context, _ *FeedbackEntry) error { return nil }
-func (m *mockDB) Ping(_ context.Context) error                           { return m.pingErr }
-func (m *mockDB) Close()                                                  {}
+func (m *mockDB) SaveFeedback(_ context.Context, _ *FeedbackEntry) error  { return nil }
+func (m *mockDB) ExpireSession(_ context.Context, id string) error        { delete(m.sessions, id); return nil }
+func (m *mockDB) Ping(_ context.Context) error                            { return m.pingErr }
+func (m *mockDB) Close()                                                   {}
 
 // ---------------------------------------------------------------------------
 // SessionService ↔ DBBackend integration

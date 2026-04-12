@@ -76,12 +76,15 @@ func main() {
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
 
-	// Background cleanup of expired sessions every 5 minutes
+	// Background cleanup of expired sessions every 5 minutes.
+	// CleanupExpiredSessions removes them from RAM and marks them 'expired' in DB.
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
 		for range ticker.C {
-			sessionSvc.CleanupExpiredSessions(30 * time.Minute)
+			if n := sessionSvc.CleanupExpiredSessions(30 * time.Minute); n > 0 {
+				slog.Info("expired sessions cleaned up", "count", n)
+			}
 		}
 	}()
 

@@ -86,4 +86,13 @@ var (
 		},
 		[]string{"language"},
 	)
+
+	// SessionsExpiredTotal counts in-memory sessions removed by the
+	// background cleanup goroutine because they exceeded the idle timeout.
+	SessionsExpiredTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "sessions_expired_total",
+			Help: "Total number of sessions removed by the expiry cleanup goroutine.",
+		},
+	)
 )

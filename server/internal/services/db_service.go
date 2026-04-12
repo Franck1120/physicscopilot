@@ -27,6 +27,9 @@ type DBBackend interface {
 	SaveSessionStep(ctx context.Context, sessionID string, stepNumber int, instruction string) error
 	// SaveFeedback persists a user feedback entry for a given session step.
 	SaveFeedback(ctx context.Context, f *FeedbackEntry) error
+	// ExpireSession marks the session status as 'expired' in Postgres.
+	// Called by the cleanup goroutine for sessions that timed out.
+	ExpireSession(ctx context.Context, id string) error
 	// Ping returns nil when the database is reachable.
 	Ping(ctx context.Context) error
 	// Close releases the connection pool.
@@ -176,6 +179,21 @@ func (d *DBService) ListSessions(ctx context.Context) ([]SessionState, error) {
 		return nil, fmt.Errorf("iterate sessions: %w", err)
 	}
 	return sessions, nil
+}
+
+// ExpireSession marks the session status as 'expired'.
+// Used by the background cleanup goroutine; no error is returned when the
+// row is already non-active (idempotent for concurrent cleanup calls).
+func (d *DBService) ExpireSession(ctx context.Context, id string) error {
+	_, err := d.pool.Exec(ctx, `
+		UPDATE sessions
+		SET    status = 'expired', last_activity = $2
+		WHERE  id = $1 AND status = 'active'
+	`, id, time.Now())
+	if err != nil {
+		return fmt.Errorf("expire session %q: %w", id, err)
+	}
+	return nil
 }
 
 // DeleteSession soft-deletes the session (status → 'completed').
