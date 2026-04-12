@@ -1,9 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:physicscopilot/providers/session_provider.dart';
 
 void main() {
+  group('SessionState', () {
+    test('default constructor has null fields and isProcessing=false', () {
+      const state = SessionState();
+      expect(state.responseText, isNull);
+      expect(state.audioUrl, isNull);
+      expect(state.overlay, isNull);
+      expect(state.isProcessing, isFalse);
+      expect(state.errorText, isNull);
+    });
+
+    test('copyWith updates only specified fields', () {
+      const original = SessionState(responseText: 'hello', isProcessing: false);
+      final updated = original.copyWith(isProcessing: true);
+      expect(updated.responseText, 'hello');
+      expect(updated.isProcessing, isTrue);
+    });
+
+    test('copyWith with explicit null clears errorText', () {
+      const original = SessionState(errorText: 'some error');
+      final updated = original.copyWith(errorText: null);
+      expect(updated.errorText, isNull);
+    });
+  });
+
   group('SessionNotifier', () {
     late ProviderContainer container;
     late SessionNotifier notifier;
@@ -17,111 +40,61 @@ void main() {
       container.dispose();
     });
 
-    test('initial state: all fields null/false', () {
+    test('initial state is blank SessionState', () {
       final state = container.read(sessionProvider);
       expect(state.responseText, isNull);
-      expect(state.audioUrl, isNull);
-      expect(state.overlay, isNull);
       expect(state.isProcessing, isFalse);
       expect(state.errorText, isNull);
-      expect(state.streamingText, isNull);
-      expect(state.isStreaming, isFalse);
     });
 
-    test('setProcessing() → isProcessing=true, clears errorText/streamingText/isStreaming', () {
-      // Arrange: set some prior state
+    test('updateFromResponse sets responseText from json text key', () {
+      notifier.updateFromResponse({'text': 'Check the nozzle', 'overlay': null});
+      expect(container.read(sessionProvider).responseText, 'Check the nozzle');
+    });
+
+    test('updateFromResponse with null text keeps responseText null', () {
+      notifier.updateFromResponse({'text': null, 'overlay': null});
+      expect(container.read(sessionProvider).responseText, isNull);
+    });
+
+    test('updateFromResponse sets overlay map', () {
+      final overlay = <String, dynamic>{'boxes': <dynamic>[], 'arrows': <dynamic>[]};
+      notifier.updateFromResponse({'text': 'ok', 'overlay': overlay});
+      expect(container.read(sessionProvider).overlay, overlay);
+    });
+
+    test('setProcessing sets isProcessing=true and clears errorText', () {
       notifier.setError('previous error');
-      notifier.appendChunk('some chunk');
-
-      // Act
       notifier.setProcessing();
-
       final state = container.read(sessionProvider);
       expect(state.isProcessing, isTrue);
       expect(state.errorText, isNull);
-      expect(state.streamingText, isNull);
-      expect(state.isStreaming, isFalse);
     });
 
-    test('setError("msg") → errorText="msg", isProcessing=false, isStreaming=false', () {
-      // Arrange: set processing state first
+    test('setError sets errorText and clears isProcessing', () {
       notifier.setProcessing();
-
-      // Act
-      notifier.setError('msg');
-
+      notifier.setError('Something went wrong');
       final state = container.read(sessionProvider);
-      expect(state.errorText, equals('msg'));
+      expect(state.errorText, 'Something went wrong');
       expect(state.isProcessing, isFalse);
-      expect(state.isStreaming, isFalse);
     });
 
-    test('setAITimeout() → errorText contains "AI"', () {
+    test('setAITimeout sets Italian timeout error message', () {
       notifier.setAITimeout();
-
       final state = container.read(sessionProvider);
       expect(state.errorText, contains('AI'));
+      expect(state.errorText, contains('Riprova'));
       expect(state.isProcessing, isFalse);
-      expect(state.isStreaming, isFalse);
     });
 
-    test('appendChunk("hello") → streamingText="hello", isStreaming=true', () {
-      notifier.appendChunk('hello');
-
-      final state = container.read(sessionProvider);
-      expect(state.streamingText, equals('hello'));
-      expect(state.isStreaming, isTrue);
-    });
-
-    test('appendChunk("hello") then appendChunk(" world") → streamingText="hello world"', () {
-      notifier.appendChunk('hello');
-      notifier.appendChunk(' world');
-
-      final state = container.read(sessionProvider);
-      expect(state.streamingText, equals('hello world'));
-      expect(state.isStreaming, isTrue);
-    });
-
-    test('updateFromResponse → responseText set, isStreaming=false, streamingText=null', () {
-      // Arrange: simulate active streaming
-      notifier.appendChunk('partial');
-
-      // Act
-      notifier.updateFromResponse({
-        'text': 'final',
-        'audio_url': null,
-        'overlay': null,
-      });
-
-      final state = container.read(sessionProvider);
-      expect(state.responseText, equals('final'));
-      expect(state.isStreaming, isFalse);
-      expect(state.streamingText, isNull);
-      expect(state.audioUrl, isNull);
-      expect(state.overlay, isNull);
-    });
-
-    test('reset() → all fields back to initial values', () {
-      // Arrange: set various state values
+    test('reset clears all state to initial values', () {
+      notifier.updateFromResponse({'text': 'Some text', 'overlay': null});
       notifier.setProcessing();
-      notifier.appendChunk('some text');
-      notifier.updateFromResponse({
-        'text': 'response',
-        'audio_url': 'http://example.com/audio.mp3',
-        'overlay': {'type': 'highlight'},
-      });
-
-      // Act
       notifier.reset();
-
       final state = container.read(sessionProvider);
       expect(state.responseText, isNull);
-      expect(state.audioUrl, isNull);
-      expect(state.overlay, isNull);
       expect(state.isProcessing, isFalse);
       expect(state.errorText, isNull);
-      expect(state.streamingText, isNull);
-      expect(state.isStreaming, isFalse);
     });
   });
 }

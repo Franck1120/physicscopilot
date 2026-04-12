@@ -825,9 +825,9 @@
     /* ── Pricing ─────────────────────────────────────────────── */
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      max-width: 760px;
+      max-width: 1060px;
       margin: 0 auto;
     }
 
@@ -964,6 +964,62 @@
     .btn-plan-pro:hover {
       background: #00FFB2;
       transform: translateY(-1px);
+    }
+
+    .btn-plan-enterprise {
+      background: transparent;
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+    }
+
+    .btn-plan-enterprise:hover {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+    }
+
+    /* ── Product stats section ──────────────────────────────────── */
+    .product-stats {
+      padding: 80px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      border-top: 1px solid var(--border);
+    }
+
+    .product-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .product-stat-item {
+      background: var(--bg-card);
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .product-stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .product-stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 640px) {
+      .product-stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .product-stat-number { font-size: 36px; }
     }
 
     /* ── Footer ──────────────────────────────────────────────── */
@@ -1335,9 +1391,9 @@
       <div class="pricing-card reveal reveal-delay-1">
         <p class="pricing-plan">Free</p>
         <div class="pricing-price">$0</div>
-        <p class="pricing-desc">3 repair sessions per day — no credit card required.</p>
+        <p class="pricing-desc">5 diagnoses per month — no credit card required.</p>
         <ul class="pricing-features">
-          <li>3 sessions / day</li>
+          <li>5 diagnoses / month</li>
           <li>Real-time vision</li>
           <li>Voice guidance</li>
           <li>Session history (7 days)</li>
@@ -1358,6 +1414,20 @@
           <li>Email support</li>
         </ul>
         <a href="#waitlist" class="btn-plan btn-plan-pro">Join Beta — Free</a>
+      </div>
+      <div class="pricing-card reveal reveal-delay-3">
+        <p class="pricing-plan">Enterprise</p>
+        <div class="pricing-price" style="font-size:36px;letter-spacing:-1px">Custom</div>
+        <p class="pricing-desc">Tailored plans for repair businesses and service centers.</p>
+        <ul class="pricing-features">
+          <li>Unlimited everything</li>
+          <li>Custom AI training</li>
+          <li>Team management</li>
+          <li>API access</li>
+          <li>SLA guarantee</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="mailto:hello@physicscopilot.app" class="btn-plan btn-plan-enterprise">Contact Sales</a>
       </div>
     </div>
   </div>
@@ -1396,6 +1466,30 @@
   </div>
 </section>
 
+<!-- ── Product stats ─────────────────────────────────────────────── -->
+<section class="product-stats">
+  <div class="container">
+    <div class="product-stats-grid">
+      <div class="product-stat-item reveal">
+        <div class="product-stat-number">66</div>
+        <div class="product-stat-label">Failure modes<br>detected</div>
+      </div>
+      <div class="product-stat-item reveal reveal-delay-1">
+        <div class="product-stat-number">&lt;1s</div>
+        <div class="product-stat-label">AI response<br>time</div>
+      </div>
+      <div class="product-stat-item reveal reveal-delay-2">
+        <div class="product-stat-number">24/7</div>
+        <div class="product-stat-label">Always<br>available</div>
+      </div>
+      <div class="product-stat-item reveal reveal-delay-3">
+        <div class="product-stat-number">0</div>
+        <div class="product-stat-label">Hands needed<br>to navigate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── Footer ─────────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-inner">
@@ -1410,8 +1504,10 @@
       </a>
       <a href="mailto:hello@physicscopilot.app">Contact</a>
       <a href="#pricing">Pricing</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms</a>
     </div>
-    <p class="footer-meta">© 2026 PhysicsCopilot · Made in Italy 🇮🇹</p>
+    <p class="footer-meta">© 2026 PhysicsCopilot · Built with Gemini AI · Made in Italy 🇮🇹</p>
   </div>
 </footer>
 
@@ -1464,7 +1560,7 @@
 
     // Formspree submission — replace YOUR_FORM_ID
     try {
-      const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      const res = await fetch('https://formspree.io/f/xpwzgkql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email })

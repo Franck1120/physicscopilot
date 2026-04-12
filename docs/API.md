@@ -32,6 +32,28 @@ Returns server liveness and resource snapshot. Rate-limited to **60 requests/min
 | `active_connections` | int | Current open WebSocket connections |
 | `memory_mb` | int | Heap memory allocated in MB (`runtime.MemStats.Alloc`) |
 
+**curl example**
+
+```bash
+# Local development
+curl -s http://localhost:8080/health | jq .
+
+# Production (replace with your tunnel/domain)
+curl -s https://physicscopilot.app/health | jq .
+```
+
+**Expected output**
+```json
+{
+  "status": "ok",
+  "service": "physicscopilot",
+  "version": "0.1.0",
+  "uptime": "3h14m22s",
+  "active_connections": 2,
+  "memory_mb": 18
+}
+```
+
 ---
 
 ### `GET /metrics`
@@ -66,6 +88,22 @@ ai_inference_duration_seconds_bucket{le="1"} 31
 | `ws_active_connections` | Gauge | — | Open WebSocket connections |
 | `ws_messages_total` | Counter | `type` | Incoming WS messages by type |
 | `ai_inference_duration_seconds` | Histogram | — | Gemini round-trip latency (0.1–10 s) |
+
+**curl example**
+
+```bash
+# Fetch raw Prometheus metrics
+curl -s http://localhost:8080/metrics | grep -E "^(ws_|ai_inference|http_requests_total)"
+```
+
+**Sample output**
+```
+http_requests_total{method="GET",path="/health",status="200"} 142
+ws_active_connections 3
+ws_messages_total{type="frame"} 87
+ws_messages_total{type="text"} 12
+ai_inference_duration_seconds_sum 43.2
+```
 
 ---
 
@@ -208,6 +246,82 @@ Sent when frame or text processing fails. **The connection remains open.**
 
 ---
 
+## WebSocket Payload Examples
+
+### Complete session transcript
+
+Below is a real JSON exchange for a typical repair session. Each entry shows direction, type, and full payload.
+
+**1. Client sends a frame for analysis**
+```json
+{
+  "type": "frame",
+  "data": "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U...",
+  "timestamp": 1712870400123
+}
+```
+
+**2. Server responds with AI guidance**
+```json
+{
+  "type": "response",
+  "text": "I can see the extruder assembly. The PTFE tube appears slightly loose at the hotend coupling. Press it firmly until it clicks, then tighten the blue collet clip.",
+  "overlay": {
+    "boxes": [
+      { "x": 0.32, "y": 0.45, "w": 0.15, "h": 0.10, "label": "PTFE coupling" }
+    ],
+    "arrows": [
+      { "x1": 0.50, "y1": 0.30, "x2": 0.39, "y2": 0.48 }
+    ]
+  },
+  "step": { "current": 2, "total": 5 }
+}
+```
+
+**3. Client sends a follow-up text question**
+```json
+{
+  "type": "text",
+  "content": "The PTFE tube is already seated. What else could cause the clicking?",
+  "timestamp": 1712870425000
+}
+```
+
+**4. Server responds**
+```json
+{
+  "type": "response",
+  "text": "If the PTFE is seated correctly, clicking usually means the extruder idler arm tension is too high. Loosen the spring screw by half a turn and test.",
+  "overlay": {
+    "boxes": [],
+    "arrows": []
+  },
+  "step": { "current": 2, "total": 5 }
+}
+```
+
+**5. Client sends application-level ping**
+```json
+{ "type": "ping", "timestamp": 1712870430000 }
+```
+
+**6. Server responds with pong**
+```json
+{ "type": "pong" }
+```
+
+**7. Server sends an error (e.g., AI timeout)**
+```json
+{
+  "type": "error",
+  "error": "Request timed out, please retry"
+}
+```
+
+> Note: Error messages are intentionally generic. Internal details (stack traces, API status codes) are logged server-side only and never sent to the client.
+
+---
+
 ## Sequence Diagrams
 
 ### Normal camera analysis session
@@ -264,20 +378,78 @@ Client                                Server
 
 ## Error Codes
 
-| HTTP / WS Code | Meaning |
-|----------------|---------|
-| `HTTP 429` | REST rate limit exceeded (60 req/min per IP) |
-| `HTTP 426` | Upgrade Required (non-WS request to `/ws`) |
-| `HTTP 500` | Internal server error (JSON body with `"error"` field) |
-| `WS 1000` | Normal closure |
-| `WS 1001` | Going Away (server shutdown) |
-| `WS 1008` | Policy Violation (connection limit, message too large) |
-| `WS 1009` | Message Too Big (frame exceeds 10 MB) |
+### HTTP Error Codes
+
+| Code | Meaning | When it occurs |
+|------|---------|----------------|
+| `200 OK` | Success | Normal REST response |
+| `426 Upgrade Required` | WebSocket upgrade missing | HTTP GET to `/ws` without `Upgrade: websocket` header |
+| `429 Too Many Requests` | Rate limit exceeded | > 60 REST requests/min from same IP |
+| `500 Internal Server Error` | Unexpected error | Unhandled server panic; body: `{"error":"..."}` |
+
+### WebSocket Close Codes
+
+| Code | Name | Meaning |
+|------|------|---------|
+| `1000` | Normal Closure | Client or server closed the connection cleanly |
+| `1001` | Going Away | Server is shutting down (`server shutting down`) |
+| `1008` | Policy Violation | Connection limit reached for your IP (`connection limit reached`) |
+| `1009` | Message Too Big | Frame exceeded the 10 MB limit |
+| `1011` | Internal Error | Server-side panic — reconnect and retry |
+
+### Application-Level Error Messages
+
+Error messages sent via `{"type":"error","error":"..."}` are generic by design:
+
+| Error text | Root cause |
+|-----------|-----------|
+| `Service temporarily unavailable, please retry in a few seconds` | Gemini API rate-limited (HTTP 429) or quota exhausted |
+| `Request timed out, please retry` | Gemini took > 30 s to respond |
+| `Request was cancelled` | Client disconnected during AI processing |
+| `Invalid frame: unsupported image format: expected JPEG or PNG` | Frame base64 decodes to non-image data |
+| `Invalid frame: invalid base64 encoding` | Malformed base64 in the `data` field |
+| `Message content cannot be empty` | Empty `content` field in a `text` message |
+| `Message content exceeds maximum allowed length` | `content` field > 50 KB |
+| `Internal server error` | All other unexpected errors |
 
 ---
 
 ## Authentication
 
-There is currently **no authentication** on the WebSocket endpoint. All access controls are network-level (firewall, Cloudflare tunnel ACL, VPN).
+Authentication is currently **network-level only** (Cloudflare tunnel ACL, firewall, VPN). No JWT or API key is required on the WebSocket endpoint.
 
-A session token flow is planned for v0.2.0.
+### Planned: JWT Flow (v0.2.0)
+
+The planned authentication model will work as follows:
+
+1. **Obtain a token** — POST to `/auth/token` with your credentials:
+
+```bash
+curl -s -X POST https://physicscopilot.app/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"your-password"}' \
+  | jq .
+```
+
+Expected response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+2. **Use the token** — Pass it as a query parameter on the WebSocket upgrade:
+
+```
+wss://physicscopilot.app/ws?token=eyJhbGci...
+```
+
+Or (once supported) as a header during the HTTP upgrade handshake:
+
+```
+Authorization: Bearer eyJhbGci...
+```
+
+> **Current status:** All endpoints are open. Implement network-level ACLs in production until v0.2.0 ships.

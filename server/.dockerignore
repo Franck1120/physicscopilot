@@ -1,24 +1,18 @@
-# Exclude version control and CI artefacts
+# Exclude everything in the repo root except the server/ directory context
 .git
-.gitignore
-.github
+*.md
+*.txt
 
-# Flutter app and web landing page — not needed in the Go server image
-../app
-../web
-../docs
+# Test files (not needed in image)
+**/*_test.go
 
-# Claude AI workspace files
-../.claude
+# Local dev files
+.env
+.env.*
+!.env.example
 
-# Test and development artefacts
-*_test.go
-coverage.out
-*.exe
-
-# Editor and OS metadata
-.vscode
-.idea
+# Editor artifacts
+.vscode/
+.idea/
 *.swp
-.DS_Store
-Thumbs.db
+*.DS_Store
