@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -362,8 +363,12 @@ func (g *GeminiService) buildRequestBody(frameBase64, conversationContext, langu
 	}
 }
 
-// doWithRetry executes the HTTP POST to Gemini with exponential backoff.
-// Retries on HTTP 429 (rate limit) and 5xx (server error).
+// doWithRetry executes the HTTP POST to Gemini with exponential backoff and
+// jitter. Retries on HTTP 429 (rate limit) and 5xx (server error).
+//
+// Backoff doubles on each failure (1s → 2s → 4s …). A random jitter of up to
+// backoff/2 is added to each wait interval to reduce thundering-herd effects
+// when multiple concurrent sessions retry simultaneously.
 func (g *GeminiService) doWithRetry(ctx context.Context, payload []byte) ([]byte, error) {
 	backoff := 1 * time.Second
 
@@ -382,6 +387,8 @@ func (g *GeminiService) doWithRetry(ctx context.Context, payload []byte) ([]byte
 		lastErr = retryErr
 
 		if attempt < maxRetries-1 {
+			jitter := time.Duration(rand.Int63n(int64(backoff / 2)))
+			backoff += jitter
 			select {
 			case <-ctx.Done():
 				return nil, fmt.Errorf("context cancelled during retry: %w", ctx.Err())
