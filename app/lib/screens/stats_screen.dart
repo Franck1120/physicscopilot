@@ -26,9 +26,22 @@ class StatsScreen extends ConsumerWidget {
         title: const Text('Statistiche'),
         backgroundColor: const Color(0xFF111111),
       ),
-      body: sessions.isEmpty
-          ? _EmptyStats()
-          : _StatsList(sessions: sessions),
+      body: RefreshIndicator(
+        color: kAccent,
+        backgroundColor: const Color(0xFF1E1E1E),
+        onRefresh: () async {
+          ref.invalidate(sessionHistoryProvider);
+        },
+        child: sessions.isEmpty
+            ? SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: 400,
+                  child: _EmptyStats(),
+                ),
+              )
+            : _StatsList(sessions: sessions),
+      ),
     );
   }
 }
@@ -115,6 +128,7 @@ class _StatsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         // ── Top row: total sessions + avg duration ──────────────────────────
