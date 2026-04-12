@@ -323,6 +323,16 @@ func newFiberApp(
 	app.Get("/health", handlers.NewHealthHandler(ver, startTime, wsHandler, db))
 	app.Get("/version", handlers.VersionHandler(ver, buildTime, runtime.Version()))
 
+	// Swagger UI — served at /docs (without /api prefix) for browser access.
+	// Overrides the global CSP to allow loading Swagger UI assets from unpkg.com.
+	app.Get("/docs", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		c.Set("Cache-Control", "public, max-age=3600")
+		c.Set("Content-Security-Policy",
+			"default-src 'none'; script-src 'unsafe-inline' https://unpkg.com; style-src 'unsafe-inline' https://unpkg.com; img-src data: https:; connect-src *")
+		return c.SendString(handlers.SwaggerUIHTML("/api/docs"))
+	})
+
 	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
 	api.Get("/docs", handlers.OpenAPIHandler())
 	api.Post("/sessions", sessionHandler.CreateSession)
