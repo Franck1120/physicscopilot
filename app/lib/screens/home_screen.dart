@@ -10,6 +10,7 @@ import '../providers/websocket_provider.dart';
 import '../services/api_service.dart' show serverOnlineProvider;
 import '../services/websocket_service.dart';
 import '../utils/extensions.dart';
+import '../widgets/confetti_overlay.dart';
 import '../widgets/session_skeleton.dart';
 import 'history_screen.dart';
 
@@ -119,6 +120,8 @@ class _HomeTab extends ConsumerStatefulWidget {
 
 class _HomeTabState extends ConsumerState<_HomeTab> {
   bool _initialLoading = true;
+  bool _showConfetti = false;
+  int _lastSessionCount = 0;
 
   @override
   void initState() {
@@ -132,8 +135,22 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   Widget build(BuildContext context) {
     final equipment = ref.watch(equipmentProvider);
     final connectionStatus = ref.watch(connectionStatusProvider);
+    final sessions = ref.watch(sessionHistoryProvider);
 
-    return Scaffold(
+    // Trigger confetti when a 10-session milestone is crossed.
+    if (sessions.length != _lastSessionCount) {
+      final prev = _lastSessionCount;
+      _lastSessionCount = sessions.length;
+      if (sessions.length > 0 &&
+          sessions.length % 10 == 0 &&
+          sessions.length > prev) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _showConfetti = true);
+        });
+      }
+    }
+
+    final scaffold = Scaffold(
       backgroundColor: kBgPrimary,
       appBar: AppBar(
         backgroundColor: const Color(0xFF111111),
@@ -183,6 +200,21 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           ),
         ),
       ),
+    );
+
+    if (!_showConfetti) return scaffold;
+
+    return Stack(
+      children: [
+        scaffold,
+        Positioned.fill(
+          child: ConfettiOverlay(
+            onComplete: () {
+              if (mounted) setState(() => _showConfetti = false);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
