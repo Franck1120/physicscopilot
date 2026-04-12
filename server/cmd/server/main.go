@@ -66,7 +66,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("KB init failed: %w", err)
 	}
 	if !ragSvc.Loaded() {
-		slog.Warn("knowledge base not loaded — KB_PATH absent or file missing; running without KB context")
+		slog.Warn("knowledge base not loaded — KB_DATA_DIR absent or no *.json files found; running without KB context")
 	}
 
 	// ── Optional Postgres backend ────────────────────────────────────────────
@@ -122,7 +122,7 @@ func run(ctx context.Context) error {
 	}()
 
 	// ── HTTP app ─────────────────────────────────────────────────────────────
-	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, dbSvc)
+	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, ragSvc, dbSvc)
 
 	port := resolvePort()
 
@@ -204,6 +204,7 @@ func newFiberApp(
 	sessionHandler *handlers.SessionHandler,
 	feedbackHandler *handlers.FeedbackHandler,
 	wsHandler *handlers.WSHandler,
+	ragSvc handlers.DomainsService,
 	db handlers.DBPinger, // nil when DATABASE_URL not set
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
@@ -310,6 +311,7 @@ func newFiberApp(
 	api.Get("/sessions/:id", sessionHandler.GetSession)
 	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
 	api.Post("/feedback", feedbackHandler.Submit)
+	api.Get("/domains", handlers.DomainsHandler(ragSvc))
 
 	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
 
