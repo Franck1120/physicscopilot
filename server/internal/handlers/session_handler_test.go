@@ -277,6 +277,86 @@ func TestCreateSessionModelTooLongReturns400(t *testing.T) {
 	}
 }
 
+// ── Pagination tests ──────────────────────────────────────────────────────────
+
+func TestListSessionsPaginationPage2(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	for i := 0; i < 5; i++ {
+		sessions.CreateSession("Brand", "Model", "", "") //nolint:errcheck
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?page=2&page_size=2", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	sessionsList, ok := body["sessions"].([]interface{})
+	if !ok {
+		t.Fatalf("sessions field missing or wrong type: %v", body["sessions"])
+	}
+	if len(sessionsList) != 2 {
+		t.Errorf("want 2 sessions on page 2, got %d", len(sessionsList))
+	}
+	if int(body["page"].(float64)) != 2 {
+		t.Errorf("want page=2, got %v", body["page"])
+	}
+	if int(body["page_size"].(float64)) != 2 {
+		t.Errorf("want page_size=2, got %v", body["page_size"])
+	}
+	if int(body["total"].(float64)) != 5 {
+		t.Errorf("want total=5, got %v", body["total"])
+	}
+}
+
+func TestListSessionsPaginationDefaults(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Brand", "Model", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&body) //nolint:errcheck
+
+	if int(body["page"].(float64)) != 1 {
+		t.Errorf("default page should be 1, got %v", body["page"])
+	}
+	if int(body["page_size"].(float64)) != 20 {
+		t.Errorf("default page_size should be 20, got %v", body["page_size"])
+	}
+}
+
+func TestListSessionsPaginationBeyondEndReturnsEmpty(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Brand", "Model", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?page=99&page_size=10", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&body) //nolint:errcheck
+
+	sessionsList, _ := body["sessions"].([]interface{})
+	if len(sessionsList) != 0 {
+		t.Errorf("want 0 sessions beyond last page, got %d", len(sessionsList))
+	}
+}
+
 // ── ETag tests ────────────────────────────────────────────────────────────────
 
 func TestGetSessionReturnsETagHeader(t *testing.T) {

@@ -11,6 +11,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const (
+	defaultPage     = 1
+	defaultPageSize = 20
+	maxPageSize     = 100
+)
+
 const maxDeviceFieldLen = 100
 
 // SessionHandler exposes REST endpoints for session lifecycle management.
@@ -126,9 +132,59 @@ func validateSessionRequest(req createSessionRequest) error {
 	return nil
 }
 
+// parsePagination parses the page and page_size query parameters from the
+// request context and applies defaults and clamps. page defaults to 1 (min 1),
+// page_size defaults to 20 (min 1, max 100).
+func parsePagination(c *fiber.Ctx) (page, pageSize int) {
+	page = c.QueryInt("page", defaultPage)
+	if page < 1 {
+		page = 1
+	}
+	pageSize = c.QueryInt("page_size", defaultPageSize)
+	if pageSize < 1 {
+		pageSize = 1
+	}
+	if pageSize > maxPageSize {
+		pageSize = maxPageSize
+	}
+	return page, pageSize
+}
+
+// paginateSessions returns the sub-slice for the requested page together with
+// the total count of entries before slicing.
+func paginateSessions(dtos []sessionResponse, page, pageSize int) (paged []sessionResponse, total int) {
+	total = len(dtos)
+	start := (page - 1) * pageSize
+	if start >= total {
+		return []sessionResponse{}, total
+	}
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+	return dtos[start:end], total
+}
+
+// totalPages computes the number of pages required to hold total entries at
+// pageSize items per page. Returns at least 1 when total is 0.
+func totalPages(total, pageSize int) int {
+	if total == 0 {
+		return 1
+	}
+	pages := total / pageSize
+	if total%pageSize != 0 {
+		pages++
+	}
+	return pages
+}
+
 // ListSessions handles GET /api/sessions.
 //
-// Response 200: {"sessions": [...], "count": N} with ETag header.
+// Query parameters:
+//   - page (int, default 1): 1-based page number
+//   - page_size (int, default 20, max 100): items per page
+//
+// Response 200: {"sessions":[...],"count":N,"page":P,"page_size":S,"total":T,"total_pages":TP} with ETag header.
 // Response 304: when If-None-Match matches the current ETag.
 func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 	all := h.sessions.ListSessions()
@@ -136,15 +192,24 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 	for i, s := range all {
 		dtos[i] = toResponse(s)
 	}
+
 	etag := sessionListETag(dtos)
 	if c.Get("If-None-Match") == etag {
 		return c.SendStatus(fiber.StatusNotModified)
 	}
+
+	page, pageSize := parsePagination(c)
+	paged, total := paginateSessions(dtos, page, pageSize)
+
 	c.Set("ETag", etag)
 	c.Set("Cache-Control", "private, no-cache")
 	return c.JSON(fiber.Map{
-		"sessions": dtos,
-		"count":    len(dtos),
+		"sessions":    paged,
+		"count":       len(paged),
+		"page":        page,
+		"page_size":   pageSize,
+		"total":       total,
+		"total_pages": totalPages(total, pageSize),
 	})
 }
 
