@@ -7,10 +7,14 @@ import '../services/voice_service.dart';
 // ── Service provider ──────────────────────────────────────────────────────────
 
 /// Singleton [VoiceService]; initialised on creation and disposed with the scope.
+/// Initialization errors are logged but non-fatal — the app degrades
+/// gracefully (voice features unavailable, camera still works).
 final voiceServiceProvider = Provider<VoiceService>((ref) {
   final service = VoiceService();
-  // Fire-and-forget: initialization is async but non-blocking.
-  service.initialize();
+  service.initialize().catchError((e) {
+    // Non-fatal: STT/TTS may be unavailable but the app remains usable.
+    assert(() { print('VoiceService init failed: $e'); return true; }());
+  });
   ref.onDispose(service.dispose);
   return service;
 });
