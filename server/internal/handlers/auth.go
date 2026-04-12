@@ -6,6 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gofiber/fiber/v2"
+
+	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 )
 
 // WSAuthMiddleware returns a Fiber middleware that validates a JWT on the /ws
@@ -32,6 +34,11 @@ func WSAuthMiddleware() fiber.Handler {
 			}
 		}
 		if token == "" {
+			applogger.SecurityLog("auth_failure",
+				"reason", "missing_token",
+				"path", c.Path(),
+				"ip_hash", applogger.HashIP(c.IP()),
+			)
 			return fiber.NewError(fiber.StatusUnauthorized, "missing authentication token")
 		}
 
@@ -42,6 +49,11 @@ func WSAuthMiddleware() fiber.Handler {
 			return keyBytes, nil
 		})
 		if err != nil || !parsed.Valid {
+			applogger.SecurityLog("auth_failure",
+				"reason", "invalid_token",
+				"path", c.Path(),
+				"ip_hash", applogger.HashIP(c.IP()),
+			)
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
 		}
 

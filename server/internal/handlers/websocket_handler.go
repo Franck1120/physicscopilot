@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
@@ -456,6 +457,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 	// Reject frames that don't begin with the JPEG magic bytes (FF D8 FF).
 	if !isValidJPEG(msg.Data) {
 		slog.Warn("frame rejected: not a valid JPEG", "session_id", sessionID)
+		applogger.SecurityLog("jpeg_validation_failure", "session_id", sessionID)
 		writeError(sc, "frame must be a base64-encoded JPEG image")
 		return
 	}
@@ -492,6 +494,13 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg Incom
 	if !ok {
 		writeError(sc, "message content is empty after sanitization")
 		return
+	}
+	if content != msg.Content {
+		applogger.SecurityLog("input_sanitized",
+			"session_id", sessionID,
+			"original_len", len(msg.Content),
+			"sanitized_len", len(content),
+		)
 	}
 
 	ctx := context.Background()

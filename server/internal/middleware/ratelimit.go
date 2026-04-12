@@ -6,6 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/time/rate"
+
+	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 )
 
 const (
@@ -114,6 +116,7 @@ func (rl *IPRateLimiter) Middleware() fiber.Handler {
 		}
 		if !rl.getLimiter(ip).Allow() {
 			rl.recordViolation(ip)
+			applogger.SecurityLog("rate_limit_hit", "ip_hash", applogger.HashIP(ip))
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 				"error": "rate limit exceeded — try again in a moment",
 			})
@@ -152,6 +155,10 @@ func (rl *IPRateLimiter) recordViolation(ip string) {
 	if v.count >= banViolationThreshold {
 		rl.bans[ip] = time.Now().Add(banDuration)
 		delete(rl.violations, ip)
+		applogger.SecurityLog("ip_banned",
+			"ip_hash", applogger.HashIP(ip),
+			"duration_min", int(banDuration.Minutes()),
+		)
 	}
 }
 
