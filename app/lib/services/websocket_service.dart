@@ -26,6 +26,9 @@ class WebSocketService {
   /// Optional JWT for server-side authentication.
   final String? _token;
 
+  /// BCP-47 language code forwarded to the server as ?lang= query param.
+  final String _language;
+
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   bool _disposed = false;
@@ -36,7 +39,9 @@ class WebSocketService {
   final _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  WebSocketService(this._baseUrl, {String? token}) : _token = token;
+  WebSocketService(this._baseUrl, {String? token, String language = 'it'})
+      : _token = token,
+        _language = language;
 
   /// Connection status changes (connecting → connected → disconnected → …).
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
@@ -51,9 +56,10 @@ class WebSocketService {
 
     try {
       final token = _token; // local copy for Dart type promotion
-      final wsUri = token != null
-          ? Uri.parse('$_baseUrl/ws?token=${Uri.encodeComponent(token)}')
-          : Uri.parse('$_baseUrl/ws');
+      final queryParams = <String, String>{'lang': _language};
+      if (token != null) queryParams['token'] = token;
+      final wsUri =
+          Uri.parse('$_baseUrl/ws').replace(queryParameters: queryParams);
       _channel = WebSocketChannel.connect(wsUri);
       await _channel!.ready;
 

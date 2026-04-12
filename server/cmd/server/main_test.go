@@ -19,7 +19,8 @@ func buildTestApp(t *testing.T) *fiber.App {
 	convSvc := services.NewConversationService(sessionSvc, nil, nil)
 	ws := handlers.NewWSHandler(convSvc, sessionSvc)
 	sh := handlers.NewSessionHandler(sessionSvc)
-	return newFiberApp("test", sh, ws, nil)
+	fh := handlers.NewFeedbackHandler(nil)
+	return newFiberApp("test", sh, fh, ws, nil)
 }
 
 func TestNewFiberAppHealthRouteRegistered(t *testing.T) {

@@ -57,4 +57,33 @@ var (
 			Buckets: []float64{0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0},
 		},
 	)
+
+	// GeminiErrorsTotal counts failed Gemini inference calls, labelled by
+	// the message type that triggered the call ("frame" or "text").
+	GeminiErrorsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gemini_errors_total",
+			Help: "Total number of Gemini AI inference errors, by message type.",
+		},
+		[]string{"type"},
+	)
+
+	// WsFramesProcessedTotal counts camera frames that passed the rate limiter
+	// and were successfully forwarded to Gemini for analysis.
+	WsFramesProcessedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "ws_frames_processed_total",
+			Help: "Camera frames forwarded to Gemini (after rate limiting, successful only).",
+		},
+	)
+
+	// WsActiveSessionsByLanguage is a per-language gauge of open WebSocket
+	// sessions. The language label holds the BCP-47 code (e.g. "it", "en").
+	WsActiveSessionsByLanguage = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "ws_active_sessions_by_language",
+			Help: "Number of active WebSocket sessions grouped by user language.",
+		},
+		[]string{"language"},
+	)
 )

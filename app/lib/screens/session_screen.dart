@@ -20,6 +20,8 @@ import '../providers/equipment_provider.dart';
 import '../providers/prefs_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../providers/session_provider.dart';
+import '../providers/settings_provider.dart';
+import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -50,11 +52,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   final TextEditingController _textController = TextEditingController();
   Uint8List? _lastFrame;
 
+  static const _kCachedResponseKey = 'offline_last_ai_response';
+
   final DateTime _sessionStart = DateTime.now();
   Duration _elapsed = Duration.zero;
   Timer? _ticker;
   String? _firstUserMessage;
   bool _showTutorial = false;
+  String? _lastVoiceText; // for play/pause replay
+  String? _cachedResponse; // last AI response from previous session (offline fallback)
 
   static const _kTutorialKey = 'session_tutorial_shown';
 
@@ -71,9 +77,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     // Check after first frame so we don't call setState during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final shown =
-          ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false;
+      final prefs = ref.read(sharedPrefsProvider);
+      final shown = prefs.getBool(_kTutorialKey) ?? false;
       if (!shown) setState(() => _showTutorial = true);
+      // Load last cached AI response for offline fallback.
+      final cached = prefs.getString(_kCachedResponseKey);
+      if (cached != null && cached.isNotEmpty) {
+        setState(() => _cachedResponse = cached);
+      }
     });
   }
 
@@ -120,6 +131,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
       }
     } else if (type == 'response') {
       ref.read(sessionProvider.notifier).updateFromResponse(msg);
+      // Cache response for offline mode.
+      final responseText = msg['text'] as String?;
+      if (responseText != null && responseText.isNotEmpty) {
+        setState(() => _cachedResponse = responseText);
+        ref.read(sharedPrefsProvider).setString(_kCachedResponseKey, responseText);
+      }
+      // Auto-read voice_text if voice guidance is enabled.
+      final voiceText = msg['voice_text'] as String?;
+      if (voiceText != null && voiceText.isNotEmpty) {
+        _lastVoiceText = voiceText;
+        final voiceEnabled = ref.read(settingsProvider).voiceEnabled;
+        if (voiceEnabled) {
+          ref.read(voiceProvider.notifier).speak(voiceText);
+        }
+      }
     } else if (type == 'error') {
       ref.read(sessionProvider.notifier).setError(
         (msg['error'] as String?) ?? 'Errore sconosciuto',
@@ -266,6 +292,34 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
           },
         ),
         actions: [
+          // Voice play/pause toggle — only shown when voice guidance is enabled.
+          Consumer(
+            builder: (context, ref, _) {
+              final voiceEnabled = ref.watch(settingsProvider).voiceEnabled;
+              if (!voiceEnabled) return const SizedBox.shrink();
+              final voiceState = ref.watch(voiceProvider);
+              final isSpeaking = voiceState.isSpeaking;
+              return Semantics(
+                label: isSpeaking ? 'Ferma voce AI' : 'Riproduci voce AI',
+                button: true,
+                child: IconButton(
+                  icon: Icon(
+                    isSpeaking ? Icons.pause_circle_outline : Icons.volume_up_outlined,
+                    color: isSpeaking ? kAccent : Colors.white54,
+                    size: 20,
+                  ),
+                  tooltip: isSpeaking ? 'Ferma voce' : 'Riproduci istruzione',
+                  onPressed: () {
+                    if (isSpeaking) {
+                      ref.read(voiceProvider.notifier).stopSpeaking();
+                    } else if (_lastVoiceText != null) {
+                      ref.read(voiceProvider.notifier).speak(_lastVoiceText!);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
           if (_lastFrame != null)
             IconButton(
               icon: const Icon(Icons.draw_outlined,
@@ -327,6 +381,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
                 child: GuidancePanel(
                   textController: _textController,
                   onSendText: _sendText,
+                  cachedResponse: _cachedResponse,
+                  isOffline: wsStatus.value != ConnectionStatus.connected,
                 ),
               ),
             ],
@@ -769,6 +825,776 @@ class _CameraError extends StatelessWidget {
         ),
       );
 }
+
+// ── Guidance panel ──────────────────────────────────────────────────────────
+
+class _GuidancePanel extends ConsumerWidget {
+  const _GuidancePanel({
+    required this.textController,
+    required this.onSendText,
+    this.cachedResponse,
+    this.isOffline = false,
+  });
+  final TextEditingController textController;
+  final VoidCallback onSendText;
+  final String? cachedResponse;
+  final bool isOffline;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(sessionProvider);
+    return Container(
+      decoration: const BoxDecoration(
+        color: kBgCard,
+        border: Border(top: BorderSide(color: kBgCardBorder, width: 1)),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: _ResponseArea(
+              session: session,
+              cachedResponse: cachedResponse,
+              isOffline: isOffline,
+            ),
+          ),
+          _TextInputRow(controller: textController, onSend: onSendText),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Response area with animations ───────────────────────────────────────────
+
+class _ResponseArea extends StatelessWidget {
+  const _ResponseArea({
+    required this.session,
+    this.cachedResponse,
+    this.isOffline = false,
+  });
+  final SessionState session;
+  final String? cachedResponse;
+  final bool isOffline;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child;
+
+    if (session.isProcessing) {
+      child = const _ThinkingIndicator();
+    } else if (session.isStreaming && session.streamingText != null) {
+      // True streaming: show accumulated chunks with a blinking cursor.
+      child = _StreamingText(
+        key: const ValueKey('streaming'),
+        text: session.streamingText!,
+      );
+    } else if (session.errorText != null) {
+      child = Padding(
+        key: const ValueKey('error'),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                color: Colors.orangeAccent, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(session.errorText!,
+                  style: const TextStyle(
+                      color: Colors.orangeAccent, fontSize: 13)),
+            ),
+          ],
+        ),
+      );
+    } else if (isOffline && cachedResponse != null) {
+      // Offline fallback: show last cached response when disconnected.
+      child = Column(
+        key: const ValueKey('offline'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            color: Colors.orangeAccent.withAlpha(25),
+            child: const Row(
+              children: [
+                Icon(Icons.cloud_off_outlined,
+                    color: Colors.orangeAccent, size: 14),
+                SizedBox(width: 8),
+                Text('Modalità offline — ultima risposta disponibile',
+                    style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                cachedResponse!,
+                style: const TextStyle(
+                    color: Colors.white70, fontSize: 14, height: 1.5),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (session.responseText != null) {
+      final steps = _parseSteps(session.responseText!);
+      if (steps != null) {
+        child = _MultiStepView(
+          key: ValueKey('steps_${session.responseText.hashCode}'),
+          steps: steps,
+        );
+      } else {
+        child = _TypewriterResponse(
+          key: ValueKey(session.responseText),
+          text: session.responseText!,
+        );
+      }
+    } else {
+      child = const Center(
+        key: ValueKey('idle'),
+        child: Text(
+          AppStrings.sessionIdle,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: kTextMuted, fontSize: 13, height: 1.5),
+        ),
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 350),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+      child: child,
+    );
+  }
+}
+
+// ── Feedback bar — thumbs up / down after AI response ────────────────────────
+
+/// Thumbs-up / thumbs-down buttons shown once the typewriter animation ends.
+/// Selection is persisted to SharedPreferences as aggregate counters.
+class _FeedbackBar extends ConsumerStatefulWidget {
+  const _FeedbackBar({required this.responseText});
+  final String responseText;
+
+  @override
+  ConsumerState<_FeedbackBar> createState() => _FeedbackBarState();
+}
+
+class _FeedbackBarState extends ConsumerState<_FeedbackBar> {
+  // null = not voted, true = liked, false = disliked
+  bool? _vote;
+
+  static const _keyUp = 'feedback_thumbsUp';
+  static const _keyDown = 'feedback_thumbsDown';
+
+  Future<void> _setVote(bool liked) async {
+    if (_vote != null) return; // already voted
+    HapticFeedback.selectionClick();
+    setState(() => _vote = liked);
+    final prefs = ref.read(sharedPrefsProvider);
+    if (liked) {
+      await prefs.setInt(_keyUp, (prefs.getInt(_keyUp) ?? 0) + 1);
+    } else {
+      await prefs.setInt(_keyDown, (prefs.getInt(_keyDown) ?? 0) + 1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: 'Risposta utile',
+          button: true,
+          child: IconButton(
+            icon: Icon(
+              _vote == true
+                  ? Icons.thumb_up_rounded
+                  : Icons.thumb_up_outlined,
+              size: 15,
+              color: _vote == true ? kAccent : kTextMuted,
+            ),
+            tooltip: 'Utile',
+            onPressed: _vote == null ? () => _setVote(true) : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+        Semantics(
+          label: 'Risposta non utile',
+          button: true,
+          child: IconButton(
+            icon: Icon(
+              _vote == false
+                  ? Icons.thumb_down_rounded
+                  : Icons.thumb_down_outlined,
+              size: 15,
+              color: _vote == false ? Colors.redAccent : kTextMuted,
+            ),
+            tooltip: 'Non utile',
+            onPressed: _vote == null ? () => _setVote(false) : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Streaming text — shows accumulated chunks with a blinking cursor ─────────
+
+class _StreamingText extends StatelessWidget {
+  const _StreamingText({super.key, required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.smart_toy_outlined, color: kAccent, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Elaborazione…',
+                style: TextStyle(
+                  color: kAccent.withAlpha(180),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    height: 1.55,
+                  ),
+                ),
+                const WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: _BlinkingCursor(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlinkingCursor extends StatefulWidget {
+  const _BlinkingCursor();
+
+  @override
+  State<_BlinkingCursor> createState() => _BlinkingCursorState();
+}
+
+class _BlinkingCursorState extends State<_BlinkingCursor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 530),
+    )..repeat(reverse: true);
+    _opacity = _ctrl;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 2,
+        height: 16,
+        margin: const EdgeInsets.only(left: 2),
+        decoration: BoxDecoration(
+          color: kAccent,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Multi-step guidance ────────────────────────────────────────────────────────
+
+/// Returns a list of step strings if [text] contains 2+ numbered items
+/// (e.g. "1. Do this\n2. Do that"), otherwise null.
+List<String>? _parseSteps(String text) {
+  final lines = text.split('\n');
+  final steps = <String>[];
+  final stepRe = RegExp(r'^\s*(\d+)[.)]\s+(.+)$');
+  for (final line in lines) {
+    final m = stepRe.firstMatch(line);
+    if (m != null) steps.add(m.group(2)!.trim());
+  }
+  return steps.length >= 2 ? steps : null;
+}
+
+class _MultiStepView extends StatefulWidget {
+  const _MultiStepView({super.key, required this.steps});
+  final List<String> steps;
+
+  @override
+  State<_MultiStepView> createState() => _MultiStepViewState();
+}
+
+class _MultiStepViewState extends State<_MultiStepView> {
+  final Set<int> _checked = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.steps.length;
+    final done = _checked.length;
+    final progress = total == 0 ? 0.0 : done / total;
+    final allDone = done == total;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header + progress
+          Row(
+            children: [
+              const Icon(Icons.format_list_numbered,
+                  color: kAccent, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                '$done / $total completati',
+                style: const TextStyle(
+                  color: kAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: kBgCardBorder,
+              valueColor: const AlwaysStoppedAnimation<Color>(kAccent),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Step cards
+          ...List.generate(total, (i) {
+            final isDone = _checked.contains(i);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  if (isDone) {
+                    _checked.remove(i);
+                  } else {
+                    _checked.add(i);
+                  }
+                }),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDone
+                        ? kAccent.withAlpha(30)
+                        : kBgCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDone ? kAccent.withAlpha(120) : kBgCardBorder,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDone ? kAccent : Colors.transparent,
+                          border: Border.all(
+                            color: isDone ? kAccent : kTextMuted,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isDone
+                            ? const Icon(Icons.check,
+                                color: Colors.white, size: 13)
+                            : Center(
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                      color: kTextMuted,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.steps[i],
+                          style: TextStyle(
+                            color: isDone
+                                ? Colors.white.withAlpha(140)
+                                : Colors.white,
+                            fontSize: 13,
+                            height: 1.5,
+                            decoration: isDone
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                            decorationColor: Colors.white38,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          if (allDone) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: kAccent.withAlpha(40),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: kAccent.withAlpha(100)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      color: kAccent, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Tutti i passi completati!',
+                    style: TextStyle(
+                        color: kAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Typewriter response — animates text char-by-char + copy button ────────────
+
+class _TypewriterResponse extends StatefulWidget {
+  const _TypewriterResponse({super.key, required this.text});
+
+  final String text;
+
+  @override
+  State<_TypewriterResponse> createState() => _TypewriterResponseState();
+}
+
+class _TypewriterResponseState extends State<_TypewriterResponse> {
+  int _length = 0;
+  Timer? _timer;
+
+  // ~100 chars/sec feels snappy without losing readability.
+  static const _charInterval = Duration(milliseconds: 10);
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_charInterval, (_) {
+      if (_length < widget.text.length) {
+        if (mounted) setState(() => _length++);
+      } else {
+        _timer?.cancel();
+        _timer = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayed = widget.text.substring(0, _length);
+    final done = _length >= widget.text.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.auto_fix_high, color: kAccent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    displayed,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 14, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Copy + feedback row — visible once typing is complete.
+        AnimatedOpacity(
+          opacity: done ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+            child: Row(
+              children: [
+                // Feedback (thumbs up/down)
+                _FeedbackBar(responseText: widget.text),
+                const Spacer(),
+                // Copy button
+                Semantics(
+                  label: 'Copia risposta AI',
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.copy_outlined,
+                        size: 16, color: kTextMuted),
+                    tooltip: 'Copia risposta',
+                    onPressed: done
+                        ? () {
+                            HapticFeedback.selectionClick();
+                            Clipboard.setData(
+                                ClipboardData(text: widget.text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(AppStrings.sessionResponseCopied),
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Thinking indicator — three pulsing dots ──────────────────────────────────
+
+class _ThinkingIndicator extends StatefulWidget {
+  const _ThinkingIndicator();
+  @override
+  State<_ThinkingIndicator> createState() => _ThinkingIndicatorState();
+}
+
+class _ThinkingIndicatorState extends State<_ThinkingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: AppStrings.sessionAiThinking,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) => _Dot(ctrl: _ctrl, index: i)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const ExcludeSemantics(
+              child: Text(
+                AppStrings.sessionAiThinking,
+                style: TextStyle(color: kTextMuted, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.ctrl, required this.index});
+  final AnimationController ctrl;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    // Each dot is offset by 0.2 of the animation cycle.
+    final offsetAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: ctrl,
+        curve: Interval(
+          index * 0.2,
+          math.min(index * 0.2 + 0.6, 1.0),
+          curve: Curves.easeInOut,
+        ),
+      ),
+    );
+    return AnimatedBuilder(
+      animation: offsetAnimation,
+      builder: (_, __) {
+        final t = offsetAnimation.value;
+        final dy = -6.0 * math.sin(t * math.pi);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: kAccent.withValues(alpha: 0.4 + 0.6 * (1 - (dy / -6).abs())),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Text input row ───────────────────────────────────────────────────────────
+
+class _TextInputRow extends StatelessWidget {
+  const _TextInputRow({required this.controller, required this.onSend});
+  final TextEditingController controller;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: kBgCardBorder, width: 1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              label: 'Descrivi il problema',
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Descrivi il problema…',
+                  hintStyle: const TextStyle(color: kTextMuted, fontSize: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: kAccent),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  filled: true,
+                  fillColor: const Color(0xFF111111),
+                ),
+                onSubmitted: (_) => onSend(),
+                textInputAction: TextInputAction.send,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: onSend,
+            icon: const Icon(Icons.send_rounded),
+            color: kAccent,
+            tooltip: 'Invia messaggio',
+            style: IconButton.styleFrom(
+              backgroundColor: kAccent.withAlpha(20),
+              shape: const CircleBorder(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Tutorial overlay ──────────────────────────────────────────────────────────
 
 // ── Image annotation dialog ───────────────────────────────────────────────────
 

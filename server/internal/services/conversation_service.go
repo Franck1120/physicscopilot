@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 // frameSampleSize is the maximum number of bytes from the base64 frame
 // used to compute the deduplication hash. Hashing only a prefix avoids
 // processing multi-megabyte strings while still catching identical frames.
 const frameSampleSize = 1024
+
+// frameHashTTL is how long a frame hash is retained. After this duration the
+// same frame will be re-analysed rather than skipped as a duplicate — prevents
+// the map from leaking memory when sessions are long-lived or abandoned.
+const frameHashTTL = 30 * time.Minute
 
 // ProcessResult holds the combined Gemini analysis, overlay annotations,
 // current step position, and a TTS-optimised voice hint returned to the client.
@@ -28,6 +34,12 @@ type StepInfo struct {
 	Total   int `json:"total"`
 }
 
+// frameHashEntry stores a frame hash alongside the time it was recorded.
+type frameHashEntry struct {
+	hash      string
+	recordedAt time.Time
+}
+
 // ConversationService orchestrates frame analysis and text conversations
 // by coordinating SessionService (state), an AIBackend (AI inference), and an
 // optional RAGService (knowledge-base context enrichment).
@@ -35,7 +47,7 @@ type ConversationService struct {
 	sessions    *SessionService
 	ai          AIBackend
 	rag         *RAGService
-	frameHashes map[string]string // sessionID -> hash of last processed frame
+	frameHashes map[string]frameHashEntry // sessionID -> (hash, timestamp)
 	mu          sync.Mutex
 }
 
@@ -47,7 +59,7 @@ func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGServ
 		sessions:    sessions,
 		ai:          ai,
 		rag:         rag,
-		frameHashes: make(map[string]string),
+		frameHashes: make(map[string]frameHashEntry),
 	}
 }
 
@@ -229,22 +241,32 @@ func hashFrame(frameBase64 string) string {
 }
 
 // isDuplicateFrame checks whether the frame hash matches the last processed
-// frame for this session. Thread-safe via mutex.
+// frame for this session. Entries older than frameHashTTL are treated as
+// expired and the frame is allowed through. Thread-safe via mutex.
 func (c *ConversationService) isDuplicateFrame(sessionID, hash string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.frameHashes[sessionID] == hash
+	entry, ok := c.frameHashes[sessionID]
+	if !ok {
+		return false
+	}
+	if time.Since(entry.recordedAt) > frameHashTTL {
+		delete(c.frameHashes, sessionID)
+		return false
+	}
+	return entry.hash == hash
 }
 
-// storeFrameHash records the latest frame hash for a session. Thread-safe.
+// storeFrameHash records the latest frame hash for a session with a timestamp.
+// Thread-safe.
 func (c *ConversationService) storeFrameHash(sessionID, hash string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.frameHashes[sessionID] = hash
+	c.frameHashes[sessionID] = frameHashEntry{hash: hash, recordedAt: time.Now()}
 }
 
 // clearFrameHash removes the stored frame hash for a session, allowing the
-// same frame to be reprocessed. Called when Gemini analysis fails after an
+// same frame to be reprocessed. Called when AI analysis fails after an
 // optimistic hash store.
 func (c *ConversationService) clearFrameHash(sessionID string) {
 	c.mu.Lock()

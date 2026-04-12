@@ -460,10 +460,10 @@ func TestBuildRequestBodyWithoutContext(t *testing.T) {
 	}
 }
 
-func TestParseGeminiResponseEmptyParts(t *testing.T) {
+func TestParseAIResponseEmptyParts(t *testing.T) {
 	body := []byte(`{"candidates":[{"content":{"parts":[]}}]}`)
 
-	_, err := parseGeminiResponse(body)
+	_, err := parseAIResponse(body)
 	if err == nil {
 		t.Fatal("expected error for empty parts")
 	}
@@ -472,10 +472,10 @@ func TestParseGeminiResponseEmptyParts(t *testing.T) {
 	}
 }
 
-func TestParseGeminiResponseEmptyText(t *testing.T) {
+func TestParseAIResponseEmptyText(t *testing.T) {
 	body := []byte(`{"candidates":[{"content":{"parts":[{"text":""}]}}]}`)
 
-	_, err := parseGeminiResponse(body)
+	_, err := parseAIResponse(body)
 	if err == nil {
 		t.Fatal("expected error for empty text")
 	}
@@ -484,8 +484,8 @@ func TestParseGeminiResponseEmptyText(t *testing.T) {
 	}
 }
 
-func TestParseGeminiResponseBrokenEnvelope(t *testing.T) {
-	_, err := parseGeminiResponse([]byte(`not json`))
+func TestParseAIResponseBrokenEnvelope(t *testing.T) {
+	_, err := parseAIResponse([]byte(`not json`))
 	if err == nil {
 		t.Fatal("expected error for broken envelope JSON")
 	}

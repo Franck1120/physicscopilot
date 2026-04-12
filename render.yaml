@@ -33,3 +33,7 @@ services:
         sync: false
       - key: WS_MAX_FPS
         value: 5
+      - key: KB_PATH
+        sync: false
+      - key: DATABASE_URL
+        sync: false
