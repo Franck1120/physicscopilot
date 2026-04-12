@@ -1,3 +1,6 @@
+// Package handlers implements the HTTP and WebSocket handlers for the
+// PhysicsCopilot server. Each handler is a thin layer that validates input,
+// delegates to the service layer, and writes a structured JSON response.
 package handlers
 
 import (
