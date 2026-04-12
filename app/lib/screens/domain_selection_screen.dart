@@ -34,19 +34,44 @@ const _domains = [
 
 /// Route: `/domain-selection`
 ///
-/// Displays a 3-column grid of domain cards. Tapping a card saves the chosen
-/// domain via [settingsProvider] and calls [onSelected] with the domain id.
-class DomainSelectionScreen extends ConsumerWidget {
+/// Displays a 3-column grid of domain cards. A search field above the grid
+/// filters domains by label (case-insensitive). Tapping a card saves the
+/// chosen domain via [settingsProvider] and calls [onSelected].
+class DomainSelectionScreen extends ConsumerStatefulWidget {
   const DomainSelectionScreen({super.key, this.onSelected});
 
   /// Called after the domain is persisted. Receives the selected domain id.
   final void Function(String domain)? onSelected;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DomainSelectionScreen> createState() =>
+      _DomainSelectionScreenState();
+}
+
+class _DomainSelectionScreenState extends ConsumerState<DomainSelectionScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<_DomainItem> get _filtered {
+    if (_query.isEmpty) return _domains;
+    final lower = _query.toLowerCase();
+    return _domains
+        .where((d) => d.label.toLowerCase().contains(lower))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentDomain = ref.watch(
       settingsProvider.select((s) => s.selectedDomain),
     );
+    final filtered = _filtered;
 
     return Scaffold(
       backgroundColor: kBgPrimary,
@@ -69,7 +94,7 @@ class DomainSelectionScreen extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
                 'Seleziona il dominio per ottimizzare le analisi AI.',
                 style: Theme.of(context)
@@ -78,31 +103,91 @@ class DomainSelectionScreen extends ConsumerWidget {
                     ?.copyWith(color: kTextMuted),
               ),
             ),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.9,
+
+            // ── Search field ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Cerca dominio…',
+                  hintStyle: const TextStyle(color: kTextMuted, fontSize: 14),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: kTextMuted,
+                    size: 20,
+                  ),
+                  suffixIcon: _query.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear_rounded,
+                            color: kTextMuted,
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _query = '');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: kBgCard,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: kBgCardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: kAccent),
+                  ),
                 ),
-                itemCount: _domains.length,
-                itemBuilder: (context, index) {
-                  final domain = _domains[index];
-                  final isSelected = currentDomain == domain.id;
-                  return _DomainCard(
-                    item: domain,
-                    selected: isSelected,
-                    onTap: () async {
-                      await ref
-                          .read(settingsProvider.notifier)
-                          .setDomain(domain.id);
-                      onSelected?.call(domain.id);
-                    },
-                  );
-                },
+                onChanged: (value) => setState(() => _query = value),
               ),
+            ),
+
+            // ── Domain grid ───────────────────────────────────────────────
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Nessun dominio trovato',
+                        style: TextStyle(color: kTextMuted, fontSize: 14),
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final domain = filtered[index];
+                        final isSelected = currentDomain == domain.id;
+                        return _DomainCard(
+                          item: domain,
+                          selected: isSelected,
+                          onTap: () async {
+                            await ref
+                                .read(settingsProvider.notifier)
+                                .setDomain(domain.id);
+                            widget.onSelected?.call(domain.id);
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),
