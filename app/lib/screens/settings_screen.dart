@@ -217,7 +217,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   value: settings.voiceEnabled,
                   onChanged: (v) =>
                       ref.read(settingsProvider.notifier).setVoiceEnabled(v),
-                  activeColor: kAccent,
+                  activeThumbColor: kAccent,
                 ),
               ],
             ),

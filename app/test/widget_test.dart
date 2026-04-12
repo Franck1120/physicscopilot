@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:physicscopilot/main.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 void main() {
   testWidgets('App mounts without crashing', (WidgetTester tester) async {
