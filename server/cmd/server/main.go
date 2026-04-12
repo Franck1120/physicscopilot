@@ -37,14 +37,18 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Refuse to start in production without a JWT secret — missing secret means
-	// zero authentication and any client can connect without a valid JWT.
-	if os.Getenv("SUPABASE_JWT_SECRET") == "" {
-		if os.Getenv("APP_ENV") == "production" {
-			slog.Error("SUPABASE_JWT_SECRET is not set in production — refusing to start")
-			os.Exit(1)
-		}
-		slog.Warn("⚠️  SUPABASE_JWT_SECRET is not set — running in UNAUTHENTICATED dev mode; all WebSocket clients can connect without a JWT")
+	if err := run(ctx); err != nil {
+		slog.Error("fatal", "err", err)
+		os.Exit(1)
+	}
+}
+
+// run contains the server lifecycle: service init, background goroutines,
+// HTTP server start, and graceful shutdown. Extracted from main() so that
+// tests can exercise the startup and shutdown paths without os.Exit.
+func run(ctx context.Context) error {
+	if err := checkJWTSecret(); err != nil {
+		return err
 	}
 
 	// ── Services ────────────────────────────────────────────────────────────
@@ -52,13 +56,11 @@ func main() {
 
 	aiBackend, err := services.NewAIBackend()
 	if err != nil {
-		slog.Error("AI backend init failed", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("AI backend init failed: %w", err)
 	}
 	ragSvc, err := services.NewRAGService()
 	if err != nil {
-		slog.Error("KB init failed", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("KB init failed: %w", err)
 	}
 	if !ragSvc.Loaded() {
 		slog.Warn("knowledge base not loaded — KB_PATH absent or file missing; running without KB context")
@@ -92,25 +94,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				var m runtime.MemStats
-				runtime.ReadMemStats(&m)
-				metrics.MemHeapAllocBytes.Set(float64(m.HeapAlloc))
-				metrics.MemSysBytes.Set(float64(m.Sys))
-				metrics.MemNumGCTotal.Set(float64(m.NumGC))
-
-				// GOMEMLIMIT=-1 reads current limit without changing it.
-				// Default is math.MaxInt64 (no limit set).
-				limit := debug.SetMemoryLimit(-1)
-				if limit > 0 && limit != math.MaxInt64 {
-					usagePct := float64(m.HeapAlloc) / float64(limit) * 100
-					if usagePct > 80 {
-						slog.Warn("high memory usage",
-							"heap_alloc_mb", m.HeapAlloc/1024/1024,
-							"limit_mb", uint64(limit)/1024/1024,
-							"usage_pct", int(usagePct),
-						)
-					}
-				}
+				collectMemoryMetrics()
 			case <-ctx.Done():
 				return
 			}
@@ -137,10 +121,7 @@ func main() {
 	// ── HTTP app ─────────────────────────────────────────────────────────────
 	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, dbSvc)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	port := resolvePort()
 
 	go func() {
 		slog.Info("server starting", "port", port, "version", version)
@@ -157,13 +138,59 @@ func main() {
 	time.Sleep(500 * time.Millisecond)
 
 	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
-		slog.Error("shutdown error", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("shutdown error: %w", err)
 	}
 	if dbSvc != nil {
 		dbSvc.Close()
 	}
 	slog.Info("server stopped cleanly")
+	return nil
+}
+
+// checkJWTSecret validates the SUPABASE_JWT_SECRET environment variable.
+// Returns a non-nil error when production mode is active and the secret is
+// missing. In dev mode it logs a warning and returns nil.
+func checkJWTSecret() error {
+	if os.Getenv("SUPABASE_JWT_SECRET") != "" {
+		return nil
+	}
+	if os.Getenv("APP_ENV") == "production" {
+		return fmt.Errorf("SUPABASE_JWT_SECRET is not set in production — refusing to start")
+	}
+	slog.Warn("SUPABASE_JWT_SECRET is not set — running in UNAUTHENTICATED dev mode; all WebSocket clients can connect without a JWT")
+	return nil
+}
+
+// resolvePort reads PORT from the environment, defaulting to "8080".
+func resolvePort() string {
+	if p := os.Getenv("PORT"); p != "" {
+		return p
+	}
+	return "8080"
+}
+
+// collectMemoryMetrics reads runtime memory stats, updates Prometheus gauges,
+// and warns when heap usage exceeds 80% of GOMEMLIMIT.
+func collectMemoryMetrics() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	metrics.MemHeapAllocBytes.Set(float64(m.HeapAlloc))
+	metrics.MemSysBytes.Set(float64(m.Sys))
+	metrics.MemNumGCTotal.Set(float64(m.NumGC))
+
+	// GOMEMLIMIT=-1 reads current limit without changing it.
+	// Default is math.MaxInt64 (no limit set).
+	limit := debug.SetMemoryLimit(-1)
+	if limit > 0 && limit != math.MaxInt64 {
+		usagePct := float64(m.HeapAlloc) / float64(limit) * 100
+		if usagePct > 80 {
+			slog.Warn("high memory usage",
+				"heap_alloc_mb", m.HeapAlloc/1024/1024,
+				"limit_mb", uint64(limit)/1024/1024,
+				"usage_pct", int(usagePct),
+			)
+		}
+	}
 }
 
 // newFiberApp builds and returns the configured Fiber application.

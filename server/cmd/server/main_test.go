@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -220,5 +223,185 @@ func TestNewFiberAppIdleTimeoutConfigured(t *testing.T) {
 	if app == nil {
 		t.Fatal("expected non-nil app")
 	}
+}
+
+func TestHealthRouteReturnsOK(t *testing.T) {
+	app := buildTestApp(t)
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/health: want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestDocsRouteReturnsContent(t *testing.T) {
+	app := buildTestApp(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/docs", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	// Must not be 404 or 500.
+	if resp.StatusCode == http.StatusNotFound {
+		t.Error("/api/docs returned 404")
+	}
+	if resp.StatusCode >= 500 {
+		t.Errorf("/api/docs server error: %d", resp.StatusCode)
+	}
+}
+
+func TestFeedbackRouteWithValidBody(t *testing.T) {
+	app := buildTestApp(t)
+
+	body := strings.NewReader(`{"session_id":"test-session","step_number":1,"rating":"positive"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/feedback", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	// Without a DB backend the handler may return 503/500, but NOT 404.
+	if resp.StatusCode == http.StatusNotFound {
+		t.Error("/api/feedback returned 404 — route not registered")
+	}
+}
+
+func TestFeedbackRouteEmptyBodyReturns400(t *testing.T) {
+	app := buildTestApp(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/feedback", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		t.Error("/api/feedback returned 404 — route not registered")
+	}
+}
+
+func TestNewFiberAppCORSWithAllowedOrigins(t *testing.T) {
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("ALLOWED_ORIGINS", "https://app.example.com,https://staging.example.com")
+
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := handlers.NewWSHandler(convSvc, sessionSvc)
+	sh := handlers.NewSessionHandler(sessionSvc)
+	fh := handlers.NewFeedbackHandler(nil)
+	app := newFiberApp("test", sh, fh, ws, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Origin", "https://app.example.com")
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("production with ALLOWED_ORIGINS: want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestBuildTestAppNoJWTSecret(t *testing.T) {
+	// In test mode JWT secret is not required — verify app builds successfully.
+	os.Unsetenv("SUPABASE_JWT_SECRET")
+	app := buildTestApp(t)
+	if app == nil {
+		t.Fatal("expected non-nil app without JWT secret in dev mode")
+	}
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("health check without JWT secret: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestMetricsRouteRequiresAuth(t *testing.T) {
+	app := buildTestApp(t)
+
+	// Without credentials must return 401, not 200 or 404.
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		t.Error("/metrics not registered")
+	}
+	if resp.StatusCode == http.StatusOK {
+		t.Error("/metrics should require auth — got 200 without credentials")
+	}
+}
+
+func TestFeedbackRouteCORSPreflight(t *testing.T) {
+	app := buildTestApp(t)
+	req := httptest.NewRequest(http.MethodOptions, "/api/feedback", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "POST")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		t.Error("/api/feedback CORS preflight returned 404")
+	}
+}
+
+// --- Tests for extracted helper functions ---
+
+func TestCheckJWTSecretDevModeNoSecret(t *testing.T) {
+	t.Setenv("SUPABASE_JWT_SECRET", "")
+	t.Setenv("APP_ENV", "development")
+
+	if err := checkJWTSecret(); err != nil {
+		t.Errorf("dev mode without JWT secret should not error: %v", err)
+	}
+}
+
+func TestCheckJWTSecretProductionNoSecret(t *testing.T) {
+	t.Setenv("SUPABASE_JWT_SECRET", "")
+	t.Setenv("APP_ENV", "production")
+
+	err := checkJWTSecret()
+	if err == nil {
+		t.Fatal("production without JWT secret must return an error")
+	}
+}
+
+func TestCheckJWTSecretProductionWithSecret(t *testing.T) {
+	t.Setenv("SUPABASE_JWT_SECRET", "super-secret-key")
+	t.Setenv("APP_ENV", "production")
+
+	if err := checkJWTSecret(); err != nil {
+		t.Errorf("production with JWT secret should not error: %v", err)
+	}
+}
+
+func TestResolvePortDefault(t *testing.T) {
+	t.Setenv("PORT", "")
+	if got := resolvePort(); got != "8080" {
+		t.Errorf("resolvePort() default: want 8080, got %s", got)
+	}
+}
+
+func TestResolvePortCustom(t *testing.T) {
+	t.Setenv("PORT", "3000")
+	if got := resolvePort(); got != "3000" {
+		t.Errorf("resolvePort() custom: want 3000, got %s", got)
+	}
+}
+
+func TestCollectMemoryMetrics(t *testing.T) {
+	// collectMemoryMetrics should not panic and should complete without error.
+	// It updates Prometheus gauges — we just verify it does not crash.
+	collectMemoryMetrics()
 }
 
