@@ -5,19 +5,16 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/scheduler.dart';
-
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:share_plus/share_plus.dart';
 
 import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../services/camera_service.dart' show FrameQuality;
 import '../models/session_record.dart';
 import '../providers/camera_provider.dart';
 import '../providers/equipment_provider.dart';
@@ -28,8 +25,9 @@ import '../providers/settings_provider.dart';
 import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
-import '../services/websocket_service.dart';
+import '../services/camera_service.dart' show FrameQuality;
 import '../services/notification_service.dart';
+import '../services/websocket_service.dart';
 import '../utils/strings.dart';
 import '../widgets/connection_banner.dart';
 import '../widgets/guidance_panel.dart';

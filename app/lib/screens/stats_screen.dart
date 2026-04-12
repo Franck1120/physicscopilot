@@ -5,12 +5,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../main.dart'
+    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
 import '../widgets/progress_ring_widget.dart';
-import '../../main.dart'
-    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
 
 // ── StatsScreen ───────────────────────────────────────────────────────────────
 

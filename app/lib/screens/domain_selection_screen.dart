@@ -5,9 +5,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/settings_provider.dart';
 import '../../main.dart'
     show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kTextMuted;
+import '../providers/settings_provider.dart';
 
 // ── Domain data ───────────────────────────────────────────────────────────────
 

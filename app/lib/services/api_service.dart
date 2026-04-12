@@ -3,8 +3,10 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../providers/settings_provider.dart';
 import '../utils/constants.dart';
 
