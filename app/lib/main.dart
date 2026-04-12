@@ -48,7 +48,21 @@ final onboardingCompletedProvider = StateProvider<bool>((ref) {
 // ---------------------------------------------------------------------------
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+
+  // Forward Flutter framework errors to the standard error log without crashing.
+  FlutterError.onError = FlutterError.presentError;
+
+  // Catch unhandled async / platform errors and absorb them gracefully.
+  binding.platformDispatcher.onError = (error, stack) {
+    debugPrint('[PhysicsCopilot] Unhandled error: $error\n$stack');
+    return true;
+  };
+
+  // Replace Flutter's red-screen with a friendly dark error widget.
+  ErrorWidget.builder = (FlutterErrorDetails details) =>
+      _AppErrorWidget(message: details.exceptionAsString());
+
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
@@ -216,6 +230,54 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       );
+}
+
+// ---------------------------------------------------------------------------
+// Global error widget — replaces Flutter's red screen on widget build errors
+// ---------------------------------------------------------------------------
+
+class _AppErrorWidget extends StatelessWidget {
+  const _AppErrorWidget({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: kBgPrimary,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orangeAccent,
+                size: 52,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Qualcosa è andato storto',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Riavvia l\'app per riprendere.',
+                style: TextStyle(color: kTextMuted, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
