@@ -10,22 +10,29 @@ import (
 )
 
 const metricsUser = "admin"
-const defaultMetricsPassword = "metrics-secret"
 
 // MetricsBasicAuth returns a Fiber middleware that enforces HTTP Basic
 // authentication on the /metrics endpoint.
 //
-// Credentials: username "admin", password from METRICS_PASSWORD env var
-// (falls back to "metrics-secret" when the var is not set).
+// The password is read exclusively from the METRICS_PASSWORD environment
+// variable. If the variable is not set, the endpoint is disabled and every
+// request returns 503 Service Unavailable — no hardcoded fallback is used
+// so that misconfigured deployments fail loudly rather than silently exposing
+// metrics behind a known-weak password.
 //
 // Uses constant-time comparison to prevent timing attacks.
 func MetricsBasicAuth() fiber.Handler {
 	password := os.Getenv("METRICS_PASSWORD")
-	if password == "" {
-		password = defaultMetricsPassword
-	}
+	disabled := password == ""
 
 	return func(c *fiber.Ctx) error {
+		if disabled {
+			return fiber.NewError(
+				fiber.StatusServiceUnavailable,
+				"metrics endpoint is disabled: set METRICS_PASSWORD to enable it",
+			)
+		}
+
 		auth := c.Get("Authorization")
 		if !strings.HasPrefix(auth, "Basic ") {
 			c.Set("WWW-Authenticate", `Basic realm="PhysicsCopilot Metrics"`)

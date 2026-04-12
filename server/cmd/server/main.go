@@ -124,7 +124,8 @@ func main() {
 	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
 
 	// Prometheus metrics endpoint — protected by HTTP Basic Auth.
-	// Credentials: user=admin, password=$METRICS_PASSWORD (default: "metrics-secret").
+	// Credentials: user=admin, password=$METRICS_PASSWORD.
+	// Returns 503 if METRICS_PASSWORD is not set (endpoint disabled).
 	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
 
 	// WebSocket: JWT auth → upgrade guard → handler
