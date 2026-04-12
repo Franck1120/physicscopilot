@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +24,7 @@ final voiceServiceProvider = Provider<VoiceService>((ref) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-/// Immutable snapshot of the voice I/O state.
+/// VoiceState - immutable snapshot of the voice I/O state (STT listening + TTS speaking).
 class VoiceState {
   /// True while the STT engine is actively recording.
   final bool isListening;
