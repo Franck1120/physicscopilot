@@ -74,6 +74,22 @@ class ApiService {
 
   final Dio _dio;
 
+  /// Posts a new session record to `POST /api/sessions`.
+  ///
+  /// Fire-and-forget: errors are silently swallowed because local storage
+  /// is the source of truth — server sync is best-effort only.
+  Future<void> createSession({
+    required String deviceBrand,
+    required String deviceModel,
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/sessions',
+        data: {'device_brand': deviceBrand, 'device_model': deviceModel},
+      );
+    } catch (_) {}
+  }
+
   /// Returns a [ServerHealth] snapshot from `GET /health`.
   ///
   /// Never throws — all errors are expressed as [ServerHealth.offline].
