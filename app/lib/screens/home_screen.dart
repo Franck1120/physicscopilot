@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../models/session_record.dart';
 import '../providers/equipment_provider.dart';
+import '../providers/session_history_provider.dart';
 import '../providers/websocket_provider.dart';
+import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import 'history_screen.dart';
 
@@ -37,7 +40,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _onItemTapped(int index) {
     if (index == 1) {
-      // Camera tab: delegate navigation to the router callback, stay at home.
       widget.onStartCamera();
       return;
     }
@@ -55,7 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onGoToCamera: () => _onItemTapped(1),
             onChangeEquipment: widget.onChangeEquipment,
           ),
-          // Tab 1 — Camera: never rendered; handled by onStartCamera callback.
           const SizedBox.shrink(),
           const HistoryScreen(),
           const _ProfileTab(),
@@ -112,6 +113,7 @@ class _HomeTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final equipment = ref.watch(equipmentProvider);
     final connectionStatus = ref.watch(connectionStatusProvider);
+    final serverHealth = ref.watch(serverHealthProvider);
 
     return Scaffold(
       backgroundColor: kBgPrimary,
@@ -127,6 +129,12 @@ class _HomeTab extends ConsumerWidget {
           ),
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Center(
+              child: _ServerHealthDot(health: serverHealth),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: _WsStatusChip(status: connectionStatus),
@@ -153,15 +161,50 @@ class _HomeTab extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// New Session Card
+// Server health dot — small indicator next to WS chip
+// ---------------------------------------------------------------------------
+
+class _ServerHealthDot extends StatelessWidget {
+  const _ServerHealthDot({required this.health});
+
+  final AsyncValue<bool> health;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, tooltip) = health.when(
+      data: (ok) => ok
+          ? (kAccent, 'Server raggiungibile')
+          : (Colors.redAccent, 'Server non raggiungibile'),
+      loading: () => (Colors.orangeAccent, 'Verifica server…'),
+      error: (_, __) => (Colors.redAccent, 'Server non raggiungibile'),
+    );
+
+    return Tooltip(
+      message: tooltip,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        width: 9,
+        height: 9,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color.withAlpha(120), blurRadius: 5),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// New Session Card — prominent CTA
 // ---------------------------------------------------------------------------
 
 class _NewSessionCard extends StatelessWidget {
   const _NewSessionCard({required this.onTap});
 
   final VoidCallback onTap;
-
-  static const Color _cardBackground = Color(0xFF064E3B);
 
   @override
   Widget build(BuildContext context) {
@@ -172,32 +215,45 @@ class _NewSessionCard extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         decoration: BoxDecoration(
-          color: _cardBackground,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF065F46), Color(0xFF064E3B)],
+          ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: kAccent.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: kAccent.withValues(alpha: 0.22),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-              size: 36,
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: kAccent.withAlpha(40),
+                shape: BoxShape.circle,
+                border: Border.all(color: kAccent.withAlpha(80), width: 1.5),
+              ),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
-            SizedBox(width: 20),
-            Expanded(
+            const SizedBox(width: 20),
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Inizia sessione',
+                    'Nuova sessione',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -205,9 +261,9 @@ class _NewSessionCard extends StatelessWidget {
                       letterSpacing: 0.3,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 5),
                   Text(
-                    'Nuova sessione di analisi',
+                    'Punta la camera e avvia l\'analisi AI',
                     style: TextStyle(
                       color: Color(0xFF6EE7B7),
                       fontSize: 13,
@@ -216,10 +272,18 @@ class _NewSessionCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Color(0xFF6EE7B7),
-              size: 18,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: kAccent.withAlpha(30),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Color(0xFF6EE7B7),
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -313,29 +377,121 @@ class _EquipmentSection extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Recent Sessions Section
+// Recent Sessions Section — shows last 3 real sessions
 // ---------------------------------------------------------------------------
 
-class _RecentSessionsSection extends StatelessWidget {
+class _RecentSessionsSection extends ConsumerWidget {
   const _RecentSessionsSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allSessions = ref.watch(sessionHistoryProvider);
+    final recent = allSessions.take(3).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
-          'ULTIME SESSIONI',
-          style: TextStyle(
-            color: kTextMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
-          ),
+      children: [
+        Row(
+          children: [
+            const Text(
+              'ULTIME SESSIONI',
+              style: TextStyle(
+                color: kTextMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const Spacer(),
+            if (allSessions.isNotEmpty)
+              GestureDetector(
+                onTap: () => context.push('/history'),
+                child: const Text(
+                  'Vedi tutte',
+                  style: TextStyle(
+                    color: kAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
         ),
-        SizedBox(height: 10),
-        _NoSessionsCard(),
+        const SizedBox(height: 10),
+        if (recent.isEmpty)
+          const _NoSessionsCard()
+        else
+          ...recent.map((s) => _RecentSessionCard(session: s)),
       ],
+    );
+  }
+}
+
+class _RecentSessionCard extends StatelessWidget {
+  const _RecentSessionCard({required this.session});
+
+  final SessionRecord session;
+
+  @override
+  Widget build(BuildContext context) {
+    final isResolved = session.status == SessionStatus.resolved;
+    final statusColor = isResolved ? kAccent : Colors.redAccent;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: kBgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kBgCardBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: statusColor.withAlpha(80), blurRadius: 4),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.equipmentName.isEmpty
+                      ? 'Sessione'
+                      : session.equipmentName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (session.summary.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    session.summary,
+                    style: const TextStyle(color: kTextMuted, fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _formatSessionDate(session.date),
+            style: const TextStyle(color: kTextMuted, fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -374,6 +530,26 @@ class _NoSessionsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSessionDate(DateTime date) {
+  const months = [
+    'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
+    'lug', 'ago', 'set', 'ott', 'nov', 'dic',
+  ];
+  final now = DateTime.now();
+  if (date.year == now.year &&
+      date.month == now.month &&
+      date.day == now.day) {
+    return 'oggi';
+  }
+  final yesterday = now.subtract(const Duration(days: 1));
+  if (date.year == yesterday.year &&
+      date.month == yesterday.month &&
+      date.day == yesterday.day) {
+    return 'ieri';
+  }
+  return '${date.day} ${months[date.month - 1]}';
 }
 
 // ---------------------------------------------------------------------------
