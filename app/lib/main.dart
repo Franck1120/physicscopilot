@@ -225,8 +225,108 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
           primary: kAccent,
           secondary: kAccentDark,
           surface: kBgSurface,
+          onSurface: Colors.white,
+          onPrimary: Colors.white,
+          error: Colors.redAccent,
         ),
         scaffoldBackgroundColor: kBgPrimary,
+
+        // AppBar — consistent dark header across all screens.
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF111111),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: false,
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.4,
+          ),
+        ),
+
+        // Card — matches kBgCard with rounded corners and a subtle border.
+        cardTheme: CardTheme(
+          color: kBgCard,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: kBgCardBorder, width: 1),
+          ),
+        ),
+
+        // BottomNavigationBar
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF111111),
+          selectedItemColor: kAccent,
+          unselectedItemColor: kTextMuted,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+        ),
+
+        // SnackBar
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: kBgCard,
+          contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          behavior: SnackBarBehavior.floating,
+          actionTextColor: kAccent,
+        ),
+
+        // ElevatedButton — emerald fill.
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccent,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+
+        // OutlinedButton
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kAccent,
+            side: const BorderSide(color: kBgCardBorder),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+
+        // Switch — emerald thumb when active.
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.contains(WidgetState.selected) ? kAccent : null,
+          ),
+          trackColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.contains(WidgetState.selected)
+                    ? kAccent.withAlpha(80)
+                    : null,
+          ),
+        ),
+
+        // Dialog
+        dialogTheme: DialogTheme(
+          backgroundColor: kBgCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: kBgCardBorder, width: 1),
+          ),
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+          contentTextStyle:
+              const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+        ),
+
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       );

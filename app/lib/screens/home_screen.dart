@@ -732,19 +732,19 @@ class _WsStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label, icon) = status.when(
       data: (s) => switch (s) {
-        ConnectionStatus.connected => (kAccent, 'Online', Icons.wifi),
+        ConnectionStatus.connected => (kAccent, 'Connesso', Icons.wifi),
         ConnectionStatus.connecting => (
           Colors.orangeAccent,
-          'Connessione...',
-          Icons.wifi_off,
+          'Connessione…',
+          Icons.wifi_find,
         ),
         ConnectionStatus.disconnected => (
           Colors.redAccent,
-          'Offline',
+          'Non connesso',
           Icons.wifi_off,
         ),
       },
-      loading: () => (Colors.orangeAccent, 'Connessione...', Icons.wifi_off),
+      loading: () => (Colors.orangeAccent, 'Connessione…', Icons.wifi_find),
       error: (_, __) => (Colors.redAccent, 'Errore', Icons.error_outline),
     );
 
