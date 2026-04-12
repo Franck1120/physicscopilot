@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 /// Central repository of every user-visible string in PhysicsCopilot.
 ///
 /// Keeping strings here makes future localization a one-step migration:
