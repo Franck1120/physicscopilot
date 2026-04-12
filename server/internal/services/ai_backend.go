@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package services contains the business logic layer for the PhysicsCopilot
 // server. It includes session management, AI inference, conversation
 // orchestration, knowledge-base retrieval, and database persistence.
