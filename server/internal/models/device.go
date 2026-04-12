@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package models contains the domain types that map directly to Supabase
 // database tables. These types are shared across the handlers and services
 // layers and are used as DTOs when serialising to/from JSON.
