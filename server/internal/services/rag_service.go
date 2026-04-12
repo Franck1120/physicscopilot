@@ -1,6 +1,11 @@
 // Copyright (c) 2026 PhysicsCopilot. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+// Package services contains the core business-logic layer of the
+// PhysicsCopilot server: AI backend adapters (Gemini, OpenAI),
+// knowledge-base retrieval (RAGService), conversation orchestration
+// (ConversationService), session management (SessionService),
+// and vector-store implementations used for TF-IDF document retrieval.
 package services
 
 import (
