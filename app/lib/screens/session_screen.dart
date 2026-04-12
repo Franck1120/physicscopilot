@@ -13,6 +13,8 @@ import '../providers/equipment_provider.dart';
 import '../providers/prefs_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../providers/session_provider.dart';
+import '../providers/settings_provider.dart';
+import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -41,6 +43,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Timer? _ticker;
   String? _firstUserMessage;
   bool _showTutorial = false;
+  String? _lastVoiceText; // for play/pause replay
 
   static const _kTutorialKey = 'session_tutorial_shown';
 
@@ -82,6 +85,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final type = msg['type'] as String?;
     if (type == 'response') {
       ref.read(sessionProvider.notifier).updateFromResponse(msg);
+      // Auto-read voice_text if voice guidance is enabled.
+      final voiceText = msg['voice_text'] as String?;
+      if (voiceText != null && voiceText.isNotEmpty) {
+        _lastVoiceText = voiceText;
+        final voiceEnabled = ref.read(settingsProvider).voiceEnabled;
+        if (voiceEnabled) {
+          ref.read(voiceProvider.notifier).speak(voiceText);
+        }
+      }
     } else if (type == 'error') {
       ref.read(sessionProvider.notifier).setError(
         (msg['error'] as String?) ?? 'Errore sconosciuto',
@@ -217,6 +229,34 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           },
         ),
         actions: [
+          // Voice play/pause toggle — only shown when voice guidance is enabled.
+          Consumer(
+            builder: (context, ref, _) {
+              final voiceEnabled = ref.watch(settingsProvider).voiceEnabled;
+              if (!voiceEnabled) return const SizedBox.shrink();
+              final voiceState = ref.watch(voiceProvider);
+              final isSpeaking = voiceState.isSpeaking;
+              return Semantics(
+                label: isSpeaking ? 'Ferma voce AI' : 'Riproduci voce AI',
+                button: true,
+                child: IconButton(
+                  icon: Icon(
+                    isSpeaking ? Icons.pause_circle_outline : Icons.volume_up_outlined,
+                    color: isSpeaking ? kAccent : Colors.white54,
+                    size: 20,
+                  ),
+                  tooltip: isSpeaking ? 'Ferma voce' : 'Riproduci istruzione',
+                  onPressed: () {
+                    if (isSpeaking) {
+                      ref.read(voiceProvider.notifier).stopSpeaking();
+                    } else if (_lastVoiceText != null) {
+                      ref.read(voiceProvider.notifier).speak(_lastVoiceText!);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded,
                 color: Colors.white54, size: 20),
