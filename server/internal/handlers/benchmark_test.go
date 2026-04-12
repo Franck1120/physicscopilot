@@ -123,6 +123,33 @@ func BenchmarkListSessions(b *testing.B) {
 	}
 }
 
+// BenchmarkGetSessionSteps measures the throughput of GET /api/sessions/:id/steps.
+// A single session is created before the benchmark loop.
+func BenchmarkGetSessionSteps(b *testing.B) {
+	sessionSvc := services.NewSessionService()
+	sess, err := sessionSvc.CreateSession("BrandX", "ModelX", "", "")
+	if err != nil {
+		b.Fatalf("CreateSession: %v", err)
+	}
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	sh := NewSessionHandler(sessionSvc)
+	app.Get("/api/sessions/:id/steps", sh.GetSessionSteps)
+
+	url := "/api/sessions/" + sess.SessionID + "/steps"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
