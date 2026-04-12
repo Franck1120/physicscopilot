@@ -2,13 +2,27 @@ import 'package:flutter/material.dart';
 
 /// A shimmer-style skeleton placeholder shown while session data is loading.
 ///
-/// Renders [itemCount] placeholder rows that animate between two shades,
-/// mimicking the shape of a [_SessionCard] without any real content.
-/// Uses a custom opacity-based animation — no external packages required.
+/// Renders [itemCount] placeholder rows that animate between two opacity
+/// levels, mimicking the shape of a real session card without any real content.
+/// Uses a custom [AnimationController]-driven opacity — no external packages
+/// required.
+///
+/// Typical usage:
+/// ```dart
+/// if (isLoading) const SessionSkeleton(itemCount: 5)
+/// else RealContent()
+/// ```
+///
+/// The animation loops automatically and is disposed when the widget leaves
+/// the tree.
 class SessionSkeleton extends StatefulWidget {
+  /// Creates a skeleton list with [itemCount] placeholder cards.
+  ///
+  /// [itemCount] defaults to 5. Set it to match the expected page size so
+  /// the layout shift when real data arrives is minimal.
   const SessionSkeleton({super.key, this.itemCount = 5});
 
-  /// Number of skeleton rows to display.
+  /// Number of skeleton placeholder cards to display.
   final int itemCount;
 
   @override
@@ -102,7 +116,9 @@ class _SkeletonCard extends StatelessWidget {
   }
 }
 
-/// A rounded rectangle placeholder block used inside skeleton cards.
+/// A rounded rectangle placeholder block used as text/content stand-in.
+///
+/// Rendered in a muted grey that contrasts lightly with the card background.
 class _Pill extends StatelessWidget {
   const _Pill({required this.width, required this.height});
 
