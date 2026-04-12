@@ -5,12 +5,14 @@ import '../models/session_record.dart';
 
 /// Full-detail view for a single [SessionRecord].
 ///
-/// Displays all available session metadata:
-/// - Device name and resolution status
+/// Displays all available session metadata in a scrollable layout:
+/// - Device name and resolution status ([_HeaderCard])
 /// - Step-progress via [LinearProgressIndicator] (100 % resolved, 50 % otherwise)
-/// - Problem description extracted by the AI
-/// - AI-generated session summary
-/// - Metadata card with session ID, date and duration
+/// - Problem description extracted by the AI (omitted when empty)
+/// - AI-generated session summary (omitted when empty)
+/// - Metadata card with session ID, date and duration ([_MetadataCard])
+///
+/// This widget is read-only; no state is mutated by user interaction.
 ///
 /// Navigate to this screen via [slideFromRight] for a consistent
 /// slide-from-right transition:
@@ -19,6 +21,10 @@ import '../models/session_record.dart';
 ///   slideFromRight(SessionDetailScreen(session: mySession)),
 /// );
 /// ```
+///
+/// See also:
+/// - [SessionRecord] for the data model.
+/// - [HistoryScreen] which navigates to this screen on card tap.
 class SessionDetailScreen extends StatelessWidget {
   /// Creates the detail view for [session].
   ///
@@ -31,6 +37,10 @@ class SessionDetailScreen extends StatelessWidget {
   /// cause the corresponding section to be omitted from the layout.
   final SessionRecord session;
 
+  /// Builds the screen scaffold containing the scrollable detail layout.
+  ///
+  /// Sections with empty text content are automatically omitted to keep
+  /// the layout clean when optional fields are absent.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
