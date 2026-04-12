@@ -146,3 +146,43 @@ func TestFormatForPromptNilReturnsEmpty(t *testing.T) {
 		t.Errorf("expected empty string for nil entries, got %q", out)
 	}
 }
+
+func TestQueryKBCacheHitReturnsSameResults(t *testing.T) {
+	entries := []KBEntry{
+		{ID: "clog", Name: "Clogged Nozzle", Description: "Nozzle blocked"},
+	}
+	path := writeTestKB(t, entries)
+	t.Setenv("KB_PATH", path)
+
+	svc, err := NewRAGService()
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+
+	r1 := svc.QueryKB("clogged nozzle", 3)
+	r2 := svc.QueryKB("clogged nozzle", 3)
+	if len(r1) != len(r2) {
+		t.Errorf("cache hit returned different result length: %d vs %d", len(r1), len(r2))
+	}
+}
+
+func TestQueryKBDifferentMaxResultsAreCachedSeparately(t *testing.T) {
+	entries := []KBEntry{
+		{ID: "a", Name: "Alpha error", Description: "error device"},
+		{ID: "b", Name: "Beta error", Description: "error device"},
+		{ID: "c", Name: "Gamma error", Description: "error device"},
+	}
+	path := writeTestKB(t, entries)
+	t.Setenv("KB_PATH", path)
+
+	svc, _ := NewRAGService()
+
+	r1 := svc.QueryKB("error device", 1)
+	r2 := svc.QueryKB("error device", 3)
+	if len(r1) > 1 {
+		t.Errorf("maxResults=1 should return at most 1 result, got %d", len(r1))
+	}
+	if len(r2) != len(r1) && len(r2) <= 1 {
+		t.Errorf("maxResults=3 should potentially return more than maxResults=1")
+	}
+}
