@@ -381,6 +381,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		if delErr := h.sessions.DeleteSession(sessionID); delErr != nil {
 			slog.Warn("failed to delete session", "session_id", sessionID, "err", delErr)
 		}
+		h.conversations.CleanupSession(sessionID)
 		h.activeConns.Add(-1)
 		metrics.WsActiveConnections.Dec()
 		h.ipConns.remove(ip)

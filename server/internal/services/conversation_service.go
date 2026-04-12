@@ -319,6 +319,15 @@ func (c *ConversationService) checkAndStoreFrameHash(sessionID, sha256Hash strin
 	return false
 }
 
+// CleanupSession removes the stored frame hash for the given session.
+// Call this when a session is permanently deleted to free the associated
+// frame-dedup entry immediately rather than waiting for TTL expiry.
+func (c *ConversationService) CleanupSession(sessionID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.frameHashes, sessionID)
+}
+
 // clearFrameHash removes the stored frame hash for a session, allowing the
 // same frame to be reprocessed. Called when AI analysis fails after an
 // optimistic hash store.
