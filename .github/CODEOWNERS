@@ -1,0 +1,36 @@
+# CODEOWNERS — defines who reviews changes to each part of the codebase.
+# Format: <pattern> <owner1> <owner2>
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global fallback — all files require at least one review
+*                           @Franck1120
+
+# Go server
+/server/                    @Franck1120
+/server/internal/handlers/  @Franck1120
+/server/internal/middleware/ @Franck1120
+/server/internal/services/  @Franck1120
+/server/internal/db/        @Franck1120
+
+# Flutter app
+/app/                       @Franck1120
+/app/lib/screens/           @Franck1120
+/app/lib/providers/         @Franck1120
+/app/lib/services/          @Franck1120
+
+# Infrastructure & CI
+/.github/                   @Franck1120
+/infra/                     @Franck1120
+/scripts/                   @Franck1120
+Dockerfile                  @Franck1120
+docker-compose.yml          @Franck1120
+render.yaml                 @Franck1120
+
+# Documentation
+/docs/                      @Franck1120
+README.md                   @Franck1120
+CHANGELOG.md                @Franck1120
+SECURITY.md                 @Franck1120
+
+# Supabase migrations (require careful review)
+/supabase/migrations/       @Franck1120
