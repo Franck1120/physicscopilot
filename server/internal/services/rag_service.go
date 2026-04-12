@@ -172,12 +172,13 @@ type KBStep struct {
 // If no files are found the service starts in no-op mode: QueryKB always
 // returns nil and the server continues to function without KB context.
 type RAGService struct {
-	entries      []KBEntry
-	store        VectorStore            // all-domains store
-	domainStores map[string]VectorStore // per-domain stores
-	domains      []string               // sorted list of loaded domain names
-	cache        *ragLRU
-	domainCaches map[string]*ragLRU
+	entries           []KBEntry
+	store             VectorStore            // all-domains store
+	domainStores      map[string]VectorStore // per-domain stores
+	domainEntryCounts map[string]int         // number of entries per domain
+	domains           []string               // sorted list of loaded domain names
+	cache             *ragLRU
+	domainCaches      map[string]*ragLRU
 }
 
 // NewRAGService loads all *.json knowledge-base files from the directory given
@@ -213,10 +214,11 @@ func newRAGServiceWith(storeFactory func() VectorStore) (*RAGService, error) {
 	if err != nil {
 		// Malformed pattern — not expected, but treat as no-op.
 		return &RAGService{
-			store:        storeFactory(),
-			domainStores: make(map[string]VectorStore),
-			domainCaches: make(map[string]*ragLRU),
-			cache:        newRAGLRU(ragCacheCapacity, ragCacheTTL),
+			store:             storeFactory(),
+			domainStores:      make(map[string]VectorStore),
+			domainEntryCounts: make(map[string]int),
+			domainCaches:      make(map[string]*ragLRU),
+			cache:             newRAGLRU(ragCacheCapacity, ragCacheTTL),
 		}, nil
 	}
 
@@ -252,31 +254,31 @@ func newRAGServiceWith(storeFactory func() VectorStore) (*RAGService, error) {
 	// Build per-domain stores and caches.
 	domainStores := make(map[string]VectorStore, len(domainEntries))
 	domainCaches := make(map[string]*ragLRU, len(domainEntries))
+	domainEntryCounts := make(map[string]int, len(domainEntries))
 	domains := make([]string, 0, len(domainEntries))
 	for domain, entries := range domainEntries {
 		ds := storeFactory()
 		ds.Index(entries)
 		domainStores[domain] = ds
 		domainCaches[domain] = newRAGLRU(ragCacheCapacity, ragCacheTTL)
+		domainEntryCounts[domain] = len(entries)
 		domains = append(domains, domain)
 	}
 	sort.Strings(domains)
 
 	return &RAGService{
-		entries:      allEntries,
-		store:        globalStore,
-		domainStores: domainStores,
-		domains:      domains,
-		cache:        newRAGLRU(ragCacheCapacity, ragCacheTTL),
-		domainCaches: domainCaches,
+		entries:           allEntries,
+		store:             globalStore,
+		domainStores:      domainStores,
+		domainEntryCounts: domainEntryCounts,
+		domains:           domains,
+		cache:             newRAGLRU(ragCacheCapacity, ragCacheTTL),
+		domainCaches:      domainCaches,
 	}, nil
 }
 
 // Loaded reports whether the knowledge base was successfully loaded.
 func (r *RAGService) Loaded() bool { return len(r.entries) > 0 }
-
-// EntryCount returns the number of knowledge-base entries currently loaded.
-func (r *RAGService) EntryCount() int { return len(r.entries) }
 
 // QueryKB returns the top maxResults entries most relevant to query,
 // ordered by descending TF-IDF relevance score. Results are served from an
@@ -302,9 +304,33 @@ func (r *RAGService) QueryKB(query string, maxResults int) []KBEntry {
 // Returns an empty slice when no files were loaded.
 func (r *RAGService) KBDomains() []string { return r.domains }
 
-// QueryKBByDomain performs RAG filtered to a single domain.
-// If domain is "" or does not match a loaded domain, it falls back to the
-// global search (equivalent to QueryKB).
+// DomainEntryCount returns the number of KBEntry records loaded for the given
+// domain. Returns 0 when the domain was not found or no KB was loaded.
+func (r *RAGService) DomainEntryCount(domain string) int {
+	return r.domainEntryCounts[domain]
+}
+
+// QueryKBByDomain performs RAG scoped to a single knowledge-base domain.
+//
+// Domain routing: each domain has its own TF-IDF index built at startup from
+// the JSON files in KB_DATA_DIR. Queries are executed directly against the
+// domain-specific index — results are not post-filtered from the global index
+// — so relevance scores are calibrated to the domain vocabulary.
+//
+// Fallback behaviour:
+//   - domain == ""               → delegates to [QueryKB] (global search)
+//   - domain not in loaded set   → delegates to [QueryKB] (global search)
+//
+// Cache: each domain has its own LRU cache (capacity [ragCacheCapacity],
+// TTL [ragCacheTTL]) independent of the global cache used by [QueryKB].
+// Cache keys are derived from (SHA-256(query), maxResults), so different
+// maxResults values for the same query are cached separately.
+//
+// Thread safety: safe for concurrent use. The domain stores and caches are
+// read-only after construction; individual [ragLRU] instances are protected
+// by their own mutex.
+//
+// Returns nil when query is empty or no terms match the domain index.
 func (r *RAGService) QueryKBByDomain(domain, query string, maxResults int) []KBEntry {
 	if domain == "" {
 		return r.QueryKB(query, maxResults)
