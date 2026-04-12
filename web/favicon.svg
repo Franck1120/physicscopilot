@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark background circle -->
+  <rect width="32" height="32" rx="7" fill="#06090F"/>
+  <!-- "PC" monogram in accent green -->
+  <!-- P letterform -->
+  <path d="M5 8h6.5c2.2 0 3.8 1.5 3.8 3.5S13.7 15 11.5 15H8v9H5V8z" fill="#00E5A0"/>
+  <path d="M8 11v1.5h3c.7 0 1.1-.4 1.1-0.75S11.7 11 11 11H8z" fill="#06090F"/>
+  <!-- C letterform -->
+  <path d="M27 12.5c-1-1.8-2.8-3-4.8-3c-3.1 0-5.5 2.7-5.5 6.5s2.4 6.5 5.5 6.5c2 0 3.8-1.2 4.8-3l-2.4-1.4c-.6 1-1.4 1.6-2.4 1.6c-1.7 0-2.9-1.6-2.9-3.7s1.2-3.7 2.9-3.7c1 0 1.8.6 2.4 1.6L27 12.5z" fill="#00E5A0"/>
+</svg>
