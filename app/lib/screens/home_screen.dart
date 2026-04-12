@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +20,7 @@ import 'history_screen.dart';
 // HomeScreen
 // ---------------------------------------------------------------------------
 
+/// Main navigation shell with bottom-tab navigation and home/history/profile tabs.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
     super.key,
