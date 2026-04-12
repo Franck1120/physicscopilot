@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../services/api_service.dart';
+import '../utils/strings.dart';
 import '../widgets/safe_screen.dart';
 
 // ---------------------------------------------------------------------------
@@ -65,7 +66,7 @@ class HistoryScreen extends ConsumerWidget {
         title: Row(
           children: [
             const Text(
-              'Sessioni',
+              AppStrings.historyTitle,
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
             ),
             if (isSyncing) ...[
@@ -88,7 +89,7 @@ class HistoryScreen extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.delete_sweep_outlined,
                       color: Colors.white54),
-                  tooltip: 'Cancella tutto',
+                  tooltip: AppStrings.historyClearAll,
                   onPressed: () => _confirmClearAll(context, ref),
                 ),
               ],
@@ -145,16 +146,16 @@ class HistoryScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Cancella tutto',
+        title: const Text(AppStrings.historyClearAll,
             style: TextStyle(color: Colors.white)),
         content: const Text(
-          'Eliminare tutta la cronologia delle sessioni?',
+          AppStrings.historyClearConfirm,
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Annulla',
+            child: const Text(AppStrings.cancel,
                 style: TextStyle(color: Colors.white54)),
           ),
           TextButton(
@@ -162,7 +163,7 @@ class HistoryScreen extends ConsumerWidget {
               ref.read(sessionHistoryProvider.notifier).clearAll();
               Navigator.of(ctx).pop();
             },
-            child: const Text('Elimina',
+            child: const Text(AppStrings.delete,
                 style: TextStyle(color: Colors.redAccent)),
           ),
         ],
@@ -323,7 +324,7 @@ class _StatusBadge extends StatelessWidget {
         ),
       ),
       child: Text(
-        isResolved ? 'Risolto' : 'Non risolto',
+        isResolved ? AppStrings.historyStatusResolved : AppStrings.historyStatusUnresolved,
         style: TextStyle(
           color: isResolved
               ? const Color(0xFF81C784)
@@ -348,7 +349,7 @@ class _SessionDetailSheet extends StatelessWidget {
     final deviceName =
         session.equipmentName.isEmpty ? 'N/D' : session.equipmentName;
     final status =
-        session.status == SessionStatus.resolved ? 'Risolto' : 'Non risolto';
+        session.status == SessionStatus.resolved ? AppStrings.historyStatusResolved : AppStrings.historyStatusUnresolved;
 
     buf.writeln('PhysicsCopilot — Report Sessione');
     buf.writeln('=================================');
@@ -522,7 +523,7 @@ class _EmptyState extends StatelessWidget {
               size: 80, color: Colors.white.withValues(alpha: 0.2)),
           const SizedBox(height: 16),
           Text(
-            'Nessuna sessione',
+            AppStrings.historyEmpty,
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 16,
@@ -530,7 +531,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Le sessioni completate appariranno qui.',
+            AppStrings.historyEmptySub,
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
           ),

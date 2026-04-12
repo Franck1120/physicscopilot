@@ -12,6 +12,7 @@ import '../providers/step_provider.dart';
 import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/websocket_service.dart';
+import '../utils/strings.dart';
 import '../widgets/ar_overlay.dart';
 import '../widgets/guidance_overlay.dart';
 import '../widgets/step_progress.dart';
@@ -132,11 +133,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
         } else if (type == 'error') {
           final msg = json['message'] as String?;
           ref.read(sessionProvider.notifier).setError(
-            msg ?? 'Errore dal server.',
+            msg ?? AppStrings.sessionErrorFromServer,
           );
         }
       } catch (_) {
-        ref.read(sessionProvider.notifier).setError('Risposta non valida dal server.');
+        ref.read(sessionProvider.notifier).setError(AppStrings.sessionInvalidResponse);
       }
     });
   }
@@ -400,7 +401,7 @@ class _ChatPanel extends StatelessWidget {
                     )
                   : const Center(
                       child: Text(
-                        'Nessuna risposta ancora.',
+                        AppStrings.sessionNoResponseYet,
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                     ),
@@ -419,7 +420,7 @@ class _ChatPanel extends StatelessWidget {
                     controller: textInput,
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Scrivi una domanda…',
+                      hintText: AppStrings.cameraWriteHere,
                       hintStyle: const TextStyle(color: Colors.white38),
                       filled: true,
                       fillColor: Colors.white10,
@@ -436,19 +437,23 @@ class _ChatPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: onSend,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: kAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 18,
+                Semantics(
+                  label: AppStrings.sessionSend,
+                  button: true,
+                  child: GestureDetector(
+                    onTap: onSend,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: kAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -489,7 +494,7 @@ class _OfflineBanner extends StatelessWidget {
               Icon(Icons.wifi_off, color: Colors.white, size: 16),
               SizedBox(width: 8),
               Text(
-                'Offline — Riconnessione in corso…',
+                AppStrings.cameraOfflineBanner,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -515,12 +520,12 @@ class _ConnectionIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label) = status.when(
       data: (s) => switch (s) {
-        ConnectionStatus.connected => (Colors.greenAccent, 'Connesso'),
-        ConnectionStatus.connecting => (Colors.orangeAccent, 'Connessione…'),
-        ConnectionStatus.disconnected => (Colors.redAccent, 'Non connesso'),
+        ConnectionStatus.connected => (Colors.greenAccent, AppStrings.connConnected),
+        ConnectionStatus.connecting => (Colors.orangeAccent, AppStrings.connConnecting),
+        ConnectionStatus.disconnected => (Colors.redAccent, AppStrings.connDisconnected),
       },
-      loading: () => (Colors.orangeAccent, 'Connessione…'),
-      error: (_, __) => (Colors.redAccent, 'Errore'),
+      loading: () => (Colors.orangeAccent, AppStrings.connConnecting),
+      error: (_, __) => (Colors.redAccent, AppStrings.connError),
     );
 
     return Container(
@@ -558,19 +563,23 @@ class _ChatToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isOpen ? kAccent : Colors.black54,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isOpen ? Icons.close : Icons.chat_bubble_outline,
-          color: Colors.white,
-          size: 20,
+    return Semantics(
+      label: isOpen ? 'Chiudi chat' : 'Apri chat',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isOpen ? kAccent : Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            isOpen ? Icons.close : Icons.chat_bubble_outline,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -610,30 +619,38 @@ class _MicButton extends StatelessWidget {
       glowColor = Colors.white;
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 72,
-        height: 72,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: bgColor,
-          boxShadow: [
-            BoxShadow(
-              color: glowColor.withAlpha(100),
-              blurRadius: 14,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Icon(
-          isSpeaking
-              ? Icons.volume_up
-              : isActive
-                  ? Icons.mic
-                  : Icons.mic_none,
-          size: 32,
-          color: iconColor,
+    return Semantics(
+      label: isSpeaking
+          ? 'Ferma risposta vocale'
+          : isActive
+              ? 'Ferma microfono'
+              : 'Avvia microfono',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: bgColor,
+            boxShadow: [
+              BoxShadow(
+                color: glowColor.withAlpha(100),
+                blurRadius: 14,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Icon(
+            isSpeaking
+                ? Icons.volume_up
+                : isActive
+                    ? Icons.mic
+                    : Icons.mic_none,
+            size: 32,
+            color: iconColor,
+          ),
         ),
       ),
     );

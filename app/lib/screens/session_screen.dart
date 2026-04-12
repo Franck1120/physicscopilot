@@ -148,7 +148,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
       }
     } else if (type == 'error') {
       ref.read(sessionProvider.notifier).setError(
-        (msg['error'] as String?) ?? 'Errore sconosciuto',
+        (msg['error'] as String?) ?? AppStrings.sessionErrorUnknown,
       );
     }
   }
@@ -161,7 +161,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   Future<void> _captureAndSend() async {
     if (!_isConnected) {
       ref.read(sessionProvider.notifier).setError(
-        'Server non raggiungibile — attendi la riconnessione.',
+        AppStrings.sessionServerUnreachable,
       );
       return;
     }
@@ -178,14 +178,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     } catch (_) {
       ref
           .read(sessionProvider.notifier)
-          .setError('Impossibile acquisire il frame');
+          .setError(AppStrings.sessionFrameError);
     }
   }
 
   void _sendText() {
     if (!_isConnected) {
       ref.read(sessionProvider.notifier).setError(
-        'Server non raggiungibile — attendi la riconnessione.',
+        AppStrings.sessionServerUnreachable,
       );
       return;
     }
@@ -275,7 +275,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
         backgroundColor: const Color(0xFF111111),
         elevation: 0,
         title: const Text(
-          'Sessione attiva',
+          AppStrings.sessionTitle,
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -671,19 +671,23 @@ class _TorchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: isOn ? kAccent : Colors.black54,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isOn ? Icons.flash_on : Icons.flash_off,
-          color: Colors.white,
-          size: 18,
+    return Semantics(
+      label: isOn ? 'Torcia accesa, tocca per spegnere' : 'Torcia spenta, tocca per accendere',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: isOn ? kAccent : Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            isOn ? Icons.flash_on : Icons.flash_off,
+            color: Colors.white,
+            size: 18,
+          ),
         ),
       ),
     );
@@ -799,7 +803,7 @@ class _CameraPlaceholder extends StatelessWidget {
             children: [
               CircularProgressIndicator(color: kAccent),
               SizedBox(height: 16),
-              Text('Inizializzazione camera…',
+              Text(AppStrings.sessionCameraInit,
                   style: TextStyle(color: kTextMuted, fontSize: 13)),
             ],
           ),
@@ -818,7 +822,7 @@ class _CameraError extends StatelessWidget {
             children: [
               Icon(Icons.camera_alt_outlined, color: kTextMuted, size: 48),
               SizedBox(height: 12),
-              Text('Camera non disponibile',
+              Text(AppStrings.sessionCameraUnavailable,
                   style: TextStyle(color: kTextMuted, fontSize: 13)),
             ],
           ),

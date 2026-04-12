@@ -39,6 +39,7 @@ abstract final class AppStrings {
   static const sessionAiTimeout = 'Nessuna risposta dall\'AI. Riprova.';
   static const sessionErrorFromServer = 'Errore dal server.';
   static const sessionInvalidResponse = 'Risposta non valida dal server.';
+  static const sessionErrorUnknown = 'Errore sconosciuto';
   static const sessionDescribeProblem = 'Descrivi il problema…';
   static const sessionSend = 'Invia messaggio';
   static const sessionNoResponseYet = 'Nessuna risposta ancora.';
