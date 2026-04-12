@@ -53,26 +53,28 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 
 ## Knowledge Base Domains
 
-12 domains are available out of the box. The knowledge base (`kb/data/problems.json`) is bundled in the Docker image — no extra configuration needed.
+12 domains are available out of the box. Each domain has its own JSON file under `kb/data/` (glob-loaded at startup — no extra configuration needed).
 
-| Domain | Description |
-|--------|-------------|
-| 🖨 **Printer** | Paper jams, connectivity issues, print quality problems |
-| 💻 **Laptop** | Hardware faults, overheating, display and keyboard repairs |
-| 🍳 **Kitchen appliances** | Ovens, dishwashers, refrigerators, small appliance diagnostics |
-| 🌡 **HVAC** | Heating, ventilation and air conditioning maintenance |
-| 🚗 **Automotive** | Engine faults, electrical systems, brake and tyre guidance |
-| ⚙️ **Industrial equipment** | CNC machines, conveyors, pneumatic and hydraulic systems |
-| 🔌 **Electronics** | PCB-level diagnosis, soldering, component replacement |
-| 🏠 **Home appliances** | Washing machines, dryers, water heaters |
-| 📱 **Smartphone** | Screen replacement, battery swap, charging port repair |
-| 🛋 **Furniture** | Assembly, structural repairs, hinge and drawer fixes |
-| 🌿 **Garden** | Lawnmowers, trimmers, irrigation systems, power tools |
-| 📷 **Photography** | Camera body, lens servicing, sensor cleaning, flash repair |
+| Domain ID | Display Name | KB File | Problems |
+|-----------|-------------|---------|----------|
+| `printer` | 🖨 Printer (3D & 2D) | `problems.json` | 66 |
+| `appliance` | 🍳 Appliance | `appliance_problems.json` | 20 |
+| `automotive` | 🚗 Automotive | `automotive_problems.json` | 20 |
+| `bicycle` | 🚲 Bicycle | `bicycle_problems.json` | 20 |
+| `computer` | 💻 Computer | `computer_problems.json` | 20 |
+| `electronics` | 🔌 Electronics | `electronics_problems.json` | 20 |
+| `hvac` | 🌡 HVAC | `hvac_problems.json` | 20 |
+| `photography` | 📷 Photography | `photography_problems.json` | 15 |
+| `plumbing` | 🔧 Plumbing | `plumbing_problems.json` | 20 |
+| `smartphone` | 📱 Smartphone | `smartphone_problems.json` | 20 |
+| `furniture` | 🛋 Furniture | `furniture_problems.json` | 15 |
+| `garden` | 🌿 Garden | `garden_problems.json` | 15 |
+
+> Each domain ships with a `README_<domain>.md` in `kb/data/` explaining its schema and how to add new problems.
 
 **Planned (not yet live):**
 - Semantic search over uploaded manuals (pgvector)
-- Multiple domain verticals beyond the bundled equipment profiles
+- Domain auto-detection from camera frame content
 
 ---
 
