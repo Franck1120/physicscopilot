@@ -405,3 +405,44 @@ func TestCollectMemoryMetrics(t *testing.T) {
 	collectMemoryMetrics()
 }
 
+func TestRunStartsAndShutsDown(t *testing.T) {
+	// Use a free port to avoid conflicts with other tests.
+	t.Setenv("PORT", "0")
+	t.Setenv("SUPABASE_JWT_SECRET", "")
+	t.Setenv("APP_ENV", "")
+	t.Setenv("DATABASE_URL", "")
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- run(ctx)
+	}()
+
+	// Give the server a moment to start before cancelling.
+	time.Sleep(200 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("run() returned unexpected error: %v", err)
+		}
+	case <-time.After(15 * time.Second):
+		t.Fatal("run() did not return within 15 seconds after context cancellation")
+	}
+}
+
+func TestRunFailsWithProductionNoJWTSecret(t *testing.T) {
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SUPABASE_JWT_SECRET", "")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := run(ctx)
+	if err == nil {
+		t.Fatal("run() should fail in production without JWT secret")
+	}
+}
+
