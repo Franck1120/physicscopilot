@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:physicscopilot/models/session_record.dart';
 import 'package:physicscopilot/providers/prefs_provider.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/providers/session_history_provider.dart';
 import 'package:physicscopilot/providers/settings_provider.dart';
 import 'package:physicscopilot/screens/domain_selection_screen.dart';
 
@@ -15,9 +17,14 @@ void main() {
   group('DomainSelectionScreen', () {
     Future<Widget> buildTestWidget({
       Map<String, Object> prefs = const {},
+      List<SessionRecord> sessions = const [],
       void Function(String)? onSelected,
     }) async {
-      SharedPreferences.setMockInitialValues(prefs);
+      final prefsMap = Map<String, Object>.from(prefs);
+      if (sessions.isNotEmpty) {
+        prefsMap['session_history'] = SessionRecord.encodeList(sessions);
+      }
+      SharedPreferences.setMockInitialValues(prefsMap);
       final sharedPrefs = await SharedPreferences.getInstance();
 
       return ProviderScope(
@@ -25,6 +32,9 @@ void main() {
           sharedPrefsProvider.overrideWithValue(sharedPrefs),
           settingsProvider.overrideWith(
             (ref) => SettingsNotifier(sharedPrefs),
+          ),
+          sessionHistoryProvider.overrideWith(
+            (ref) => SessionHistoryNotifier(sharedPrefs),
           ),
         ],
         child: MaterialApp(
@@ -66,6 +76,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(selected, equals('printer'));
+    });
+
+    testWidgets('shows session count badge when domain has past sessions',
+        (tester) async {
+      // A session whose equipmentName contains the domain id "printer"
+      // so _sessionCountForDomain returns 1 for the "printer" tile.
+      final sessions = [
+        SessionRecord(
+          id: 'badge-1',
+          date: DateTime(2026, 3, 10, 14, 0),
+          equipmentName: 'printer',
+          problemDescription: 'Paper jam',
+          summary: 'Fixed paper jam.',
+          status: SessionStatus.resolved,
+          duration: const Duration(minutes: 5),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        await buildTestWidget(sessions: sessions),
+      );
+      await tester.pump();
+
+      // The badge chip shows the count "1" for the printer domain.
+      expect(find.text('1'), findsWidgets);
     });
   });
 }
