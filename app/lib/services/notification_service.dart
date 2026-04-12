@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Thin wrapper around [FlutterLocalNotificationsPlugin].
