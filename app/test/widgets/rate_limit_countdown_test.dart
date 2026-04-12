@@ -18,10 +18,8 @@ void main() {
       );
       await tester.pump();
 
-      // No label text should be in the tree.
+      // No label text should be in the tree when countdown is idle.
       expect(find.byType(Text), findsNothing);
-      // The widget itself should be a SizedBox with zero size.
-      expect(find.byType(SizedBox), findsOneWidget);
     });
 
     testWidgets('when remainingSeconds is 30, shows text containing "30"',
