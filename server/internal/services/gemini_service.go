@@ -45,10 +45,17 @@ const (
 // (i.e. Gemini has failed 5 times consecutively and the cooldown has not elapsed).
 var ErrAIUnavailable = errors.New("AI temporaneamente non disponibile, riprova tra poco")
 
-// circuitBreaker is a simple two-state (Closed / Open) circuit breaker.
-// After threshold consecutive failures it opens for timeout seconds; the next
-// call after the cooldown acts as a half-open probe — success resets the
-// counter, failure restarts the timer.
+// circuitBreaker implements a simple two-state (Closed / Open) circuit breaker
+// designed to protect the Gemini API from cascading failures.
+//
+// State transitions:
+//   - Closed → Open: after threshold consecutive failures
+//   - Open   → Closed (half-open probe): on the first call after the cooldown
+//     expires. A successful probe resets the counter; a failed probe restarts
+//     the timer.
+//
+// All state mutations are protected by mu so the breaker is safe for concurrent
+// use across WebSocket sessions.
 type circuitBreaker struct {
 	mu              sync.Mutex
 	consecutiveErrs int
@@ -57,19 +64,25 @@ type circuitBreaker struct {
 	timeout         time.Duration
 }
 
+// newCircuitBreaker creates a circuitBreaker with the package-level threshold
+// and timeout constants. Call isOpen before every upstream request.
 func newCircuitBreaker() *circuitBreaker {
 	return &circuitBreaker{threshold: circuitBreakerThreshold, timeout: circuitBreakerTimeout}
 }
 
-// isOpen returns true when the breaker is tripped and the cooldown has not
-// yet elapsed. Callers must not invoke the upstream service in this state.
+// isOpen reports whether the circuit breaker is in the Open state and the
+// cooldown window has not yet elapsed. Returns false when the breaker is Closed
+// or when the cooldown has expired (allowing a half-open probe attempt).
+// Callers must not invoke the upstream service when isOpen returns true.
 func (cb *circuitBreaker) isOpen() bool {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 	return !cb.openUntil.IsZero() && time.Now().Before(cb.openUntil)
 }
 
-// recordSuccess resets the consecutive-error counter and closes the breaker.
+// recordSuccess resets the consecutive-error counter and transitions the
+// breaker back to the Closed state. Call this after every successful upstream
+// request.
 func (cb *circuitBreaker) recordSuccess() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
@@ -77,8 +90,10 @@ func (cb *circuitBreaker) recordSuccess() {
 	cb.openUntil = time.Time{}
 }
 
-// recordFailure increments the error counter and opens the breaker once the
-// threshold is reached.
+// recordFailure increments the consecutive-error counter. When the counter
+// reaches threshold the breaker transitions to the Open state and blocks
+// further calls for circuitBreakerTimeout. Call this after every failed
+// upstream request.
 func (cb *circuitBreaker) recordFailure() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
