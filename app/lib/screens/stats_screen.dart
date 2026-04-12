@@ -112,6 +112,10 @@ class _StatsList extends StatelessWidget {
     return Duration(seconds: totalSecs ~/ _totalSessions);
   }
 
+  Duration get _totalDuration => Duration(
+        seconds: sessions.fold<int>(0, (sum, s) => sum + s.duration.inSeconds),
+      );
+
   String? get _topDomain {
     if (sessions.isEmpty) return null;
     final freq = <String, int>{};
@@ -143,7 +147,7 @@ class _StatsList extends StatelessWidget {
         AchievementBadgesWidget(sessionCount: _totalSessions),
         const SizedBox(height: 12),
 
-        // ── Top row: total sessions + avg duration ──────────────────────────
+        // ── Top row: total sessions + total duration ────────────────────────
         Row(
           children: [
             Expanded(
@@ -156,11 +160,26 @@ class _StatsList extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
+                label: 'Tempo totale',
+                value: _formatDuration(_totalDuration),
+                icon: Icons.access_time_rounded,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // ── Second row: avg duration ────────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
                 label: 'Durata media',
                 value: _formatDuration(_averageDuration),
                 icon: Icons.timer_outlined,
               ),
             ),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 12),
