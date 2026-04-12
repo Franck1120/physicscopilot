@@ -38,11 +38,7 @@ Returns server liveness and resource snapshot. Rate-limited to **60 requests/min
 
 Exposes **Prometheus metrics** in the standard text format. Suitable for scraping by Prometheus or Grafana Agent.
 
-**Authentication:** HTTP Basic Auth is required.
-- Username: `admin`
-- Password: value of the `METRICS_PASSWORD` environment variable (default: `metrics-secret`)
-
-Restrict access at the network/reverse-proxy level in addition to Basic Auth in production.
+**No authentication required** — restrict at the network/reverse-proxy level in production.
 
 **Example output (excerpt)**
 
@@ -153,17 +149,15 @@ Sent after a `frame` or `text` message has been processed by Gemini.
   "type": "response",
   "text": "Your extruder is clicking because of filament grinding. Check that the idler arm tension is not too tight and that the filament diameter is consistent.",
   "overlay": {
-    "boxes": [
+    "regions": [
       {
         "x": 0.32,
         "y": 0.45,
-        "w": 0.15,
-        "h": 0.10,
-        "label": "Idler arm"
+        "width": 0.15,
+        "height": 0.10,
+        "label": "Idler arm",
+        "severity": "warning"
       }
-    ],
-    "arrows": [
-      { "x1": 0.40, "y1": 0.50, "x2": 0.55, "y2": 0.60 }
     ]
   },
   "step": {
@@ -179,9 +173,8 @@ Sent after a `frame` or `text` message has been processed by Gemini.
 |-------|------|-------------|
 | `type` | string | Always `"response"` |
 | `text` | string | Human-readable AI guidance text (spoken aloud via TTS) |
-| `overlay` | object | Optional. AR overlay data rendered on the camera feed |
-| `overlay.boxes[]` | array | Bounding boxes in normalised coords (0.0–1.0): `x`, `y`, `w`, `h`, `label` |
-| `overlay.arrows[]` | array | Directional arrows in normalised coords: `x1`, `y1`, `x2`, `y2` |
+| `overlay` | object | Optional. AR overlay data (regions to highlight on camera feed) |
+| `overlay.regions[]` | array | Normalised bounding boxes (0.0–1.0) with labels |
 | `step` | object | Optional. Current repair procedure step |
 | `step.index` | int | Current step (0-based) |
 | `step.total` | int | Total steps in the procedure |
@@ -273,7 +266,6 @@ Client                                Server
 
 | HTTP / WS Code | Meaning |
 |----------------|---------|
-| `HTTP 401` | Unauthorized — missing or invalid Basic Auth credentials on `/metrics` |
 | `HTTP 429` | REST rate limit exceeded (60 req/min per IP) |
 | `HTTP 426` | Upgrade Required (non-WS request to `/ws`) |
 | `HTTP 500` | Internal server error (JSON body with `"error"` field) |

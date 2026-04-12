@@ -59,13 +59,13 @@ physicscopilot/
 │   └── lib/
 │       ├── screens/       # UI screens
 │       ├── services/      # WebSocket client, Gemini proxy
-│       ├── providers/     # Riverpod providers (session, WS, settings…)
+│       ├── providers/     # Riverpod providers
 │       ├── widgets/       # Shared widgets
 │       └── utils/         # Constants, helpers
 ├── web/                   # Static landing page (HTML/CSS/JS)
 ├── supabase/              # Supabase migrations and seed data
-├── infra/                 # Deployment config (Fly.io)
-└── kb/                    # Knowledge-base entries (optional domain context modules)
+├── infra/                 # Docker Compose and deployment config
+└── kb/                    # Knowledge-base entries (3D printer failure modes)
 ```
 
 ---
@@ -84,10 +84,8 @@ make dev-server
 
 The server exposes:
 - `GET /health` — liveness check
-- `GET /api/sessions` — session management (CRUD)
-- `POST /api/feedback` — per-step thumbs-up/down with optional comment
-- `GET /metrics` — Prometheus metrics (Basic Auth required)
-- `GET /ws` — WebSocket endpoint (camera frames in, AI guidance out)
+- `GET /metrics` — Prometheus metrics
+- `GET /ws` — WebSocket endpoint (camera frames in, repair guidance out)
 
 ### Flutter app
 
@@ -113,28 +111,22 @@ cd web && npx serve .
 ### Go
 
 ```bash
-# Run all tests (race detector enabled, no test cache)
-cd server && go test -count=1 -race ./...
+# Run all tests
+make test
 
-# Run with coverage report (outputs server/coverage.out + coverage.html)
+# Run with coverage report (outputs server/coverage.html)
 make test-coverage
 
 # Run a single package
 cd server && go test ./internal/handlers/... -v
-
-# Static analysis
-go vet ./...
-staticcheck ./...
 ```
 
-All tests must pass and `go vet` / `staticcheck` must be clean before submitting a PR.
-Tests live next to the code they test (`*_test.go` in the same package).
+All tests must pass before submitting a PR. Tests live next to the code they test (`*_test.go` in the same package).
 
 ### Flutter
 
 ```bash
 cd app && flutter test
-cd app && flutter analyze   # must show "No issues found"
 ```
 
 ---
@@ -182,10 +174,9 @@ cd app && flutter analyze   # must show "No issues found"
 
 3. **Before opening the PR**, verify locally:
    ```bash
-   cd server && go test -count=1 -race ./...   # Go tests pass (no cache)
-   cd server && go vet ./... && staticcheck ./... # Go linting clean
-   cd app && flutter test                         # Flutter tests pass
-   cd app && flutter analyze                      # Dart analysis clean
+   make test           # Go tests pass
+   make lint           # Go vet + staticcheck + flutter analyze clean
+   cd app && flutter test   # Flutter tests pass
    ```
 
 4. **Open the PR** against `main`. Fill in:
