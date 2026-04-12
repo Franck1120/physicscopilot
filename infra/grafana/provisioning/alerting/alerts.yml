@@ -104,3 +104,48 @@ groups:
         labels:
           severity: warning
           team: physicscopilot
+
+      # Alert 3: HTTP request p95 latency > 3s
+      # Fires when REST endpoint p95 latency exceeds 3 seconds.
+      - uid: physicscopilot-http-latency-p95
+        title: HTTP p95 Latency > 3s
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [3]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [B]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: $A
+              refId: B
+              type: math
+        noDataState: NoData
+        execErrState: Error
+        for: 3m
+        annotations:
+          summary: "HTTP p95 latency exceeded 3 seconds"
+          description: "The 95th percentile HTTP request latency is above 3s for 3 minutes. Check server load and database queries."
+        labels:
+          severity: warning
+          team: physicscopilot
