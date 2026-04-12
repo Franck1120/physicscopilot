@@ -144,6 +144,35 @@ void main() {
       expect(find.text('Bambu X1C'), findsWidgets);
     });
 
+    testWidgets('shows total duration for multiple sessions', (tester) async {
+      // Two sessions: 1 minute each → total 2 minutes.
+      final sessions = [
+        SessionRecord(
+          id: 'td-1',
+          date: DateTime(2026, 3, 10, 14, 0),
+          equipmentName: 'Printer A',
+          problemDescription: 'Problem A',
+          summary: 'Summary A',
+          status: SessionStatus.resolved,
+          duration: const Duration(minutes: 1),
+        ),
+        SessionRecord(
+          id: 'td-2',
+          date: DateTime(2026, 3, 11, 14, 0),
+          equipmentName: 'Printer B',
+          problemDescription: 'Problem B',
+          summary: 'Summary B',
+          status: SessionStatus.resolved,
+          duration: const Duration(minutes: 1),
+        ),
+      ];
+      await tester.pumpWidget(await _buildStatsScreen(sessions));
+      await tester.pump();
+
+      // Total = 2 minutes 0 seconds → "2m 00s".
+      expect(find.text('2m 00s'), findsOneWidget);
+    });
+
     testWidgets(
         'session with empty equipmentName → "Sessione" fallback in recent list',
         (tester) async {
