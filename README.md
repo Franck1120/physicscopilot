@@ -3,10 +3,12 @@
 ### AI-powered real-time guidance for physical work
 
 [![CI](https://github.com/Franck1120/physicscopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Franck1120/physicscopilot/actions)
+[![codecov](https://codecov.io/gh/Franck1120/physicscopilot/branch/main/graph/badge.svg)](https://codecov.io/gh/Franck1120/physicscopilot)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Franck1120/physicscopilot/server)](https://goreportcard.com/report/github.com/Franck1120/physicscopilot/server)
 
 **Point your phone at any machine. Get step-by-step guidance in real time.**
 
