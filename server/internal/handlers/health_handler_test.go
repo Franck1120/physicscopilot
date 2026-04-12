@@ -408,3 +408,22 @@ func TestHealthEndpointDBPoolIdleAndAcquiredFields(t *testing.T) {
 		t.Errorf("acquired_conns: want 2, got %d", body.DBPool.AcquiredConns)
 	}
 }
+
+// ── Cache-Control header on health endpoint ───────────────────────────────────
+
+func TestHealthEndpointCacheControlHeader(t *testing.T) {
+	app, _ := newHealthApp("0.1.0", time.Now())
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "no-cache, no-store" {
+		t.Errorf("health Cache-Control: want %q, got %q", "no-cache, no-store", cc)
+	}
+}

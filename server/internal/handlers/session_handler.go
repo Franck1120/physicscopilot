@@ -103,6 +103,7 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	c.Set("Cache-Control", "no-store")
 	return c.Status(fiber.StatusCreated).JSON(toResponse(*session))
 }
 
@@ -140,6 +141,7 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNotModified)
 	}
 	c.Set("ETag", etag)
+	c.Set("Cache-Control", "private, no-cache")
 	return c.JSON(fiber.Map{
 		"sessions": dtos,
 		"count":    len(dtos),
@@ -148,7 +150,7 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 
 // GetSession handles GET /api/sessions/:id.
 //
-// Response 200: session JSON with ETag header.
+// Response 200: session JSON with ETag and Cache-Control headers.
 // Response 304: when If-None-Match matches the current ETag.
 // Response 404: session not found.
 func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
@@ -163,6 +165,7 @@ func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNotModified)
 	}
 	c.Set("ETag", etag)
+	c.Set("Cache-Control", "private, max-age=0, must-revalidate")
 	return c.JSON(dto)
 }
 
@@ -175,5 +178,6 @@ func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 	if err := h.sessions.DeleteSession(id); err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
+	c.Set("Cache-Control", "no-store")
 	return c.SendStatus(fiber.StatusNoContent)
 }

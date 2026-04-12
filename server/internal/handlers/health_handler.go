@@ -67,6 +67,7 @@ func NewHealthHandler(version string, startTime time.Time, ws *WSHandler, db DBP
 			stats := ps.PoolStats()
 			resp.DBPool = &stats
 		}
+		c.Set("Cache-Control", "no-cache, no-store")
 		return c.JSON(resp)
 	}
 }

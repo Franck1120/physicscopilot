@@ -386,3 +386,78 @@ func TestListSessionsIfNoneMatchReturns304(t *testing.T) {
 		t.Errorf("want 304, got %d", resp2.StatusCode)
 	}
 }
+
+// ── Cache-Control tests ───────────────────────────────────────────────────────
+
+func TestGetSessionCacheControlHeader(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "private, max-age=0, must-revalidate" {
+		t.Errorf("GetSession Cache-Control: want %q, got %q", "private, max-age=0, must-revalidate", cc)
+	}
+}
+
+func TestListSessionsCacheControlHeader(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "private, no-cache" {
+		t.Errorf("ListSessions Cache-Control: want %q, got %q", "private, no-cache", cc)
+	}
+}
+
+func TestCreateSessionCacheControlHeader(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	body := `{"device_brand":"Prusa","device_model":"MK4"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("want 201, got %d", resp.StatusCode)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "no-store" {
+		t.Errorf("CreateSession Cache-Control: want %q, got %q", "no-store", cc)
+	}
+}
+
+func TestDeleteSessionCacheControlHeader(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/sessions/"+sess.SessionID, nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("want 204, got %d", resp.StatusCode)
+	}
+	cc := resp.Header.Get("Cache-Control")
+	if cc != "no-store" {
+		t.Errorf("DeleteSession Cache-Control: want %q, got %q", "no-store", cc)
+	}
+}
