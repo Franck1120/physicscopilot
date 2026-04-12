@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -381,8 +382,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
                 child: GuidancePanel(
                   textController: _textController,
                   onSendText: _sendText,
-                  cachedResponse: _cachedResponse,
-                  isOffline: wsStatus.value != ConnectionStatus.connected,
                 ),
               ),
             ],

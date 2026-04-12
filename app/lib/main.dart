@@ -18,6 +18,7 @@ import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'providers/settings_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
 import 'screens/login_screen.dart';
 import 'services/auth_service.dart';
 
