@@ -52,17 +52,17 @@ func setupConversationTest(t *testing.T, structuredJSON string) (*ConversationSe
 
 func TestNewConversationService(t *testing.T) {
 	sessions := NewSessionService()
-	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
+	var ai AIBackend = &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
 
-	svc := NewConversationService(sessions, gemini, nil)
+	svc := NewConversationService(sessions, ai, nil)
 	if svc == nil {
 		t.Fatal("expected non-nil ConversationService")
 	}
 	if svc.sessions != sessions {
 		t.Error("expected sessions field to match")
 	}
-	if svc.gemini != gemini {
-		t.Error("expected gemini field to match")
+	if svc.ai != ai {
+		t.Error("expected ai field to match")
 	}
 	if svc.frameHashes == nil {
 		t.Error("expected frameHashes map to be initialized")

@@ -27,23 +27,23 @@ type StepInfo struct {
 }
 
 // ConversationService orchestrates frame analysis and text conversations
-// by coordinating SessionService (state), GeminiService (AI), and an
+// by coordinating SessionService (state), an AIBackend (AI inference), and an
 // optional RAGService (knowledge-base context enrichment).
 type ConversationService struct {
 	sessions    *SessionService
-	gemini      *GeminiService
+	ai          AIBackend
 	rag         *RAGService
 	frameHashes map[string]string // sessionID -> hash of last processed frame
 	mu          sync.Mutex
 }
 
 // NewConversationService creates a ConversationService wired to the given
-// session store, Gemini client, and optional knowledge-base service.
+// session store, AI backend, and optional knowledge-base service.
 // rag may be nil, in which case KB enrichment is skipped.
-func NewConversationService(sessions *SessionService, gemini *GeminiService, rag *RAGService) *ConversationService {
+func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGService) *ConversationService {
 	return &ConversationService{
 		sessions:    sessions,
-		gemini:      gemini,
+		ai:          ai,
 		rag:         rag,
 		frameHashes: make(map[string]string),
 	}
@@ -99,7 +99,7 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 	}
 
 	// Call Gemini Vision API
-	response, err := c.gemini.AnalyzeFrame(ctx, frameBase64, conversationCtx)
+	response, err := c.ai.AnalyzeFrame(ctx, frameBase64, conversationCtx)
 	if err != nil {
 		c.clearFrameHash(sessionID)
 		return nil, fmt.Errorf("analyze frame: %w", err)
@@ -161,7 +161,7 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 		}
 	}
 
-	response, err := c.gemini.AnalyzeFrame(ctx, "", conversationCtx)
+	response, err := c.ai.AnalyzeFrame(ctx, "", conversationCtx)
 	if err != nil {
 		return nil, fmt.Errorf("analyze text message: %w", err)
 	}
