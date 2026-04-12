@@ -244,6 +244,9 @@ func sortSessions(dtos []sessionResponse, sortBy, sortOrder string) {
 //   - page_size (int, default 20, max 100): items per page
 //   - sort_by (string): "created_at" | "last_activity" | "status" (default "last_activity")
 //   - sort_order (string): "asc" | "desc" (default "desc")
+//   - status (string): exact match on session status (case-insensitive)
+//   - device_brand (string): exact match on device brand (case-insensitive)
+//   - problem (string): substring match on problem_detected (case-insensitive)
 //
 // Response 200: {"sessions":[...],"count":N,"page":P,"page_size":S,"total":T,"total_pages":TP} with ETag header.
 // Response 304: when If-None-Match matches the current ETag.
@@ -254,7 +257,14 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 		dtos[i] = toResponse(s)
 	}
 
-	// 1. Sort
+	// 1. Filter
+	dtos = filterSessions(dtos,
+		c.Query("status"),
+		c.Query("device_brand"),
+		c.Query("problem"),
+	)
+
+	// 2. Sort
 	sortSessions(dtos, c.Query("sort_by"), c.Query("sort_order"))
 
 	etag := sessionListETag(dtos)
@@ -262,7 +272,7 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNotModified)
 	}
 
-	// 2. Paginate
+	// 3. Paginate
 	page, pageSize := parsePagination(c)
 	paged, total := paginateSessions(dtos, page, pageSize)
 

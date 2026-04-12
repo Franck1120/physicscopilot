@@ -427,6 +427,130 @@ func TestListSessionsSortByLastActivityDesc(t *testing.T) {
 	}
 }
 
+// ── Filtering tests ───────────────────────────────────────────────────────────
+
+func TestListSessionsFilterByDeviceBrand(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Prusa", "MK4", "", "")  //nolint:errcheck
+	sessions.CreateSession("Bambu", "X1C", "", "")  //nolint:errcheck
+	sessions.CreateSession("Prusa", "Mini", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?device_brand=Prusa", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	sessionsList, ok := body["sessions"].([]interface{})
+	if !ok {
+		t.Fatalf("sessions field missing: %v", body)
+	}
+	if len(sessionsList) != 2 {
+		t.Errorf("want 2 Prusa sessions, got %d", len(sessionsList))
+	}
+	for _, s := range sessionsList {
+		sess := s.(map[string]interface{})
+		device := sess["device"].(map[string]interface{})
+		if strings.ToLower(device["brand"].(string)) != "prusa" {
+			t.Errorf("expected brand 'Prusa', got %v", device["brand"])
+		}
+	}
+}
+
+func TestListSessionsFilterByDeviceBrandCaseInsensitive(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Prusa", "MK4", "", "") //nolint:errcheck
+	sessions.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?device_brand=prusa", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&body) //nolint:errcheck
+
+	sessionsList, _ := body["sessions"].([]interface{})
+	if len(sessionsList) != 1 {
+		t.Errorf("case-insensitive filter: want 1 session, got %d", len(sessionsList))
+	}
+}
+
+func TestListSessionsFilterByProblem(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	s1, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+	s2, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+	sessions.SetProblemDetected(s1.SessionID, "nozzle clog detected") //nolint:errcheck
+	sessions.SetProblemDetected(s2.SessionID, "bed adhesion issue")   //nolint:errcheck
+	sessions.CreateSession("Creality", "Ender3", "", "")              //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?problem=clog", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	sessionsList, ok := body["sessions"].([]interface{})
+	if !ok {
+		t.Fatalf("sessions field missing: %v", body)
+	}
+	if len(sessionsList) != 1 {
+		t.Errorf("want 1 session with clog, got %d", len(sessionsList))
+	}
+	sess := sessionsList[0].(map[string]interface{})
+	if !strings.Contains(strings.ToLower(sess["problem_detected"].(string)), "clog") {
+		t.Errorf("expected problem_detected to contain 'clog', got %v", sess["problem_detected"])
+	}
+}
+
+func TestListSessionsFilterByStatus(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Prusa", "MK4", "", "") //nolint:errcheck
+	sessions.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+
+	// All current sessions have status "active"
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?status=active", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&body) //nolint:errcheck
+
+	sessionsList, _ := body["sessions"].([]interface{})
+	if len(sessionsList) != 2 {
+		t.Errorf("want 2 active sessions, got %d", len(sessionsList))
+	}
+
+	// Non-matching status returns empty
+	req2 := httptest.NewRequest(http.MethodGet, "/api/sessions?status=expired", nil)
+	resp2, _ := app.Test(req2)
+	var body2 map[string]interface{}
+	json.NewDecoder(resp2.Body).Decode(&body2) //nolint:errcheck
+	sessionsList2, _ := body2["sessions"].([]interface{})
+	if len(sessionsList2) != 0 {
+		t.Errorf("want 0 expired sessions, got %d", len(sessionsList2))
+	}
+}
+
 // ── ETag tests ────────────────────────────────────────────────────────────────
 
 func TestGetSessionReturnsETagHeader(t *testing.T) {
