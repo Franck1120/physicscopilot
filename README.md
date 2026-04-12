@@ -5,7 +5,7 @@
 [![CI](https://github.com/Franck1120/physicscopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Franck1120/physicscopilot/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Go](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 
 **Point your phone at any machine. Get step-by-step guidance in real time.**
@@ -38,13 +38,15 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 - **📷 Live vision diagnosis** — streams camera frames over WebSocket to Gemini 2.5 Flash for real-time analysis
 - **🔊 Voice-guided steps** — text-to-speech walks users through each action hands-free
 - **🗺 Visual overlays** — bounding boxes and directional arrows drawn over the live camera feed
-- **📋 Context selection** — optional device profiles for domain-specific guidance (extensible KB module)
-- **🔌 LAN-first** — zero cloud dependency for local testing; runs entirely on your network
+- **📋 RAG knowledge base** — keyword-ranked retrieval over `kb/data/problems.json` for domain-specific context
+- **🔐 Secure endpoints** — JWT auth on WebSocket, HTTP Basic Auth on `/metrics`, CORS from env
+- **📊 Prometheus metrics** — request count and latency exposed at `/metrics`
+- **🔌 Session REST API** — `POST/GET/DELETE /api/sessions` for session lifecycle management
 
 **Planned (not yet live):**
 - Persistent session history (Supabase)
-- RAG knowledge base (pgvector semantic search over uploaded manuals)
-- Multiple domain verticals beyond the bundled 3D printer profiles
+- Semantic search over uploaded manuals (pgvector)
+- Multiple domain verticals beyond the bundled equipment profiles
 
 ---
 
@@ -57,7 +59,7 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 │   Camera frames ──►  Flutter App  ──► TTS / AR overlay         │
 │                           │                                     │
 └───────────────────────────┼─────────────────────────────────────┘
-                            │  WebSocket (ws://)
+                            │  WebSocket (wss://)
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     GO SERVER (Fiber)                           │
@@ -65,15 +67,15 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 │   WebSocket handler ──► Frame processor ──► Gemini 2.5 Flash   │
 │                                │                                │
 │                                ▼                                │
-│                    Session + conversation context               │
+│              RAG service  ──► KB context injection              │
 │                                                                 │
-│                    Prometheus metrics (/metrics)                │
+│             Session REST API · Prometheus metrics               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Quick Start
+## Quick Start — Local
 
 ### 1. Run the server
 
@@ -81,62 +83,130 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 git clone https://github.com/Franck1120/physicscopilot.git
 cd physicscopilot
 
-# Set environment variables
-cp server/.env.example server/.env
-# Fill in: GEMINI_API_KEY (required)
-# Optional: METRICS_PASSWORD (default: "metrics-secret")
+# Copy and fill environment variables
+cp .env.example server/.env
+# Required: GEMINI_API_KEY
+# Optional: METRICS_PASSWORD (protects /metrics)
 
-# Start with Docker Compose
+# Run with Docker Compose (includes Supabase)
 docker compose up
 
-# Or bare metal
-make dev-server   # Go server on :8080
+# Or bare Go (no Docker)
+make server-run
 ```
 
-### 2. Run the app
+### 2. Build and run the app
 
 ```bash
-# Point the app at your server before building:
-# app/lib/utils/constants.dart → _serverHost
-
 cd app
 flutter pub get
-flutter run                      # on connected device/emulator
-
-# Build APK for Android
-flutter build apk --debug
+flutter run   # on a connected device or emulator
 ```
 
 ### 3. Without a Gemini API key
 
-If `GEMINI_API_KEY` is not set, the server falls back to a local
-[CLIProxyAPI](https://github.com/simonb97/cliproxy) Docker container at
-`CLIPROXY_URL` (default: `http://localhost:8085`).
+Set `CLIPROXY_URL` to point to a local
+[CLIProxyAPI](https://github.com/simonb97/cliproxy) instance.
+The server falls back to it automatically when `GEMINI_API_KEY` is unset.
+
+---
+
+## Deploy — Render (recommended)
+
+Render auto-deploys from the root `Dockerfile` whenever you push to `main`.
+
+### Step-by-step
+
+1. **Create a Web Service** on [render.com](https://render.com) → New → Web Service.
+
+2. **Connect your GitHub repo** (`Franck1120/physicscopilot`).
+
+3. **Select Docker** as the environment.
+   Render auto-detects the root `Dockerfile`; leave defaults:
+   - Dockerfile path: `Dockerfile`
+   - Docker context: `.` (repo root)
+
+4. **Add environment variables** in the Render dashboard:
+
+   | Variable | Value | Notes |
+   |----------|-------|-------|
+   | `GEMINI_API_KEY` | `your-key` | Required |
+   | `APP_ENV` | `production` | Enables JSON logs and strict CORS |
+   | `ALLOWED_ORIGINS` | `https://your-app.onrender.com` | Comma-separated list of allowed origins |
+   | `METRICS_PASSWORD` | `choose-a-password` | Protects `/metrics` with HTTP Basic Auth |
+   | `SUPABASE_URL` | `https://xxx.supabase.co` | Optional — for auth/history |
+   | `SUPABASE_ANON_KEY` | `eyJ...` | Optional |
+   | `SUPABASE_JWT_SECRET` | `your-secret` | Optional — enables JWT on WS |
+
+5. **Click Deploy**. The health check (`GET /health`) confirms when the
+   service is ready.
+
+> The knowledge base (`kb/data/problems.json`) is bundled in the Docker
+> image — no extra setup needed.
+
+---
+
+## Build APK for Production
+
+After deploying the server, build a release APK that points at your Render URL:
+
+```bash
+cd app
+
+# Replace with your actual Render URL (no trailing slash, no https://)
+flutter build apk --release \
+  --dart-define=SERVER_URL=physicscopilot-server.onrender.com
+
+# APK output:
+# app/build/app/outputs/flutter-apk/app-release.apk
+```
+
+Install on device:
+```bash
+adb install build/app/outputs/flutter-apk/app-release.apk
+```
+
+---
+
+## Makefile targets
+
+```
+make server-build     Build Go server binary → bin/server
+make server-test      Run Go tests (race detector)
+make server-run       Run server locally
+make app-build        Build Flutter debug APK
+make app-analyze      Flutter static analysis
+make docker-build     Build root Docker image
+make docker-up        Start local Supabase stack
+make docker-down      Stop local Supabase stack
+make deploy-render    Print Render deployment checklist
+make lint             go vet + golangci-lint + flutter analyze
+make clean            Remove all build artefacts
+```
 
 ---
 
 ## Tech Stack
 
-| Layer    | Technology                            |
-|----------|---------------------------------------|
-| Mobile   | Flutter 3.41 · iOS + Android          |
-| Backend  | Go 1.22 · Fiber · WebSocket           |
-| AI       | Gemini 2.5 Flash (vision + reasoning) |
-| Hosting  | Fly.io (server) · Vercel (landing)    |
+| Layer    | Technology                              |
+|----------|-----------------------------------------|
+| Mobile   | Flutter 3.41 · iOS + Android            |
+| Backend  | Go 1.25 · Fiber v2 · WebSocket          |
+| AI       | Gemini 2.5 Flash (vision + reasoning)   |
+| KB / RAG | JSON knowledge base · keyword ranking   |
+| Hosting  | Render (server) · Vercel (landing page) |
 
 ---
 
 ## Roadmap
 
-| Vertical          | Status  |
-|-------------------|---------|
+| Vertical             | Status  |
+|----------------------|---------|
 | 🔧 Repairs (general) | ✅ Live  |
-| 🗄 Session history  | Q3 2026 |
-| 🧠 RAG knowledge base | Q3 2026 |
-| 🚗 Automotive      | Q4 2026 |
-| ❄️ HVAC            | 2027    |
-
-Each domain vertical adds a context-specific knowledge base and tailored diagnostic prompts. The core vision + WebSocket pipeline is shared across all of them.
+| 🗄 Session history   | Q3 2026 |
+| 🧠 RAG semantic search | Q3 2026 |
+| 🚗 Automotive        | Q4 2026 |
+| ❄️ HVAC              | 2027    |
 
 ---
 
