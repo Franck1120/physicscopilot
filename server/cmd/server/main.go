@@ -24,10 +24,13 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/Franck1120/physicscopilot/server/internal/handlers"
 	applogger "github.com/Franck1120/physicscopilot/server/internal/logger"
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/middleware"
+	appsentry "github.com/Franck1120/physicscopilot/server/internal/sentry"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
@@ -37,6 +40,8 @@ var startTime = time.Now()
 
 func main() {
 	applogger.Init()
+	appsentry.Init(version)
+	prometheus.MustRegister(metrics.NewRuntimeCollector())
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
