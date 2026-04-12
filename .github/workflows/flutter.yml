@@ -91,3 +91,41 @@ jobs:
           api-level: 33
           arch: x86_64
           script: flutter test integration_test --dart-define=SERVER_URL=http://10.0.2.2:8080
+
+  build-apk:
+    name: Flutter — Build Release APK
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: flutter
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release --dart-define=SERVER_URL=https://physicscopilot.app
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: physicscopilot-release-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
