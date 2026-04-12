@@ -42,9 +42,10 @@ PhysicsCopilot is the copilot for the physical world — AI that sees what you s
 - **🔐 Secure endpoints** — JWT auth on WebSocket, HTTP Basic Auth on `/metrics`, CORS from env
 - **📊 Prometheus metrics** — request count and latency exposed at `/metrics`
 - **🔌 Session REST API** — `POST/GET/DELETE /api/sessions` for session lifecycle management
+- **💾 Optional Postgres persistence** — session history stored in Postgres/Supabase when `DATABASE_URL` is set
+- **📖 OpenAPI spec** — full API documentation served at `GET /api/docs` (OpenAPI 3.0.3, YAML)
 
 **Planned (not yet live):**
-- Persistent session history (Supabase)
 - Semantic search over uploaded manuals (pgvector)
 - Multiple domain verticals beyond the bundled equipment profiles
 
@@ -137,6 +138,7 @@ Render auto-deploys from the root `Dockerfile` whenever you push to `main`.
    | `SUPABASE_URL` | `https://xxx.supabase.co` | Optional — for auth/history |
    | `SUPABASE_ANON_KEY` | `eyJ...` | Optional |
    | `SUPABASE_JWT_SECRET` | `your-secret` | Optional — enables JWT on WS |
+   | `DATABASE_URL` | `postgres://...` | Optional — Postgres for persistent session history |
 
 5. **Click Deploy**. The health check (`GET /health`) confirms when the
    service is ready.
@@ -203,7 +205,7 @@ make clean            Remove all build artefacts
 | Vertical             | Status  |
 |----------------------|---------|
 | 🔧 Repairs (general) | ✅ Live  |
-| 🗄 Session history   | Q3 2026 |
+| 🗄 Session history   | ✅ Live  |
 | 🧠 RAG semantic search | Q3 2026 |
 | 🚗 Automotive        | Q4 2026 |
 | ❄️ HVAC              | 2027    |

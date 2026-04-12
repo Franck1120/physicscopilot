@@ -25,10 +25,20 @@ type DBBackend interface {
 	ListSessions(ctx context.Context) ([]SessionState, error)
 	// SaveSessionStep upserts a step record in session_steps.
 	SaveSessionStep(ctx context.Context, sessionID string, stepNumber int, instruction string) error
+	// SaveFeedback persists a user feedback entry for a given session step.
+	SaveFeedback(ctx context.Context, f *FeedbackEntry) error
 	// Ping returns nil when the database is reachable.
 	Ping(ctx context.Context) error
 	// Close releases the connection pool.
 	Close()
+}
+
+// FeedbackEntry holds a single user feedback record.
+type FeedbackEntry struct {
+	SessionID  string  `json:"session_id"`
+	StepNumber int     `json:"step_number"`
+	Rating     string  `json:"rating"` // "positive" or "negative"
+	Comment    *string `json:"comment,omitempty"`
 }
 
 // DBService implements DBBackend using a pgx/v5 connection pool.
@@ -162,6 +172,18 @@ func (d *DBService) SaveSessionStep(ctx context.Context, sessionID string, stepN
 	`, sessionID, stepNumber, instruction)
 	if err != nil {
 		return fmt.Errorf("save step %d for session %q: %w", stepNumber, sessionID, err)
+	}
+	return nil
+}
+
+// SaveFeedback inserts a feedback row. comment may be nil for anonymous ratings.
+func (d *DBService) SaveFeedback(ctx context.Context, f *FeedbackEntry) error {
+	_, err := d.pool.Exec(ctx, `
+		INSERT INTO feedback (session_id, step_number, rating, comment, created_at)
+		VALUES ($1, $2, $3, $4, now())
+	`, f.SessionID, f.StepNumber, f.Rating, f.Comment)
+	if err != nil {
+		return fmt.Errorf("save feedback for session %q step %d: %w", f.SessionID, f.StepNumber, err)
 	}
 	return nil
 }

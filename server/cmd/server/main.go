@@ -33,6 +33,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Warn loudly in production when SUPABASE_JWT_SECRET is absent — the
+	// WebSocket auth middleware falls back to dev mode (no authentication).
+	if os.Getenv("APP_ENV") == "production" && os.Getenv("SUPABASE_JWT_SECRET") == "" {
+		slog.Warn("SUPABASE_JWT_SECRET is not set — WebSocket connections are not authenticated; all clients can connect without a valid JWT")
+	}
+
 	// ── Services ────────────────────────────────────────────────────────────
 	sessionSvc := services.NewSessionService()
 
@@ -68,6 +74,7 @@ func main() {
 	convSvc := services.NewConversationService(sessionSvc, aiBackend, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
+	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
 
 	// Background cleanup of expired sessions every 5 minutes
 	go func() {
@@ -79,7 +86,7 @@ func main() {
 	}()
 
 	// ── HTTP app ─────────────────────────────────────────────────────────────
-	app := newFiberApp(version, sessionHandler, wsHandler, dbSvc)
+	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, dbSvc)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -116,6 +123,7 @@ func main() {
 func newFiberApp(
 	ver string,
 	sessionHandler *handlers.SessionHandler,
+	feedbackHandler *handlers.FeedbackHandler,
 	wsHandler *handlers.WSHandler,
 	db handlers.DBPinger, // nil when DATABASE_URL not set
 ) *fiber.App {
@@ -200,6 +208,7 @@ func newFiberApp(
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)
 	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
+	api.Post("/feedback", feedbackHandler.Submit)
 
 	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
 

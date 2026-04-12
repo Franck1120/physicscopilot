@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Immutable snapshot of the current AI session output.
 class SessionState {
   final String? responseText;
+  final String? voiceText; // TTS-optimised version of responseText (no markdown)
   final String? audioUrl;
   final Map<String, dynamic>? overlay;
   final bool isProcessing;
@@ -19,6 +20,7 @@ class SessionState {
 
   const SessionState({
     this.responseText,
+    this.voiceText,
     this.audioUrl,
     this.overlay,
     this.isProcessing = false,
@@ -29,6 +31,7 @@ class SessionState {
 
   SessionState copyWith({
     String? responseText,
+    String? voiceText,
     String? audioUrl,
     Map<String, dynamic>? overlay,
     bool? isProcessing,
@@ -39,6 +42,7 @@ class SessionState {
   }) {
     return SessionState(
       responseText: responseText ?? this.responseText,
+      voiceText: voiceText ?? this.voiceText,
       audioUrl: audioUrl ?? this.audioUrl,
       overlay: overlay ?? this.overlay,
       isProcessing: isProcessing ?? this.isProcessing,
@@ -60,6 +64,7 @@ class SessionNotifier extends StateNotifier<SessionState> {
   void updateFromResponse(Map<String, dynamic> json) {
     state = SessionState(
       responseText: json['text'] as String?,
+      voiceText: json['voice_text'] as String?,
       audioUrl: json['audio_url'] as String?,
       overlay: json['overlay'] as Map<String, dynamic>?,
       streamingText: null,
