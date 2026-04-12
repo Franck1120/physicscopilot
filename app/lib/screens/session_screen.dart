@@ -160,6 +160,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     } catch (_) {}
   }
 
+  void _resetSession() {
+    HapticFeedback.mediumImpact();
+    ref.read(sessionProvider.notifier).reset();
+    setState(() => _firstUserMessage = null);
+  }
+
   String _formatElapsed(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -193,6 +199,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded,
+                color: Colors.white54, size: 20),
+            tooltip: 'Nuova analisi',
+            onPressed: _resetSession,
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -435,23 +447,11 @@ class _ResponseArea extends StatelessWidget {
         ),
       );
     } else if (session.responseText != null) {
-      child = SingleChildScrollView(
+      // _TypewriterResponse carries the ValueKey so AnimatedSwitcher recreates
+      // it (and restarts the animation) whenever the text changes.
+      child = _TypewriterResponse(
         key: ValueKey(session.responseText),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.auto_fix_high, color: kAccent, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                session.responseText!,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 14, height: 1.5),
-              ),
-            ),
-          ],
-        ),
+        text: session.responseText!,
       );
     } else {
       child = const Center(
@@ -473,6 +473,107 @@ class _ResponseArea extends StatelessWidget {
         child: child,
       ),
       child: child,
+    );
+  }
+}
+
+// ── Typewriter response — animates text char-by-char + copy button ────────────
+
+class _TypewriterResponse extends StatefulWidget {
+  const _TypewriterResponse({super.key, required this.text});
+
+  final String text;
+
+  @override
+  State<_TypewriterResponse> createState() => _TypewriterResponseState();
+}
+
+class _TypewriterResponseState extends State<_TypewriterResponse> {
+  int _length = 0;
+  Timer? _timer;
+
+  // ~100 chars/sec feels snappy without losing readability.
+  static const _charInterval = Duration(milliseconds: 10);
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_charInterval, (_) {
+      if (_length < widget.text.length) {
+        if (mounted) setState(() => _length++);
+      } else {
+        _timer?.cancel();
+        _timer = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayed = widget.text.substring(0, _length);
+    final done = _length >= widget.text.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.auto_fix_high, color: kAccent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    displayed,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 14, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Copy button appears once typing is complete.
+        AnimatedOpacity(
+          opacity: done ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, bottom: 4),
+              child: Semantics(
+                label: 'Copia risposta AI',
+                button: true,
+                child: IconButton(
+                  icon: const Icon(Icons.copy_outlined,
+                      size: 16, color: kTextMuted),
+                  tooltip: 'Copia risposta',
+                  onPressed: done
+                      ? () {
+                          HapticFeedback.selectionClick();
+                          Clipboard.setData(
+                              ClipboardData(text: widget.text));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Risposta copiata negli appunti'),
+                            ),
+                          );
+                        }
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
