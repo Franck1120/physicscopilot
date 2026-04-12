@@ -138,6 +138,27 @@ void main() {
 
   // -------------------------------------------------------------------------
 
+  group('AchievementBadgesWidget — Expert badge', () {
+    testWidgets('shows Expert badge when session count is 50 or more',
+        (tester) async {
+      await tester.pumpWidget(_wrap(50));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.emoji_events), findsOneWidget);
+      expect(find.text('Expert'), findsOneWidget);
+    });
+
+    testWidgets('does not show Expert badge for 49 sessions', (tester) async {
+      await tester.pumpWidget(_wrap(49));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.emoji_events), findsNothing);
+      expect(find.text('Expert'), findsNothing);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+
   group('AchievementBadgesWidget — milestone label display', () {
     testWidgets('renders milestone numbers as text labels (5, 10, 25, 50, 100)',
         (tester) async {
