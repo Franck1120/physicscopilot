@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot contributors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 package middleware
 
 import "github.com/gofiber/fiber/v2"
