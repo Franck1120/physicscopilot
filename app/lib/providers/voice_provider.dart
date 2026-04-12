@@ -21,9 +21,15 @@ final voiceServiceProvider = Provider<VoiceService>((ref) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+/// Immutable snapshot of the voice I/O state.
 class VoiceState {
+  /// True while the STT engine is actively recording.
   final bool isListening;
+
+  /// True while the TTS engine is speaking.
   final bool isSpeaking;
+
+  /// The most-recently recognised phrase from the microphone, or `null`.
   final String? lastRecognizedText;
 
   const VoiceState({
@@ -32,6 +38,7 @@ class VoiceState {
     this.lastRecognizedText,
   });
 
+  /// Returns a copy with the given fields replaced.
   VoiceState copyWith({
     bool? isListening,
     bool? isSpeaking,
@@ -46,6 +53,10 @@ class VoiceState {
 
 // ── Notifier ──────────────────────────────────────────────────────────────────
 
+/// Bridges [VoiceService] events into Riverpod state for the UI.
+///
+/// Subscribes to [VoiceService.speakingStream] so [VoiceState.isSpeaking]
+/// stays in sync with TTS completion/error callbacks.
 class VoiceNotifier extends StateNotifier<VoiceState> {
   final VoiceService _service;
   late final StreamSubscription<bool> _speakingSub;
@@ -67,6 +78,7 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
     super.dispose();
   }
 
+  /// Starts listening if idle, or stops if already listening.
   Future<void> toggleListening() async {
     if (state.isListening) {
       await _service.stopListening();
@@ -77,17 +89,20 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
     }
   }
 
+  /// Passes [text] to TTS and marks [VoiceState.isSpeaking] true.
   void speak(String text) {
     _service.speak(text);
     state = state.copyWith(isSpeaking: true);
   }
 
+  /// Stops TTS immediately and clears the speaking flag.
   Future<void> stopSpeaking() async {
     await _service.stop();
     // Stream subscription handles the state reset; explicit call for clarity.
     state = state.copyWith(isSpeaking: false);
   }
 
+  /// Called by the session screen when the STT engine emits a final result.
   void onRecognized(String text) {
     state = state.copyWith(lastRecognizedText: text);
   }
@@ -95,6 +110,9 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
+/// Provides the [VoiceNotifier] and current [VoiceState].
+///
+/// Depends on [voiceServiceProvider]; rebuilds when the service instance changes.
 final voiceProvider =
     StateNotifierProvider<VoiceNotifier, VoiceState>((ref) {
   final service = ref.watch(voiceServiceProvider);
