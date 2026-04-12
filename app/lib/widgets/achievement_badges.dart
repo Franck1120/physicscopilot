@@ -51,8 +51,57 @@ class AchievementBadgesWidget extends StatelessWidget {
                 .map((m) => _Badge(milestone: m, unlocked: sessionCount >= m))
                 .toList(),
           ),
+          if (sessionCount >= 50) ...[
+            const SizedBox(height: 16),
+            const _ExpertBadge(),
+          ],
         ],
       ),
+    );
+  }
+}
+
+// ── _ExpertBadge ──────────────────────────────────────────────────────────────
+
+/// Shown only when [sessionCount] >= 50. Displays a gold trophy icon with
+/// an "Expert" label to mark the user as a power user.
+class _ExpertBadge extends StatelessWidget {
+  const _ExpertBadge();
+
+  static const _gold = Color(0xFFFFD700);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _gold.withAlpha(30),
+            border: Border.all(color: _gold, width: 1.5),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.emoji_events,
+              size: 26,
+              color: _gold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Text(
+          'Expert',
+          style: TextStyle(
+            color: _gold,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
     );
   }
 }
