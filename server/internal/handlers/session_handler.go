@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -110,6 +111,8 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	metrics.SessionCreatedTotal.Inc()
+	metrics.SessionsActive.Set(float64(len(h.sessions.ListSessions())))
 	c.Set("Cache-Control", "no-store")
 	return c.Status(fiber.StatusCreated).JSON(toResponse(*session))
 }
@@ -177,6 +180,32 @@ func totalPages(total, pageSize int) int {
 		pages++
 	}
 	return pages
+}
+
+// filterSessions returns a new slice containing only the entries that match
+// all non-empty filter parameters. Comparisons are case-insensitive.
+func filterSessions(dtos []sessionResponse, status, deviceBrand, problem string) []sessionResponse {
+	if status == "" && deviceBrand == "" && problem == "" {
+		return dtos
+	}
+	statusLower := strings.ToLower(status)
+	brandLower := strings.ToLower(deviceBrand)
+	problemLower := strings.ToLower(problem)
+
+	out := make([]sessionResponse, 0, len(dtos))
+	for _, d := range dtos {
+		if status != "" && strings.ToLower(d.Status) != statusLower {
+			continue
+		}
+		if deviceBrand != "" && strings.ToLower(d.Device.Brand) != brandLower {
+			continue
+		}
+		if problem != "" && !strings.Contains(strings.ToLower(d.ProblemDetected), problemLower) {
+			continue
+		}
+		out = append(out, d)
+	}
+	return out
 }
 
 // sortSessions sorts the provided slice in-place according to sortBy and
@@ -279,6 +308,7 @@ func (h *SessionHandler) DeleteSession(c *fiber.Ctx) error {
 	if err := h.sessions.DeleteSession(id); err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
+	metrics.SessionsActive.Set(float64(len(h.sessions.ListSessions())))
 	c.Set("Cache-Control", "no-store")
 	return c.SendStatus(fiber.StatusNoContent)
 }
