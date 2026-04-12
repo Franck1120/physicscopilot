@@ -29,9 +29,18 @@ const geminiMaxOutputTokens = 1024
 // httpTimeout is the deadline for each individual HTTP request.
 const httpTimeout = 30 * time.Second
 
-// systemPrompt instructs Gemini to behave as a generic field technician
-// assistant and return structured JSON analysis of camera frames.
-const systemPrompt = `You are PhysicsCopilot, an expert field technician assistant. You see what the user's camera shows in real-time. Analyze the image, identify any issues (damaged components, wear, misalignment, failure signs, incorrect assembly, etc.), and provide clear step-by-step repair or maintenance guidance. Respond ONLY with valid JSON with these fields: {"analysis": "what you see", "problem": "identified issue or null", "instruction": "next step for user", "overlay": {"boxes": [{"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4, "label": "damage"}], "arrows": [{"x1": 0.1, "y1": 0.2, "x2": 0.3, "y2": 0.4}]}}`
+// systemPromptBase is the language-independent part of the Gemini system prompt.
+const systemPromptBase = `You are PhysicsCopilot, an expert field technician assistant. You see what the user's camera shows in real-time. Analyze the image, identify any issues (damaged components, wear, misalignment, failure signs, incorrect assembly, etc.), and provide clear step-by-step repair or maintenance guidance. Respond ONLY with valid JSON with these fields: {"analysis": "what you see", "problem": "identified issue or null", "instruction": "next step for user", "overlay": {"boxes": [{"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4, "label": "damage"}], "arrows": [{"x1": 0.1, "y1": 0.2, "x2": 0.3, "y2": 0.4}]}}`
+
+// systemPromptForLanguage returns the system prompt with an explicit language
+// instruction appended. lang is a BCP-47 code (e.g. "it", "en", "fr").
+// The analysis and instruction fields must be in the requested language.
+func systemPromptForLanguage(lang string) string {
+	if lang == "" {
+		lang = "it"
+	}
+	return systemPromptBase + fmt.Sprintf(` The "analysis" and "instruction" fields MUST be written in the language with BCP-47 code "%s".`, lang)
+}
 
 // GeminiResponse is the structured analysis returned by AnalyzeFrame.
 type GeminiResponse struct {
@@ -117,12 +126,14 @@ func NewGeminiService() (*GeminiService, error) {
 
 // AnalyzeFrame sends a camera frame (base64-encoded JPEG) and conversation
 // context for analysis, then returns the structured result.
+// language is a BCP-47 code (e.g. "it", "en") that controls the language of
+// the "analysis" and "instruction" fields in the response.
 // Routes to Gemini REST API or CLIProxyAPI depending on configuration.
-func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
+func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
 	if g.useProxy {
-		return g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext)
+		return g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext, language)
 	}
-	return g.analyzeFrameViaGemini(ctx, frameBase64, conversationContext)
+	return g.analyzeFrameViaGemini(ctx, frameBase64, conversationContext, language)
 }
 
 // ── Gemini REST API path ──────────────────────────────────────────────────────
@@ -171,8 +182,8 @@ type geminiCandidatePart struct {
 	Text string `json:"text"`
 }
 
-func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
-	reqBody := g.buildRequestBody(frameBase64, conversationContext)
+func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+	reqBody := g.buildRequestBody(frameBase64, conversationContext, language)
 	payload, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("marshal gemini request: %w", err)
@@ -186,8 +197,8 @@ func (g *GeminiService) analyzeFrameViaGemini(ctx context.Context, frameBase64, 
 
 // buildRequestBody assembles the Gemini request payload.
 // When frameBase64 is non-empty, the image is included as inline_data.
-func (g *GeminiService) buildRequestBody(frameBase64, conversationContext string) geminiRequest {
-	promptText := systemPrompt
+func (g *GeminiService) buildRequestBody(frameBase64, conversationContext, language string) geminiRequest {
+	promptText := systemPromptForLanguage(language)
 	if conversationContext != "" {
 		promptText += "\n\nConversation context:\n" + conversationContext
 	}
@@ -359,8 +370,8 @@ type openAIChoiceMessage struct {
 	Content string `json:"content"`
 }
 
-func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, conversationContext string) (*GeminiResponse, error) {
-	reqBody, err := g.buildProxyRequestBody(frameBase64, conversationContext)
+func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+	reqBody, err := g.buildProxyRequestBody(frameBase64, conversationContext, language)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +408,7 @@ func (g *GeminiService) analyzeFrameViaProxy(ctx context.Context, frameBase64, c
 // buildProxyRequestBody assembles the OpenAI-compatible request for CLIProxyAPI.
 // The system prompt goes in a dedicated system message. The user message content
 // is a plain string when there is no image, or a multipart array when one is present.
-func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext string) (openAIRequest, error) {
+func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext, language string) (openAIRequest, error) {
 	userText := conversationContext
 	if userText == "" {
 		userText = "Analyze the current state and identify any issues"
@@ -408,7 +419,7 @@ func (g *GeminiService) buildProxyRequestBody(frameBase64, conversationContext s
 		model = "gemini-2.5-flash"
 	}
 
-	systemContent, err := json.Marshal(systemPrompt)
+	systemContent, err := json.Marshal(systemPromptForLanguage(language))
 	if err != nil {
 		return openAIRequest{}, fmt.Errorf("marshal system content: %w", err)
 	}

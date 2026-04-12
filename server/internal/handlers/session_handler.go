@@ -80,7 +80,7 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 		return err
 	}
 
-	session, err := h.sessions.CreateSession(req.DeviceBrand, req.DeviceModel)
+	session, err := h.sessions.CreateSession(req.DeviceBrand, req.DeviceModel, "")
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

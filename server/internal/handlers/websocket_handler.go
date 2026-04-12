@@ -49,11 +49,12 @@ type IncomingMessage struct {
 
 // OutgoingMessage represents a JSON message sent to the client.
 type OutgoingMessage struct {
-	Type    string               `json:"type"`            // "response" | "error" | "pong"
-	Text    string               `json:"text,omitempty"`
-	Overlay services.OverlayData `json:"overlay,omitempty"`
-	Step    services.StepInfo    `json:"step,omitempty"`
-	Error   string               `json:"error,omitempty"`
+	Type      string               `json:"type"`                 // "response" | "error" | "pong"
+	Text      string               `json:"text,omitempty"`
+	VoiceText string               `json:"voice_text,omitempty"` // TTS-optimised instruction (no markdown)
+	Overlay   services.OverlayData `json:"overlay,omitempty"`
+	Step      services.StepInfo    `json:"step,omitempty"`
+	Error     string               `json:"error,omitempty"`
 }
 
 // ipConnTracker enforces a per-IP limit on concurrent WebSocket connections.
@@ -297,7 +298,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	)
 
 	// ── Session ───────────────────────────────────────────────────────────────
-	session, err := h.sessions.CreateSession("unknown", "unknown")
+	// Read client language preference (BCP-47 code, e.g. "it", "en").
+	lang := c.Query("lang", "it")
+	session, err := h.sessions.CreateSession("unknown", "unknown", lang)
 	if err != nil {
 		slog.Error("failed to create session", "err", err, "remote_addr", c.RemoteAddr())
 		h.activeConns.Add(-1)
@@ -439,10 +442,11 @@ func (h *WSHandler) handlePing(sc *safeConn) {
 // writeResponse sends a successful analysis result to the client.
 func writeResponse(sc *safeConn, result *services.ProcessResult) {
 	out := OutgoingMessage{
-		Type:    "response",
-		Text:    result.Text,
-		Overlay: result.Overlay,
-		Step:    result.Step,
+		Type:      "response",
+		Text:      result.Text,
+		VoiceText: result.VoiceText,
+		Overlay:   result.Overlay,
+		Step:      result.Step,
 	}
 	if err := sc.writeJSON(out); err != nil {
 		slog.Warn("failed to write response", "err", err)

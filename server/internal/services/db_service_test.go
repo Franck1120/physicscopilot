@@ -66,7 +66,7 @@ func TestSessionServiceSyncsCreateToDB(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, err := svc.CreateSession("Apple", "iPhone 15")
+	sess, err := svc.CreateSession("Apple", "iPhone 15", "")
 	if err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestSessionServiceSyncsDeleteToDB(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, _ := svc.CreateSession("Samsung", "Galaxy S24")
+	sess, _ := svc.CreateSession("Samsung", "Galaxy S24", "")
 	if err := svc.DeleteSession(sess.SessionID); err != nil {
 		t.Fatalf("DeleteSession: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestSessionServiceDBWriteErrorDoesNotFailInMemory(t *testing.T) {
 	svc := NewSessionService()
 	svc.SetDB(db)
 
-	sess, err := svc.CreateSession("Google", "Pixel 9")
+	sess, err := svc.CreateSession("Google", "Pixel 9", "")
 	if err != nil {
 		t.Fatalf("expected in-memory create to succeed despite DB error, got: %v", err)
 	}

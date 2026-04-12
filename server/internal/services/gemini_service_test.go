@@ -130,7 +130,7 @@ func TestAnalyzeFrameSuccess(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	resp, err := svc.AnalyzeFrame(context.Background(), "base64imagedata", "user: printer clicking")
+	resp, err := svc.AnalyzeFrame(context.Background(), "base64imagedata", "user: printer clicking", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestAnalyzeFrameWithoutImage(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	resp, err := svc.AnalyzeFrame(context.Background(), "", "")
+	resp, err := svc.AnalyzeFrame(context.Background(), "", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -213,7 +213,7 @@ func TestAnalyzeFrameNullProblem(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	resp, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	resp, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestAnalyzeFrameHTTP4xxNoRetry(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	_, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err == nil {
 		t.Fatal("expected error on 400 response")
 	}
@@ -277,7 +277,7 @@ func TestAnalyzeFrameHTTP429Retries(t *testing.T) {
 		},
 	}
 
-	resp, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	resp, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error after retries: %v", err)
 	}
@@ -310,7 +310,7 @@ func TestAnalyzeFrameHTTP500RetriesExhausted(t *testing.T) {
 		},
 	}
 
-	_, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err == nil {
 		t.Fatal("expected error after exhausting retries")
 	}
@@ -340,7 +340,7 @@ func TestAnalyzeFrameNoCandidates(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	_, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err == nil {
 		t.Fatal("expected error when no candidates returned")
 	}
@@ -363,7 +363,7 @@ func TestAnalyzeFrameInvalidJSON(t *testing.T) {
 		httpClient: server.Client(),
 	}
 
-	_, err := svc.AnalyzeFrame(context.Background(), "img", "")
+	_, err := svc.AnalyzeFrame(context.Background(), "img", "", "")
 	if err == nil {
 		t.Fatal("expected error when inner text is invalid JSON")
 	}
@@ -392,7 +392,7 @@ func TestAnalyzeFrameContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	_, err := svc.AnalyzeFrame(ctx, "img", "")
+	_, err := svc.AnalyzeFrame(ctx, "img", "", "")
 	if err == nil {
 		t.Fatal("expected error when context is cancelled")
 	}
@@ -405,14 +405,14 @@ func TestBuildRequestBodyWithConversationContext(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	req := svc.buildRequestBody("imgdata", "user: help me")
+	req := svc.buildRequestBody("imgdata", "user: help me", "")
 
 	if len(req.Contents) != 1 {
 		t.Fatalf("expected 1 content, got %d", len(req.Contents))
 	}
 
 	textPart := req.Contents[0].Parts[0]
-	if !strings.Contains(textPart.Text, systemPrompt) {
+	if !strings.Contains(textPart.Text, systemPromptBase) {
 		t.Error("expected system prompt in text part")
 	}
 	if !strings.Contains(textPart.Text, "Conversation context:") {
@@ -442,15 +442,15 @@ func TestBuildRequestBodyWithoutContext(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	req := svc.buildRequestBody("", "")
+	req := svc.buildRequestBody("", "", "")
 
 	if len(req.Contents[0].Parts) != 1 {
 		t.Fatalf("expected 1 part (text only), got %d", len(req.Contents[0].Parts))
 	}
 
 	textPart := req.Contents[0].Parts[0]
-	if textPart.Text != systemPrompt {
-		t.Error("expected only system prompt when no context")
+	if !strings.Contains(textPart.Text, systemPromptBase) {
+		t.Error("expected system prompt base in text when no context")
 	}
 	if textPart.InlineData != nil {
 		t.Error("expected no inline_data when no image")
