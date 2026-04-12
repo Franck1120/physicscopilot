@@ -29,11 +29,16 @@ const (
 	ragCacheTTL      = 5 * time.Minute
 )
 
+// ragCacheKey is the composite map key used by ragLRU. The query is stored as
+// its SHA-256 hex digest so that long queries don't inflate memory usage.
 type ragCacheKey struct {
 	queryHash  string
 	maxResults int
 }
 
+// ragCacheEntry holds a single cached result set inside ragLRU. element points
+// back to the doubly-linked list node so the entry can be promoted or evicted
+// in O(1) without a linear scan.
 type ragCacheEntry struct {
 	key      ragCacheKey
 	results  []KBEntry
