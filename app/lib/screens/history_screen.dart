@@ -257,8 +257,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   final session = sessions[index];
                   return _DismissibleCard(
                     session: session,
-                    onDismissed: () =>
-                        ref.read(sessionHistoryProvider.notifier).remove(session.id),
+                    onDismissed: () => _deleteWithUndo(context, session),
                     onTap: () => _showDetailSheet(context, session),
                   );
                 },
@@ -266,6 +265,33 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _deleteWithUndo(BuildContext context, SessionRecord session) {
+    // Remove immediately from local provider.
+    ref.read(sessionHistoryProvider.notifier).remove(session.id);
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Sessione eliminata',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Annulla',
+          textColor: const Color(0xFF10B981),
+          onPressed: () {
+            // Re-insert the session into the provider list.
+            ref.read(sessionHistoryProvider.notifier).add(session);
+          },
+        ),
       ),
     );
   }
