@@ -31,7 +31,7 @@ class StatsScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF111111),
       ),
       body: sessions.isEmpty
-          ? _EmptyStats()
+          ? const _EmptyStats()
           : _StatsList(sessions: sessions),
     );
   }
@@ -40,6 +40,8 @@ class StatsScreen extends ConsumerWidget {
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyStats extends StatelessWidget {
+  const _EmptyStats();
+
   @override
   Widget build(BuildContext context) {
     return Center(
