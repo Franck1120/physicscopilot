@@ -148,4 +148,77 @@ void main() {
       expect(find.byIcon(Icons.delete_sweep_outlined), findsNothing);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Search filtering tests
+  // ---------------------------------------------------------------------------
+
+  group('HistoryScreen — search filtering', () {
+    testWidgets('search bar TextField is present', (tester) async {
+      final sessions = [_makeRecord()];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(TextField), findsWidgets);
+    });
+
+    testWidgets('typing in search bar shows matching session', (tester) async {
+      final sessions = [
+        _makeRecord(id: 'r1', equipmentName: 'Prusa MK4'),
+        _makeRecord(id: 'r2', equipmentName: 'Bambu X1C'),
+      ];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      // Both sessions visible initially.
+      expect(find.text('Prusa MK4'), findsOneWidget);
+      expect(find.text('Bambu X1C'), findsOneWidget);
+
+      // Type in search bar.
+      await tester.enterText(find.byType(TextField).first, 'Prusa');
+      await tester.pump();
+
+      // Only the matching session should be visible.
+      expect(find.text('Prusa MK4'), findsOneWidget);
+      expect(find.text('Bambu X1C'), findsNothing);
+    });
+
+    testWidgets('clearing search bar restores full list', (tester) async {
+      final sessions = [
+        _makeRecord(id: 'r1', equipmentName: 'Prusa MK4'),
+        _makeRecord(id: 'r2', equipmentName: 'Bambu X1C'),
+      ];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      // Filter to one result.
+      await tester.enterText(find.byType(TextField).first, 'Bambu');
+      await tester.pump();
+
+      expect(find.text('Prusa MK4'), findsNothing);
+      expect(find.text('Bambu X1C'), findsOneWidget);
+
+      // Clear the search.
+      await tester.enterText(find.byType(TextField).first, '');
+      await tester.pump();
+
+      expect(find.text('Prusa MK4'), findsOneWidget);
+      expect(find.text('Bambu X1C'), findsOneWidget);
+    });
+
+    testWidgets('search with no match shows empty state', (tester) async {
+      final sessions = [_makeRecord(equipmentName: 'Prusa MK4')];
+      await tester.pumpWidget(await buildHistoryScreen(localSessions: sessions));
+      await tester.pump();
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextField).first, 'zzznomatch');
+      await tester.pump();
+
+      expect(find.text(AppStrings.historyEmpty), findsOneWidget);
+    });
+  });
 }
