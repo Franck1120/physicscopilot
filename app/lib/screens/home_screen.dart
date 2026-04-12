@@ -10,6 +10,7 @@ import '../providers/websocket_provider.dart';
 import '../services/api_service.dart' show serverOnlineProvider;
 import '../services/websocket_service.dart';
 import '../utils/extensions.dart';
+import '../widgets/session_skeleton.dart';
 import 'history_screen.dart';
 
 
@@ -103,7 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 // Tab 0 — Home
 // ---------------------------------------------------------------------------
 
-class _HomeTab extends ConsumerWidget {
+class _HomeTab extends ConsumerStatefulWidget {
   const _HomeTab({
     required this.onGoToCamera,
     required this.onChangeEquipment,
@@ -113,7 +114,22 @@ class _HomeTab extends ConsumerWidget {
   final VoidCallback onChangeEquipment;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<_HomeTab> {
+  bool _initialLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _initialLoading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final equipment = ref.watch(equipmentProvider);
     final connectionStatus = ref.watch(connectionStatusProvider);
 
@@ -149,17 +165,20 @@ class _HomeTab extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
-              _NewSessionCard(onTap: onGoToCamera),
+              _NewSessionCard(onTap: widget.onGoToCamera),
               const SizedBox(height: 24),
               _EquipmentSection(
                 equipmentName: equipment?.name,
-                onChangeEquipment: onChangeEquipment,
+                onChangeEquipment: widget.onChangeEquipment,
               ),
               const SizedBox(height: 16),
               const _ServerStatusBanner(),
               const SizedBox(height: 8),
               const SizedBox(height: 16),
-              const _RecentSessionsSection(),
+              if (_initialLoading)
+                const SessionSkeleton(itemCount: 3)
+              else
+                const _RecentSessionsSection(),
             ],
           ),
         ),
