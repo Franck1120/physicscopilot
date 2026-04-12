@@ -4,6 +4,59 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
 import '../utils/constants.dart';
 
+// ---------------------------------------------------------------------------
+// ServerHealth model
+// ---------------------------------------------------------------------------
+
+/// Snapshot of the Go server's health state returned by `GET /health`.
+///
+/// Use [ServerHealth.offline] when the server cannot be reached, and
+/// [ServerHealth.fromJson] to parse a successful HTTP 200 response.
+class ServerHealth {
+  const ServerHealth({
+    required this.isOnline,
+    required this.version,
+    required this.uptimeSeconds,
+    required this.activeConnections,
+  });
+
+  /// Server is unreachable or returned an error.
+  factory ServerHealth.offline() => const ServerHealth(
+        isOnline: false,
+        version: '',
+        uptimeSeconds: 0,
+        activeConnections: 0,
+      );
+
+  /// Parses the JSON body from a successful `GET /health` response.
+  ///
+  /// Expects the shape:
+  /// ```json
+  /// { "status": "ok", "version": "1.0.0",
+  ///   "uptime_seconds": 12345, "active_connections": 3 }
+  /// ```
+  factory ServerHealth.fromJson(Map<String, dynamic> json) => ServerHealth(
+        isOnline: true,
+        version: json['version'] as String? ?? '',
+        uptimeSeconds: json['uptime_seconds'] as int? ?? 0,
+        activeConnections: json['active_connections'] as int? ?? 0,
+      );
+
+  final bool isOnline;
+  final String version;
+  final int uptimeSeconds;
+  final int activeConnections;
+
+  @override
+  String toString() =>
+      'ServerHealth(isOnline: $isOnline, version: $version, '
+      'uptimeSeconds: $uptimeSeconds, activeConnections: $activeConnections)';
+}
+
+// ---------------------------------------------------------------------------
+// ApiService
+// ---------------------------------------------------------------------------
+
 /// REST API client for the PhysicsCopilot Go server.
 ///
 /// Uses Dio with conservative timeouts and a single automatic retry
@@ -21,25 +74,31 @@ class ApiService {
 
   final Dio _dio;
 
-  /// Returns `true` when the server responds with HTTP 200 to `GET /health`.
+  /// Returns a [ServerHealth] snapshot from `GET /health`.
   ///
-  /// Never throws — all errors are swallowed and expressed as `false`.
+  /// Never throws — all errors are expressed as [ServerHealth.offline].
   /// Retries once after 1.5 s on any failure before giving up.
-  Future<bool> healthCheck() async {
+  Future<ServerHealth> healthCheck() async {
     for (var attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) {
         await Future.delayed(const Duration(milliseconds: 1500));
       }
       try {
-        final response = await _dio.get<void>('/health');
-        if (response.statusCode == 200) return true;
+        final response = await _dio.get<Map<String, dynamic>>('/health');
+        if (response.statusCode == 200 && response.data != null) {
+          return ServerHealth.fromJson(response.data!);
+        }
       } catch (_) {
         // Swallow DioException, SocketException, etc.
       }
     }
-    return false;
+    return ServerHealth.offline();
   }
 }
+
+// ---------------------------------------------------------------------------
+// Providers
+// ---------------------------------------------------------------------------
 
 /// Provides an [ApiService] wired to the user's runtime server-URL override,
 /// falling back to the compile-time [AppConstants.apiBaseUrl].
@@ -49,14 +108,23 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService(baseUrl: baseUrl);
 });
 
-/// Polls `GET /health` every 15 seconds and emits the result as a `bool`.
+/// Polls `GET /health` every 15 seconds and emits a [ServerHealth] snapshot.
 ///
-/// Consumers can use this to show a live server-status indicator without
-/// wiring polling logic into the UI layer.
-final serverHealthProvider = StreamProvider<bool>((ref) async* {
+/// Consumers that need the full health payload (version, uptime, connections)
+/// watch this provider. For a simple online/offline bool, prefer
+/// [serverOnlineProvider].
+final serverHealthProvider = StreamProvider<ServerHealth>((ref) async* {
   final api = ref.watch(apiServiceProvider);
   while (true) {
     yield await api.healthCheck();
     await Future.delayed(const Duration(seconds: 15));
   }
+});
+
+/// Derived `bool` provider — `true` when the server is reachable.
+///
+/// Convenience wrapper around [serverHealthProvider] for UI widgets that
+/// only need to know whether the server is online.
+final serverOnlineProvider = Provider<bool>((ref) {
+  return ref.watch(serverHealthProvider).valueOrNull?.isOnline ?? false;
 });
