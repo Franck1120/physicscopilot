@@ -47,18 +47,29 @@ func main() {
 		slog.Warn("⚠️  SUPABASE_JWT_SECRET is not set — running in UNAUTHENTICATED dev mode; all WebSocket clients can connect without a JWT")
 	}
 
+	if err := run(ctx); err != nil {
+		slog.Error("server exited with error", "err", err)
+		os.Exit(1)
+	}
+}
+
+// run initialises all services, starts background workers, and runs the HTTP
+// server until ctx is cancelled. It returns an error if any mandatory
+// initialisation step fails or if the server shuts down uncleanly.
+//
+// Extracted from main() so that tests can exercise the full startup/shutdown
+// path by passing a context they can cancel without triggering os.Exit.
+func run(ctx context.Context) error {
 	// ── Services ────────────────────────────────────────────────────────────
 	sessionSvc := services.NewSessionService()
 
 	aiBackend, err := services.NewAIBackend()
 	if err != nil {
-		slog.Error("AI backend init failed", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("AI backend init: %w", err)
 	}
 	ragSvc, err := services.NewRAGService()
 	if err != nil {
-		slog.Error("KB init failed", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("KB init: %w", err)
 	}
 	if !ragSvc.Loaded() {
 		slog.Warn("knowledge base not loaded — KB_PATH absent or file missing; running without KB context")
@@ -157,13 +168,13 @@ func main() {
 	time.Sleep(500 * time.Millisecond)
 
 	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
-		slog.Error("shutdown error", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("shutdown: %w", err)
 	}
 	if dbSvc != nil {
 		dbSvc.Close()
 	}
 	slog.Info("server stopped cleanly")
+	return nil
 }
 
 // newFiberApp builds and returns the configured Fiber application.
