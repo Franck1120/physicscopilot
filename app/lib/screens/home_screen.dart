@@ -736,7 +736,12 @@ class _ProfileTileList extends StatelessWidget {
           size: 16,
         ),
         enabled: onTap != null,
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
       ),
     );
   }
