@@ -29,6 +29,8 @@ linter:
     require_trailing_commas: true
     always_use_package_imports: true
 
+    unnecessary_null_checks: true
+
     # ── Safety ───────────────────────────────────────────────────────────────
     avoid_dynamic_calls: true
     avoid_print: true
@@ -45,4 +47,4 @@ linter:
 
     # ── Explicitly disabled ──────────────────────────────────────────────────
     lines_longer_than_80_chars: false   # handled by dart format
-    sort_child_properties_last: false   # sometimes less readable
+    sort_child_properties_last: true
