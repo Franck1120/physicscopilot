@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package middleware provides reusable Fiber middleware components for the
 // PhysicsCopilot server: structured request logging, per-IP and per-user
 // rate limiting, HTTP Basic Auth for the metrics endpoint, and user-level
