@@ -95,6 +95,79 @@ func newBenchRAGService(b *testing.B) *services.RAGService {
 	return svc
 }
 
+// newBenchAppFull returns a minimal Fiber app wired with GET /api/sessions for
+// pagination and filtering benchmarks. The app is shared across iterations, not
+// re-created inside the loop, so only the HTTP dispatch cost is measured.
+func newBenchAppFull() (*fiber.App, *services.SessionService) {
+	svc := services.NewSessionService()
+	sh := NewSessionHandler(svc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/sessions", sh.ListSessions)
+	app.Post("/api/sessions", sh.CreateSession)
+	return app, svc
+}
+
+// BenchmarkListSessionsPaginated measures GET /api/sessions?page=1&page_size=10
+// with 100 sessions pre-loaded. Only the HTTP dispatch is measured; setup is
+// excluded via b.StopTimer / b.StartTimer.
+func BenchmarkListSessionsPaginated(b *testing.B) {
+	app, svc := newBenchAppFull()
+
+	b.StopTimer()
+	for i := 0; i < 100; i++ {
+		brand := "Prusa"
+		if i%2 == 0 {
+			brand = "Creality"
+		}
+		if _, err := svc.CreateSession(brand, "Model", "", ""); err != nil {
+			b.Fatalf("CreateSession: %v", err)
+		}
+	}
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/sessions?page=1&page_size=10", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
+// BenchmarkListSessionsFiltered measures GET /api/sessions?device_brand=Prusa
+// with 100 sessions loaded (50 Prusa, 50 Creality). Only the HTTP dispatch is
+// measured; setup is excluded via b.StopTimer / b.StartTimer.
+func BenchmarkListSessionsFiltered(b *testing.B) {
+	app, svc := newBenchAppFull()
+
+	b.StopTimer()
+	for i := 0; i < 100; i++ {
+		brand := "Prusa"
+		if i%2 == 0 {
+			brand = "Creality"
+		}
+		if _, err := svc.CreateSession(brand, "Model", "", ""); err != nil {
+			b.Fatalf("CreateSession: %v", err)
+		}
+	}
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/sessions?device_brand=Prusa", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
