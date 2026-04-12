@@ -97,7 +97,7 @@ func run(ctx context.Context) error {
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
-	statsHandler := handlers.NewStatsHandler(sessionSvc)
+	statsHandler := handlers.NewStatsHandlerFull(sessionSvc, wsHandler, ragSvc, version, startTime)
 
 	// Background memory metrics collection every 30 seconds.
 	// Warns at slog.Warn level when heap usage exceeds 80 % of GOMEMLIMIT.

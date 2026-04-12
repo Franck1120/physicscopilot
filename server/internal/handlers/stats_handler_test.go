@@ -5,11 +5,26 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
+
+// stubWSCounter implements WSConnCounter for tests.
+type stubWSCounter struct{ n int32 }
+
+func (s *stubWSCounter) ActiveConnections() int32 { return s.n }
+
+// stubRAGLoader implements RAGLoader for tests.
+type stubRAGLoader struct {
+	loaded bool
+	count  int
+}
+
+func (r *stubRAGLoader) Loaded() bool    { return r.loaded }
+func (r *stubRAGLoader) EntryCount() int { return r.count }
 
 // newStatsTestApp wires a StatsHandler to a fresh Fiber app and returns both.
 func newStatsTestApp(t *testing.T) (*fiber.App, *services.SessionService) {
@@ -21,6 +36,7 @@ func newStatsTestApp(t *testing.T) (*fiber.App, *services.SessionService) {
 	app.Get("/api/stats", h.GetStats)
 	return app, sessions
 }
+
 
 func TestGetStatsEmpty(t *testing.T) {
 	app, _ := newStatsTestApp(t)
@@ -95,10 +111,51 @@ func TestGetStatsResponseIsJSON(t *testing.T) {
 		t.Fatalf("response body is not valid JSON: %v", err)
 	}
 
-	if _, ok := raw["active_sessions"]; !ok {
-		t.Error("missing required field 'active_sessions' in stats response")
+	requiredFields := []string{
+		"active_sessions",
+		"active_ws_connections",
+		"kb_loaded",
+		"kb_entry_count",
+		"uptime_seconds",
+		"version",
+		"total_messages",
 	}
-	if _, ok := raw["total_messages"]; !ok {
-		t.Error("missing required field 'total_messages' in stats response")
+	for _, field := range requiredFields {
+		if _, ok := raw[field]; !ok {
+			t.Errorf("missing required field %q in stats response", field)
+		}
+	}
+}
+
+func TestGetStatsWSConnections(t *testing.T) {
+	sessions := services.NewSessionService()
+	ws := &stubWSCounter{n: 5}
+	rag := &stubRAGLoader{loaded: true, count: 66}
+	h := NewStatsHandlerFull(sessions, ws, rag, "0.1.0", time.Now())
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/stats", h.GetStats)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test: %v", err)
+	}
+
+	var body statsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.ActiveWSConnections != 5 {
+		t.Errorf("active_ws_connections: want 5, got %d", body.ActiveWSConnections)
+	}
+	if !body.KBLoaded {
+		t.Error("kb_loaded: want true, got false")
+	}
+	if body.KBEntryCount != 66 {
+		t.Errorf("kb_entry_count: want 66, got %d", body.KBEntryCount)
+	}
+	if body.Version != "0.1.0" {
+		t.Errorf("version: want %q, got %q", "0.1.0", body.Version)
 	}
 }

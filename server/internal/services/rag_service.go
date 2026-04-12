@@ -204,6 +204,9 @@ func newRAGServiceWith(store VectorStore) (*RAGService, error) {
 // Loaded reports whether the knowledge base was successfully loaded.
 func (r *RAGService) Loaded() bool { return len(r.entries) > 0 }
 
+// EntryCount returns the number of knowledge-base entries currently loaded.
+func (r *RAGService) EntryCount() int { return len(r.entries) }
+
 // QueryKB returns the top maxResults entries most relevant to query,
 // ordered by descending TF-IDF relevance score. Results are served from an
 // in-memory LRU cache when the same (query, maxResults) pair is repeated
