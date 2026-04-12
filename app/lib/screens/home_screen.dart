@@ -393,11 +393,29 @@ class _EquipmentSection extends StatelessWidget {
 // Recent Sessions Section — shows last 3 real sessions
 // ---------------------------------------------------------------------------
 
-class _RecentSessionsSection extends ConsumerWidget {
+class _RecentSessionsSection extends ConsumerStatefulWidget {
   const _RecentSessionsSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RecentSessionsSection> createState() =>
+      _RecentSessionsSectionState();
+}
+
+class _RecentSessionsSectionState
+    extends ConsumerState<_RecentSessionsSection> {
+  // Show skeleton for 400 ms on first mount to smooth the content reveal.
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _loading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final allSessions = ref.watch(sessionHistoryProvider);
     final recent = allSessions.take(3).toList();
 
@@ -416,7 +434,7 @@ class _RecentSessionsSection extends ConsumerWidget {
               ),
             ),
             const Spacer(),
-            if (allSessions.isNotEmpty)
+            if (!_loading && allSessions.isNotEmpty)
               Semantics(
                 label: 'Vedi tutta la cronologia',
                 button: true,
@@ -435,11 +453,128 @@ class _RecentSessionsSection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
-        if (recent.isEmpty)
-          const _NoSessionsCard()
-        else
-          ...recent.map((s) => _RecentSessionCard(session: s)),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          switchInCurve: Curves.easeOut,
+          child: _loading
+              ? const _SkeletonSessionList(key: ValueKey('skeleton'))
+              : recent.isEmpty
+                  ? const _NoSessionsCard(key: ValueKey('empty'))
+                  : Column(
+                      key: const ValueKey('sessions'),
+                      children: recent
+                          .map((s) => _RecentSessionCard(session: s))
+                          .toList(),
+                    ),
+        ),
       ],
+    );
+  }
+}
+
+// ── Skeleton list ────────────────────────────────────────────────────────────
+
+class _SkeletonSessionList extends StatelessWidget {
+  const _SkeletonSessionList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(3, (_) => const _SkeletonSessionCard()),
+    );
+  }
+}
+
+class _SkeletonSessionCard extends StatelessWidget {
+  const _SkeletonSessionCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: kBgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kBgCardBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          const _ShimmerBox(width: 9, height: 9, borderRadius: 5),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _ShimmerBox(height: 13, borderRadius: 4),
+                SizedBox(height: 6),
+                _ShimmerBox(width: 110, height: 11, borderRadius: 4),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const _ShimmerBox(width: 36, height: 11, borderRadius: 4),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shimmer box ──────────────────────────────────────────────────────────────
+
+class _ShimmerBox extends StatefulWidget {
+  const _ShimmerBox({
+    this.width = double.infinity,
+    required this.height,
+    this.borderRadius = 8.0,
+  });
+
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
+          ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final v = _ctrl.value; // 0→1
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment(-1.5 + v * 3.0, 0),
+              end: Alignment(-0.5 + v * 3.0, 0),
+              colors: const [kBgCard, kBgCardBorder, kBgCard],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+        );
+      },
     );
   }
 }
