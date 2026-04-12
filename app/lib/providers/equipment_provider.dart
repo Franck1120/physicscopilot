@@ -1,6 +1,8 @@
 // Riverpod provider for the equipment/device profile selected by the user.
-// The EquipmentProfile model is kept compatible with the 3D-printer JSON
-// schema in assets/data/printer_profiles.json (an optional KB module).
+// EquipmentProfile represents the first supported vertical: 3D printers.
+// The schema is defined in assets/data/printer_profiles.json.
+// Future verticals (automotive, HVAC, …) will extend this model or add
+// domain-specific providers alongside this one.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EquipmentProfile {

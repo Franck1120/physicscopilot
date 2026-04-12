@@ -15,8 +15,16 @@ enum ConnectionStatus { disconnected, connecting, connected }
 ///
 /// On disconnection the service reconnects automatically using exponential
 /// back-off capped at 60 seconds.
+///
+/// When [token] is provided it is appended as `?token=<jwt>` on the WebSocket
+/// URL — required by the server's JWT auth middleware when
+/// `SUPABASE_JWT_SECRET` is configured. In dev mode (no secret set) the
+/// token is ignored by the server.
 class WebSocketService {
   final String _baseUrl;
+
+  /// Optional JWT for server-side authentication.
+  final String? _token;
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
@@ -28,7 +36,7 @@ class WebSocketService {
   final _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  WebSocketService(this._baseUrl);
+  WebSocketService(this._baseUrl, {String? token}) : _token = token;
 
   /// Connection status changes (connecting → connected → disconnected → …).
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
@@ -42,8 +50,11 @@ class WebSocketService {
     _emit(ConnectionStatus.connecting);
 
     try {
-      _channel =
-          WebSocketChannel.connect(Uri.parse('$_baseUrl/ws'));
+      final token = _token; // local copy for Dart type promotion
+      final wsUri = token != null
+          ? Uri.parse('$_baseUrl/ws?token=${Uri.encodeComponent(token)}')
+          : Uri.parse('$_baseUrl/ws');
+      _channel = WebSocketChannel.connect(wsUri);
       await _channel!.ready;
 
       _reconnectAttempts = 0;
