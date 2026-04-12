@@ -107,17 +107,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     _OnboardingPage(
                       icon: Icons.camera_alt,
                       title: 'Punta la camera',
-                      subtitle: 'PhysicsCopilot vede cosa stai facendo',
+                      subtitle: 'Inquadra il dispositivo che vuoi analizzare',
                     ),
                     _OnboardingPage(
-                      icon: Icons.volume_up,
-                      title: 'Segui la voce',
-                      subtitle: 'Ti guida passo-passo a voce',
+                      icon: Icons.auto_awesome,
+                      title: 'L\'AI analizza',
+                      subtitle:
+                          'Il modello AI identifica il problema e trova la soluzione ottimale',
                     ),
                     _OnboardingPage(
-                      icon: Icons.check_circle_outline,
-                      title: 'Risolvi il problema',
-                      subtitle: 'Diagnostica e fix in tempo reale',
+                      icon: Icons.checklist_rounded,
+                      title: 'Segui le istruzioni',
+                      subtitle:
+                          'Istruzioni passo-passo guidate dalla voce per risolvere il problema',
                     ),
                   ],
                 ),
