@@ -208,12 +208,15 @@ class _NewSessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
-      child: Container(
+    return Semantics(
+      label: 'Nuova sessione — avvia analisi AI',
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
+        child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         decoration: BoxDecoration(
@@ -288,6 +291,7 @@ class _NewSessionCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -351,21 +355,25 @@ class _EquipmentSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onChangeEquipment,
-                child: Chip(
-                  label: const Text(
-                    'Cambia',
-                    style: TextStyle(
-                      color: kAccent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+              Semantics(
+                label: 'Cambia dispositivo attivo',
+                button: true,
+                child: GestureDetector(
+                  onTap: onChangeEquipment,
+                  child: Chip(
+                    label: const Text(
+                      'Cambia',
+                      style: TextStyle(
+                        color: kAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    backgroundColor: kBgPrimary,
+                    side: const BorderSide(color: kAccent, width: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    visualDensity: VisualDensity.compact,
                   ),
-                  backgroundColor: kBgPrimary,
-                  side: const BorderSide(color: kAccent, width: 1),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ],
@@ -404,14 +412,18 @@ class _RecentSessionsSection extends ConsumerWidget {
             ),
             const Spacer(),
             if (allSessions.isNotEmpty)
-              GestureDetector(
-                onTap: () => context.push('/history'),
-                child: const Text(
-                  'Vedi tutte',
-                  style: TextStyle(
-                    color: kAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              Semantics(
+                label: 'Vedi tutta la cronologia',
+                button: true,
+                child: GestureDetector(
+                  onTap: () => context.push('/history'),
+                  child: const Text(
+                    'Vedi tutte',
+                    style: TextStyle(
+                      color: kAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),

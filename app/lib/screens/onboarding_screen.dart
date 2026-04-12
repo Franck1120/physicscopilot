@@ -193,17 +193,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: child,
                       ),
                     ),
-                    child: _currentPage < _pageCount - 1
-                        ? _PrimaryButton(
-                            key: const ValueKey('avanti'),
-                            label: 'Avanti',
-                            onPressed: _goToNextPage,
-                          )
-                        : _PrimaryButton(
-                            key: const ValueKey('inizia'),
-                            label: 'Inizia',
-                            onPressed: _isCompleting ? null : _handleComplete,
-                          ),
+                    child: Semantics(
+                      label: _currentPage < _pageCount - 1
+                          ? 'Avanti alla slide successiva'
+                          : 'Inizia a usare l\'app',
+                      button: true,
+                      child: _currentPage < _pageCount - 1
+                          ? _PrimaryButton(
+                              key: const ValueKey('avanti'),
+                              label: 'Avanti',
+                              onPressed: _goToNextPage,
+                            )
+                          : _PrimaryButton(
+                              key: const ValueKey('inizia'),
+                              label: 'Inizia',
+                              onPressed: _isCompleting ? null : _handleComplete,
+                            ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 48),

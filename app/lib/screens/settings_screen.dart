@@ -111,46 +111,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: const TextStyle(color: kTextMuted, fontSize: 12, height: 1.4),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _urlController,
-                  style:
-                      const TextStyle(color: Colors.white, fontSize: 13),
-                  keyboardType: TextInputType.url,
-                  autocorrect: false,
-                  onChanged: (_) => setState(() => _urlEdited = true),
-                  decoration: InputDecoration(
-                    hintText: 'es. wss://your-tunnel.trycloudflare.com',
-                    hintStyle:
-                        const TextStyle(color: kTextMuted, fontSize: 12),
-                    filled: true,
-                    fillColor: const Color(0xFF111111),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: kBgCardBorder),
+                Semantics(
+                  label: 'URL del server, lascia vuoto per usare il default',
+                  child: TextField(
+                    controller: _urlController,
+                    style:
+                        const TextStyle(color: Colors.white, fontSize: 13),
+                    keyboardType: TextInputType.url,
+                    autocorrect: false,
+                    onChanged: (_) => setState(() => _urlEdited = true),
+                    decoration: InputDecoration(
+                      hintText: 'es. wss://your-tunnel.trycloudflare.com',
+                      hintStyle:
+                          const TextStyle(color: kTextMuted, fontSize: 12),
+                      filled: true,
+                      fillColor: const Color(0xFF111111),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: kBgCardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: kBgCardBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: kAccent),
+                      ),
+                      suffixIcon: _urlController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear,
+                                  color: kTextMuted, size: 18),
+                              onPressed: () {
+                                _urlController.clear();
+                                setState(() => _urlEdited = true);
+                              },
+                            )
+                          : null,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: kBgCardBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: kAccent),
-                    ),
-                    suffixIcon: _urlController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear,
-                                color: kTextMuted, size: 18),
-                            onPressed: () {
-                              _urlController.clear();
-                              setState(() => _urlEdited = true);
-                            },
-                          )
-                        : null,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -213,11 +216,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
-                Switch(
-                  value: settings.voiceEnabled,
-                  onChanged: (v) =>
-                      ref.read(settingsProvider.notifier).setVoiceEnabled(v),
-                  activeThumbColor: kAccent,
+                Semantics(
+                  label: 'Guida vocale ${settings.voiceEnabled ? "attiva" : "disattiva"}',
+                  toggled: settings.voiceEnabled,
+                  child: Switch(
+                    value: settings.voiceEnabled,
+                    onChanged: (v) =>
+                        ref.read(settingsProvider.notifier).setVoiceEnabled(v),
+                    activeThumbColor: kAccent,
+                  ),
                 ),
               ],
             ),
