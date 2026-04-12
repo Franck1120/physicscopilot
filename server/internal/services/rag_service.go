@@ -55,9 +55,13 @@ type kbResult struct {
 // keyword-based retrieval to enrich Gemini prompts with relevant problem
 // context before sending frames for analysis.
 //
-// No vector database is required: term matching across name, description,
-// and visual_symptoms is sufficient for the current knowledge-base size.
-// A pgvector upgrade can be layered on later without changing the QueryKB API.
+// Scalability note: the entire KB is loaded into memory as a slice of
+// KBEntry structs and scanned linearly on every QueryKB call.
+// At the current size (~66 entries, ~500 KB JSON) this is negligible —
+// each query completes in < 1 ms. If the KB grows past ~5 000 entries,
+// consider switching to an inverted index or a vector store (pgvector)
+// to keep latency bounded. The QueryKB API signature is stable and
+// can be replaced without changing callers.
 //
 // The knowledge-base path is read from the KB_PATH env var.
 // Default: ../kb/data/problems.json (relative to server working directory).

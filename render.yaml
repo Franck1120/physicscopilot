@@ -31,3 +31,5 @@ services:
         sync: false
       - key: SUPABASE_JWT_SECRET
         sync: false
+      - key: WS_MAX_FPS
+        value: 5

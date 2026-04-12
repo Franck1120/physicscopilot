@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"net"
+	"os"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -13,9 +15,9 @@ import (
 	"github.com/gofiber/websocket/v2"
 )
 
-// maxFramesPerSecond is the maximum number of camera frames a single
-// WebSocket connection may send within a one-second sliding window.
-const maxFramesPerSecond = 5
+// defaultMaxFPS is the default per-connection frame rate limit.
+// Override with the WS_MAX_FPS environment variable (min 1, max 30).
+const defaultMaxFPS = 5
 
 // maxConnsPerIP is the maximum number of concurrent WebSocket connections
 // allowed from a single IP address.
@@ -111,6 +113,8 @@ func (s *safeConn) writePing() error {
 func (s *safeConn) writeClose(code int, text string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// Errors are intentionally ignored: the connection may already be closing
+	// from the peer side, making write failures expected and non-actionable.
 	_ = s.c.WriteMessage(
 		websocket.CloseMessage,
 		websocket.FormatCloseMessage(code, text),
@@ -129,6 +133,7 @@ type WSHandler struct {
 	sessions      *services.SessionService
 	activeConns   atomic.Int32
 	ipConns       *ipConnTracker
+	maxFPS        int // per-connection frame rate cap (from WS_MAX_FPS or defaultMaxFPS)
 
 	connsMu sync.Mutex
 	conns   map[*safeConn]struct{}
@@ -140,14 +145,34 @@ type WSHandler struct {
 }
 
 // NewWSHandler creates a WSHandler wired to the given conversation
-// and session services.
+// and session services. The per-connection frame rate limit is read from
+// WS_MAX_FPS (default: 5; clamped to [1, 30]).
 func NewWSHandler(conversations *services.ConversationService, sessions *services.SessionService) *WSHandler {
 	return &WSHandler{
 		conversations: conversations,
 		sessions:      sessions,
 		ipConns:       newIPConnTracker(),
 		conns:         make(map[*safeConn]struct{}),
+		maxFPS:        wsMaxFPS(),
 	}
+}
+
+// wsMaxFPS reads WS_MAX_FPS from env with fallback to defaultMaxFPS.
+// Values outside [1, 30] are clamped to keep behaviour predictable.
+func wsMaxFPS() int {
+	if raw := os.Getenv("WS_MAX_FPS"); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil {
+			if v < 1 {
+				return 1
+			}
+			if v > 30 {
+				return 30
+			}
+			return v
+		}
+		slog.Warn("WS_MAX_FPS is not a valid integer — using default", "value", raw, "default", defaultMaxFPS)
+	}
+	return defaultMaxFPS
 }
 
 func (h *WSHandler) effectivePingInterval() time.Duration {
@@ -199,6 +224,7 @@ func (h *WSHandler) deregister(sc *safeConn) {
 // frameRateLimiter enforces a per-connection limit on camera frames
 // using a fixed one-second window counter.
 type frameRateLimiter struct {
+	max         int
 	count       int
 	windowStart time.Time
 }
@@ -211,7 +237,7 @@ func (r *frameRateLimiter) allow() bool {
 		r.count = 0
 		r.windowStart = now
 	}
-	if r.count >= maxFramesPerSecond {
+	if r.count >= r.max {
 		return false
 	}
 	r.count++
@@ -250,10 +276,13 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	if !h.ipConns.add(ip) {
 		slog.Warn("WebSocket connection limit reached for IP", "ip", ip, "limit", maxConnsPerIP)
-		_ = c.WriteMessage(
+		// Best-effort close frame; error is expected if the connection is already disrupted.
+		if err := c.WriteMessage(
 			websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "connection limit reached"),
-		)
+		); err != nil {
+			slog.Debug("close frame write failed on limit reject", "err", err)
+		}
 		return
 	}
 
@@ -302,7 +331,7 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	go h.pingLoop(sc, done, sessionID)
 
 	// ── Message loop ──────────────────────────────────────────────────────────
-	rateLimiter := &frameRateLimiter{windowStart: time.Now()}
+	rateLimiter := &frameRateLimiter{max: h.maxFPS, windowStart: time.Now()}
 
 	for {
 		var msg IncomingMessage

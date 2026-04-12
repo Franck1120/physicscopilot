@@ -30,24 +30,24 @@ func TestNewWSHandler(t *testing.T) {
 }
 
 func TestFrameRateLimiterAllowsUpToLimit(t *testing.T) {
-	rl := &frameRateLimiter{windowStart: time.Now()}
+	rl := &frameRateLimiter{max: defaultMaxFPS, windowStart: time.Now()}
 
-	for i := 0; i < maxFramesPerSecond; i++ {
+	for i := 0; i < defaultMaxFPS; i++ {
 		if !rl.allow() {
 			t.Errorf("expected frame %d to be allowed", i+1)
 		}
 	}
 
-	if rl.count != maxFramesPerSecond {
-		t.Errorf("expected count %d, got %d", maxFramesPerSecond, rl.count)
+	if rl.count != defaultMaxFPS {
+		t.Errorf("expected count %d, got %d", defaultMaxFPS, rl.count)
 	}
 }
 
 func TestFrameRateLimiterBlocksExcess(t *testing.T) {
-	rl := &frameRateLimiter{windowStart: time.Now()}
+	rl := &frameRateLimiter{max: defaultMaxFPS, windowStart: time.Now()}
 
 	// Exhaust the limit
-	for i := 0; i < maxFramesPerSecond; i++ {
+	for i := 0; i < defaultMaxFPS; i++ {
 		rl.allow()
 	}
 
@@ -61,7 +61,8 @@ func TestFrameRateLimiterResetsAfterOneSecond(t *testing.T) {
 	// Start the window in the past so the next call triggers a reset
 	pastStart := time.Now().Add(-2 * time.Second)
 	rl := &frameRateLimiter{
-		count:       maxFramesPerSecond,
+		max:         defaultMaxFPS,
+		count:       defaultMaxFPS,
 		windowStart: pastStart,
 	}
 
@@ -77,7 +78,8 @@ func TestFrameRateLimiterResetsAfterOneSecond(t *testing.T) {
 func TestFrameRateLimiterWindowBoundary(t *testing.T) {
 	// Simulate being right at the boundary: window started exactly 1 second ago
 	rl := &frameRateLimiter{
-		count:       maxFramesPerSecond,
+		max:         defaultMaxFPS,
+		count:       defaultMaxFPS,
 		windowStart: time.Now().Add(-time.Second),
 	}
 
@@ -241,9 +243,13 @@ func TestOutgoingMessageOmitsEmptyFields(t *testing.T) {
 	}
 }
 
-func TestMaxFramesPerSecondConstant(t *testing.T) {
-	if maxFramesPerSecond != 5 {
-		t.Errorf("expected maxFramesPerSecond to be 5, got %d", maxFramesPerSecond)
+func TestDefaultMaxFPS(t *testing.T) {
+	if defaultMaxFPS != 5 {
+		t.Errorf("expected defaultMaxFPS to be 5, got %d", defaultMaxFPS)
+	}
+	// wsMaxFPS reads WS_MAX_FPS from env; without it should return the default.
+	if got := wsMaxFPS(); got != defaultMaxFPS {
+		t.Errorf("wsMaxFPS() = %d, want %d (no WS_MAX_FPS set)", got, defaultMaxFPS)
 	}
 }
 
