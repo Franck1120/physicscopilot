@@ -15,6 +15,10 @@ List<String>? parseSteps(String text) {
   return steps.length >= 2 ? steps : null;
 }
 
+/// Interactive checklist widget for multi-step AI responses.
+///
+/// Renders each step as a tappable card; checked steps are visually struck
+/// through and highlighted. Shows a completion banner when all steps are done.
 class MultiStepView extends StatefulWidget {
   const MultiStepView({super.key, required this.steps});
   final List<String> steps;
