@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // phash.go implements DCT-based perceptual hashing (pHash) for camera frames.
 // Perceptual hashing lets ConversationService skip duplicate or near-identical
 // frames without calling the Gemini API, reducing cost and latency.

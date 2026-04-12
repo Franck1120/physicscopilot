@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package middleware provides reusable Fiber middleware components for the
 // PhysicsCopilot server: structured request logging, per-IP and per-user
 // rate limiting, HTTP Basic Auth for the metrics endpoint, and user-level

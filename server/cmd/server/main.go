@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package main is the entry point for the PhysicsCopilot server.
 // It wires together all services, configures the Fiber HTTP application,
 // and manages the process lifecycle including graceful shutdown.

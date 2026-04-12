@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Franck1120. All rights reserved.
+// Use of this source code is governed by a MIT license that can be
+// found in the LICENSE file.
+
 // Package metrics defines and registers all Prometheus metrics for the
 // PhysicsCopilot server. Import this package for its side-effects to ensure
 // metrics are registered with the default registry before any handler runs.
