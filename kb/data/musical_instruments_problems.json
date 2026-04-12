@@ -1,0 +1,783 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "musical_instruments",
+  "total": 15,
+  "problems": [
+    {
+      "id": "guitar_string_buzz",
+      "name": "Guitar String Buzz",
+      "category": "strings",
+      "severity": "warning",
+      "description": "One or more guitar strings produce a buzzing sound when fretted or played open, indicating a setup or hardware issue.",
+      "visual_symptoms": [
+        "String visibly vibrating against a fret during play",
+        "Uneven fret heights visible under string when holding bends",
+        "Nut slot visibly too deep for string gauge",
+        "Neck visibly bowed backward (back-bow) under string tension"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Insufficient neck relief causing strings to contact frets in the middle of the neck",
+          "probability": 0.45,
+          "test": "Fret string at 1st and 14th fret simultaneously and check gap at 7th fret — less than 0.3 mm indicates back-bow"
+        },
+        {
+          "cause": "Nut slot too low for the string gauge allowing string to buzz on first fret",
+          "probability": 0.35,
+          "test": "Fret the string at the 3rd fret; open string should clear 1st fret by at least 0.2 mm"
+        },
+        {
+          "cause": "High fret or uneven fret level causing localised buzz at specific positions",
+          "probability": 0.20,
+          "test": "Use a precision straight edge across three consecutive frets to identify any fret higher than its neighbours"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Adjust truss rod by turning clockwise (tighten) in small 1/8-turn increments to add relief and correct back-bow",
+              "verification": "Gap at 7th fret with strings fretted at 1st and 14th measures 0.3–0.5 mm",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "If buzz persists, raise saddle height at bridge by adjusting bridge saddle screws until string action is comfortable",
+              "verification": "String action at 12th fret measures approximately 2 mm bass side, 1.5 mm treble side",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "If buzz is at open string only, build up nut slot with nut shim adhesive or replace the nut",
+              "verification": "Open string clears 1st fret by at least 0.3 mm; buzz eliminated",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tuning_peg_slippage",
+      "name": "Tuning Peg Slippage",
+      "category": "strings",
+      "severity": "warning",
+      "description": "Tuning pegs slip out of tune during playing, failing to hold string tension consistently.",
+      "visual_symptoms": [
+        "String visibly unwinding at peg after tuning",
+        "Tuning peg turns with no resistance when plucked",
+        "Peg post wobbles laterally when moved",
+        "Instrument falls out of tune within a few minutes of tuning"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Worn or loose tuner gear mechanism with insufficient friction",
+          "probability": 0.50,
+          "test": "Tighten the small screw on the end of the tuner button; if gears still slip freely, gear is worn"
+        },
+        {
+          "cause": "String wound incorrectly with too few or too many wraps causing slippage at post",
+          "probability": 0.35,
+          "test": "Inspect number of string wraps on post — 2 to 3 winds are optimal for most tuners"
+        },
+        {
+          "cause": "Nut slot binding and releasing string tension unpredictably",
+          "probability": 0.15,
+          "test": "Apply graphite pencil to nut slot and observe if tuning stability improves immediately"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Tighten the tensioning screw on each tuner button with a small Phillips screwdriver until appropriate resistance is felt",
+              "verification": "Tuner button requires deliberate effort to turn; string pitch holds after stretching strings",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Restring with correct winding technique: 2–3 neat wraps below lock point, ensure string locks over itself",
+              "verification": "String pitch stabilises within 5 minutes of tuning and string stretching",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Apply graphite powder or dedicated nut lubricant to nut slots to eliminate binding",
+              "verification": "String glides smoothly through nut slot without catching; tuning remains stable across bends",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pickup_noise_hum",
+      "name": "Pickup Noise and Hum",
+      "category": "electronic",
+      "severity": "warning",
+      "description": "Electric guitar or bass produces excessive hum, buzz or noise through the amplifier when not shielding the body.",
+      "visual_symptoms": [
+        "Constant 50 or 60 Hz hum audible through amplifier",
+        "Noise reduces when player touches metal parts of guitar",
+        "Hum increases near computer monitors, fluorescent lights or transformers",
+        "Single-coil pickup hum absent on humbucking position"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Single-coil pickup picking up electromagnetic interference from nearby electronics",
+          "probability": 0.45,
+          "test": "Move guitar away from monitors, transformers and power strips; hum reduction confirms EMI source"
+        },
+        {
+          "cause": "Missing or broken ground connection between bridge, strings and output jack",
+          "probability": 0.40,
+          "test": "Touch the bridge saddle — if hum disappears, the string ground wire is disconnected"
+        },
+        {
+          "cause": "Unshielded pickup cavity allowing RFI ingress into signal path",
+          "probability": 0.15,
+          "test": "Inspect pickup cavity for copper foil shielding; absence of shielding in cavity confirms cause"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Inspect and resolder the bridge ground wire to the back of the volume pot; ensure continuity from strings to output jack ground",
+              "verification": "Touching strings silences hum; continuity measured from string to sleeve of output jack",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Line the pickup and control cavities with copper tape shielding, connecting all foil sections to ground",
+              "verification": "Hum level reduced by at least 50% in problematic locations",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Reorient guitar body away from interference sources or switch to humbucking pickup position",
+              "verification": "Noise floor silent enough for clean recording at normal playing distance from monitor",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "digital_piano_key_unresponsive",
+      "name": "Digital Piano Key Unresponsive",
+      "category": "electronic",
+      "severity": "warning",
+      "description": "One or more keys on a digital piano or keyboard do not produce sound or produce sound at incorrect velocity.",
+      "visual_symptoms": [
+        "Key depressed fully but no sound produced",
+        "Key produces sound only when pressed very hard",
+        "MIDI monitoring shows no note-on event for affected key",
+        "Key velocity consistently maximum or minimum regardless of touch"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Rubber contact dome under key worn flat, no longer making reliable contact with PCB",
+          "probability": 0.55,
+          "test": "Remove key and inspect rubber dome for flat or cracked contact nub on underside"
+        },
+        {
+          "cause": "Debris or dust on key contact PCB strip preventing electrical contact",
+          "probability": 0.30,
+          "test": "Open keyboard and clean PCB contact strip with isopropyl alcohol; test key response"
+        },
+        {
+          "cause": "Key mechanism hinge broken causing key to rest at incorrect angle missing contact point",
+          "probability": 0.15,
+          "test": "Inspect key hinge at rear — broken plastic pivot will cause key to sit unevenly in rest position"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Remove the affected key by releasing its plastic hinge clip and lift out; clean the rubber dome contact with isopropyl alcohol",
+              "verification": "Contact dome nub clean and intact; key produces consistent response after reassembly",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "If rubber dome is worn flat, replace the rubber dome sheet or individual dome for the affected key",
+              "verification": "New dome seated correctly; key velocity response now consistent across full press range",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Clean the corresponding PCB contact strip with isopropyl alcohol and lint-free cloth",
+              "verification": "PCB contacts visually clean and unoxidised; MIDI note-on events appear for all velocities",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trumpet_valve_sticking",
+      "name": "Trumpet Valve Sticking",
+      "category": "wind",
+      "severity": "warning",
+      "description": "One or more trumpet valves stick, move sluggishly or fail to return to up position after being pressed.",
+      "visual_symptoms": [
+        "Valve requires extra force to depress fully",
+        "Valve returns slowly or not at all after being released",
+        "Valve makes grinding or rough sensation when operated",
+        "Partial depression causing air leak and airy tone"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Insufficient valve oil causing friction between valve and casing",
+          "probability": 0.55,
+          "test": "Remove valve and check oil level on casing; dry or tacky feel confirms lack of lubrication"
+        },
+        {
+          "cause": "Valve casing or valve body dented from impact, causing misalignment",
+          "probability": 0.25,
+          "test": "Inspect casing exterior for dents; rotate valve 180 degrees and check if sticking position changes"
+        },
+        {
+          "cause": "Residue buildup from old oil, mineral deposits or lacquer damage inside casing",
+          "probability": 0.20,
+          "test": "Remove valve and inspect inside casing with torch for discolouration or residue on walls"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Remove the valve completely and wipe it and the inside of the casing clean with a lint-free cloth",
+              "verification": "Valve surface and casing walls clean with no old oil residue visible",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Apply 3–4 drops of quality valve oil to the valve body and reinsert, rotating to distribute oil evenly",
+              "verification": "Valve moves freely and returns to up position in under 0.5 seconds",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "If sticking persists, soak valve in warm soapy water for 10 minutes and clean casing with brush; re-oil after drying",
+              "verification": "Valve operates freely throughout full stroke with consistent feel",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clarinet_reed_crack",
+      "name": "Clarinet Reed Crack",
+      "category": "wind",
+      "severity": "warning",
+      "description": "Clarinet reed develops a crack or split, producing squeaks, thin tone or complete failure to sound.",
+      "visual_symptoms": [
+        "Visible hairline crack along reed vamp or heart",
+        "Reed surface visually warped or curled when dry",
+        "Squeak or thin sound on specific notes",
+        "Reed chips at tip corner after brief use"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Reed dried out too quickly after playing causing stress crack from rapid moisture loss",
+          "probability": 0.50,
+          "test": "Inspect crack origin — crack from tip indicates rapid drying; crack from side indicates clamping stress"
+        },
+        {
+          "cause": "Ligature overtightened, cracking the reed at the ligature binding points",
+          "probability": 0.30,
+          "test": "Check ligature screw tightness; cracks at ligature contact points confirm over-tightening"
+        },
+        {
+          "cause": "Reed too soft for player's embouchure, causing collapse and splitting under bite pressure",
+          "probability": 0.20,
+          "test": "Compare reed strength number with player's experience level — soft reeds (1–2) are more prone to cracking under firm embouchure"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Discard the cracked reed — cracked reeds cannot be reliably repaired and will produce inconsistent tone",
+              "verification": "Cracked reed removed from mouthpiece and disposed of",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Install a new reed of appropriate strength; soak for 30 seconds before use and break in over several sessions",
+              "verification": "New reed seals flat against mouthpiece table; full even tone across all registers",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Store reeds in a humidity-controlled reed case to prevent rapid drying between sessions",
+              "verification": "Reed remains flat and undistorted after 48 hours in case",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drum_head_crack",
+      "name": "Drum Head Crack",
+      "category": "percussion",
+      "severity": "error",
+      "description": "Drum head develops a crack, hole or wrinkling, causing degraded tone, buzzing or complete loss of resonance.",
+      "visual_symptoms": [
+        "Visible crack or hole in drum head film",
+        "Wrinkled or puckered area on head surface",
+        "Buzzing or rattling overtone on every stroke",
+        "Dull thud instead of resonant drum sound"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Physical impact from hard drumstick or rim shot splitting the head film",
+          "probability": 0.60,
+          "test": "Inspect head surface under direct light for cracks or punctures at impact zone"
+        },
+        {
+          "cause": "Head over-tensioned beyond rated pitch causing stress failure",
+          "probability": 0.25,
+          "test": "Compare tensioning key turns per lug with manufacturer's tuning guidelines for head diameter"
+        },
+        {
+          "cause": "Old head material brittle from UV exposure or age, failing under normal playing",
+          "probability": 0.15,
+          "test": "Check head age — heads over 2 years with regular use or showing yellowing should be considered for replacement"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Remove the cracked head by loosening all tension rods evenly in a star pattern and lifting off the hoop",
+              "verification": "Head removed cleanly; hoop and lug threads undamaged",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Install new head of matching diameter and type; seat hoop evenly and hand-tighten all tension rods before using key",
+              "verification": "Head seated evenly with no wrinkles before tensioning",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Tension head in a star pattern, one half-turn per rod, checking pitch by tapping near each lug until even",
+              "verification": "Pitch consistent at every lug position; desired fundamental tone achieved",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "metronome_sync_error",
+      "name": "Metronome Sync Error",
+      "category": "electronic",
+      "severity": "info",
+      "description": "Digital or mechanical metronome loses accurate tempo or shows inconsistent beat timing.",
+      "visual_symptoms": [
+        "Metronome beat noticeably unsteady or drifting over time",
+        "LED or pendulum movement not matching audible click",
+        "Tempo readout shows different BPM from set value",
+        "Metronome stops mid-session without user interaction"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Low battery causing clock crystal to run below specification frequency",
+          "probability": 0.55,
+          "test": "Check battery voltage — below 1.2V per cell for AA indicates insufficient supply for accurate oscillator"
+        },
+        {
+          "cause": "Mechanical pendulum metronome with weight incorrectly positioned on rod",
+          "probability": 0.30,
+          "test": "Verify weight position on pendulum rod matches BPM scale markings on housing"
+        },
+        {
+          "cause": "Digital metronome firmware bug causing timer drift on certain BPM values",
+          "probability": 0.15,
+          "test": "Compare metronome output against phone tuner metronome at same BPM; consistent offset indicates firmware issue"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Replace batteries with fresh alkaline cells; insert with correct polarity",
+              "verification": "Metronome powers on with steady display; tempo steady at reference BPM confirmed with phone metronome",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "For mechanical metronome: reposition weight on rod to align with printed BPM marking and confirm tempo",
+              "verification": "Beat rate matches expected BPM counted over 60 seconds",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "midi_connection_dropout",
+      "name": "MIDI Connection Dropout",
+      "category": "electronic",
+      "severity": "warning",
+      "description": "MIDI signal between keyboard, controller or DAW drops out, causing missed notes or stuck notes.",
+      "visual_symptoms": [
+        "Notes playing without release — stuck notes in DAW",
+        "MIDI activity LED not lighting for all played notes",
+        "Intermittent gaps in recorded MIDI in DAW session",
+        "DAW MIDI input monitor showing sporadic note events"
+      ],
+      "probable_causes": [
+        {
+          "cause": "USB cable quality or length causing data errors in USB MIDI transfer",
+          "probability": 0.45,
+          "test": "Replace USB cable with a certified USB 2.0 cable under 1.5 m and observe if dropouts reduce"
+        },
+        {
+          "cause": "USB hub power insufficiency causing device to drop off USB bus under load",
+          "probability": 0.35,
+          "test": "Connect MIDI device directly to computer USB port bypassing all hubs; test for dropouts"
+        },
+        {
+          "cause": "DAW buffer size too small causing MIDI processing overrun during CPU-heavy sessions",
+          "probability": 0.20,
+          "test": "Increase DAW audio buffer to 256 or 512 samples and observe if MIDI dropouts correlate with CPU spikes"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Replace USB cable with a high-quality cable under 1.5 m and connect directly to computer USB 2.0 or 3.0 port",
+              "verification": "Zero MIDI dropout events during 10-minute recording session in DAW MIDI monitor",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "In DAW settings increase audio buffer size to 256 samples minimum to reduce CPU pressure on MIDI processing",
+              "verification": "CPU meter stays below 70% during recording; no note dropouts in MIDI event list",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "If using DIN-5 MIDI connection, inspect DIN connectors for bent pins and reseat firmly",
+              "verification": "Physical connection secure; MIDI signal continuous with no glitches",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "amp_speaker_distortion",
+      "name": "Speaker Distortion in Amplifier",
+      "category": "electronic",
+      "severity": "warning",
+      "description": "Guitar or bass amplifier speaker produces unwanted distortion, crackling or rattling unrelated to gain settings.",
+      "visual_symptoms": [
+        "Crackling or rattling sound independent of gain or volume setting",
+        "Distortion audible even at low volume with clean channel selected",
+        "Speaker cone visibly torn or with hole in centre",
+        "Sound cuts in and out when speaker cabinet is moved"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Speaker cone torn or voice coil damaged from over-powering or physical impact",
+          "probability": 0.45,
+          "test": "Gently press speaker cone inward by hand — grinding or scratching indicates damaged voice coil"
+        },
+        {
+          "cause": "Loose cabinet panel, speaker mounting screw or grille vibrating sympathetically",
+          "probability": 0.35,
+          "test": "Apply hand pressure to various cabinet panels while playing to identify which stops the rattle"
+        },
+        {
+          "cause": "Dirty or oxidised speaker output jack causing intermittent signal interruption",
+          "probability": 0.20,
+          "test": "Wiggle speaker cable at both ends while playing; crackle correlating with movement confirms oxidised jack"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Tighten all speaker mounting bolts and cabinet panel screws; add foam gasket behind grille frame if vibrating",
+              "verification": "Rattle eliminated when pressing panel; no sympathetic vibration at any volume",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Clean output and speaker jacks with contact cleaner spray; plug and unplug cable 10 times to polish contacts",
+              "verification": "Crackling not reproducible by cable wiggling after cleaning",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If speaker cone is torn, replace speaker with matching impedance and wattage rating",
+              "verification": "Replacement speaker matches original ohm rating; clean undistorted tone across all frequencies",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bow_hair_snap",
+      "name": "Bow Hair Snap",
+      "category": "strings",
+      "severity": "warning",
+      "description": "Bow hair strands break or the entire ribbon snaps, preventing the bow from producing sound on string instruments.",
+      "visual_symptoms": [
+        "Loose strands of bow hair hanging from ribbon",
+        "Gap or complete separation in bow hair ribbon",
+        "Rosin not adhering evenly due to uneven remaining hair",
+        "Tone thin and scratchy from reduced hair contact"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Over-tightening bow hair beyond recommended tension causing fatigue failure",
+          "probability": 0.50,
+          "test": "At correct tension, bow stick should be approximately 1 cm from hair at midpoint — excess gap indicates over-tightening"
+        },
+        {
+          "cause": "Natural wear from extended play sessions depleting horse hair fibres",
+          "probability": 0.35,
+          "test": "Count approximate remaining hairs — below 120 hairs for violin bow indicates significant wear"
+        },
+        {
+          "cause": "Rosin buildup creating brittle residue that snaps hair under dynamic stress",
+          "probability": 0.15,
+          "test": "Inspect hair surface for thick white rosin crust — excessive buildup makes hair brittle"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "If fewer than 50% of hairs remain, take bow to a luthier for professional rehairing",
+              "verification": "Rehaired bow has full even ribbon of approximately 150–180 hairs for violin; tone full and responsive",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Always loosen bow tension to 1–2 turns after each playing session",
+              "verification": "Bow hair shows slight slack when tightening screw is fully released",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Clean excess rosin from hair with a dry cloth wipe after each session to prevent brittle buildup",
+              "verification": "Hair surface shows thin even rosin coating without thick white crust",
+              "time_seconds": 120
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "piano_sustain_pedal_failure",
+      "name": "Piano Sustain Pedal Failure",
+      "category": "maintenance",
+      "severity": "warning",
+      "description": "Piano or keyboard sustain pedal does not engage, engages permanently or produces no effect on note duration.",
+      "visual_symptoms": [
+        "All notes sustain indefinitely regardless of pedal state",
+        "Pedal pressed but notes cut off normally as if pedal not engaged",
+        "Pedal feels loose or has no mechanical resistance",
+        "Pedal cable connector visibly damaged at instrument jack"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Pedal polarity inverted — keyboard configured for opposite pedal polarity",
+          "probability": 0.45,
+          "test": "Power cycle keyboard with pedal NOT connected; reconnect pedal — if notes now sustain correctly, polarity was inverted"
+        },
+        {
+          "cause": "TRS jack connector on pedal cable damaged causing short or open circuit",
+          "probability": 0.35,
+          "test": "Measure continuity across pedal jack with multimeter: open when up, closed when pressed should match keyboard expectation"
+        },
+        {
+          "cause": "Acoustic piano sustain mechanism spring broken or damper felts worn",
+          "probability": 0.20,
+          "test": "Lift lid and observe damper felt pads while pressing pedal — dampers not lifting indicate broken spring or worn mechanism"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Power cycle the keyboard with sustain pedal disconnected to allow automatic polarity detection",
+              "verification": "Keyboard powers on without pedal connected; reconnect pedal — notes sustain only when pedal is pressed",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Check keyboard settings menu for sustain pedal polarity setting and toggle it if automatic detection is unavailable",
+              "verification": "Pedal behaviour correct: notes hold when pressed, release when lifted",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "If pedal cable connector is damaged, replace cable or solder new TRS jack onto existing cable",
+              "verification": "Multimeter shows open when pedal up and closed when pedal down; instrument responds correctly",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "microphone_feedback_loop",
+      "name": "Microphone Feedback Loop",
+      "category": "electronic",
+      "severity": "error",
+      "description": "Microphone picks up its own amplified output through speakers, creating a loud continuous feedback tone.",
+      "visual_symptoms": [
+        "High-pitched squeal or howl from speaker system",
+        "Feedback tone changes pitch when microphone is moved",
+        "Gain reduction immediately stops feedback",
+        "Specific frequency ringing visible as spike on EQ analyser"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Microphone positioned in front of or too close to loudspeaker",
+          "probability": 0.55,
+          "test": "Move microphone behind speaker line — if feedback stops, positioning was the cause"
+        },
+        {
+          "cause": "Excessive gain before feedback (GBF) margin exhausted by high input gain or monitor volume",
+          "probability": 0.35,
+          "test": "Reduce monitor send level by 6 dB; if feedback stops, monitor level was driving system past GBF limit"
+        },
+        {
+          "cause": "Room resonance at specific frequency amplifying feedback at lower gain settings",
+          "probability": 0.10,
+          "test": "Apply parametric EQ notch at feedback frequency; if consistent feedback frequency, room mode is factor"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Immediately reduce channel fader or master output until feedback stops, then reposition microphone behind speaker line",
+              "verification": "Feedback stops; microphone positioned at least 1 m behind nearest speaker and not in speaker projection path",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Use a feedback eliminator or apply narrow parametric EQ notches at problem frequencies identified during soundcheck",
+              "verification": "System gain raised 6 dB above previous feedback point without triggering feedback",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Switch microphone to cardioid polar pattern and aim null of pattern toward monitors",
+              "verification": "Monitor level increased 3 dB without feedback; microphone null confirmed pointed at monitor",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keyboard_sustain_stuck",
+      "name": "Keyboard Sustain Stuck On",
+      "category": "electronic",
+      "severity": "warning",
+      "description": "Keyboard sustain is permanently active, causing all notes to continue sounding regardless of pedal position.",
+      "visual_symptoms": [
+        "All notes continue ringing after keys are released with pedal up",
+        "MIDI monitor shows no sustain-off message (CC64 value 0) when pedal released",
+        "Sustain indicator in DAW stuck in on position",
+        "Powering off and on resolves issue temporarily"
+      ],
+      "probable_causes": [
+        {
+          "cause": "MIDI sustain controller message (CC64) stuck-on due to data corruption or dropout",
+          "probability": 0.50,
+          "test": "Send MIDI all-notes-off and all-controllers-reset from DAW; check if sustain clears"
+        },
+        {
+          "cause": "Pedal switch contact dirty or sticking in closed position",
+          "probability": 0.35,
+          "test": "Unplug pedal cable entirely — if sustain immediately clears, pedal contact or cable is stuck closed"
+        },
+        {
+          "cause": "Keyboard sustain button or pedal input PCB trace short circuit",
+          "probability": 0.15,
+          "test": "Test pedal on a different keyboard instrument; if sustain still sticks, fault is in pedal; if not, fault is in keyboard"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "In DAW, send MIDI Reset or All Controllers Off message to keyboard on affected channel",
+              "verification": "Sustain clears immediately; notes stop ringing without pedal pressed",
+              "time_seconds": 60
+            },
+            {
+              "instruction": "Unplug sustain pedal, clean TRS jack contacts with contact cleaner and test pedal continuity with multimeter",
+              "verification": "Pedal shows open circuit when released; closed circuit only when pressed",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Replace sustain pedal if contact is permanently closed or internal switch mechanism is faulty",
+              "verification": "New pedal shows correct open/closed behaviour; keyboard sustain responds correctly in all modes",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "condenser_mic_phantom_power",
+      "name": "Condenser Mic Phantom Power Issue",
+      "category": "electronic",
+      "severity": "error",
+      "description": "Condenser microphone fails to operate, produces no signal or produces distorted signal due to phantom power problems.",
+      "visual_symptoms": [
+        "Microphone produces no audio output with 48V phantom enabled",
+        "Microphone hums loudly or produces clipping at low signal levels",
+        "Phantom power LED on interface lights but microphone unresponsive",
+        "Signal level drops dramatically compared to other microphones on same interface"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Phantom power not enabled on interface channel or enabled after microphone was already connected",
+          "probability": 0.45,
+          "test": "Verify 48V phantom button is lit on channel; toggle off and on with microphone connected"
+        },
+        {
+          "cause": "XLR cable with broken pin 2 or 3 preventing phantom voltage from reaching microphone capsule",
+          "probability": 0.35,
+          "test": "Swap XLR cable with a known-good cable and test signal; if signal restored, cable has broken conductor"
+        },
+        {
+          "cause": "Microphone internal capacitor or phantom circuit damaged from hot-plugging without phantom off",
+          "probability": 0.20,
+          "test": "Test microphone on a second interface with fresh phantom supply; persistent failure confirms microphone damage"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Disable phantom power, connect microphone with XLR cable, then enable phantom power — always connect before enabling phantom",
+              "verification": "Phantom LED active on channel; microphone produces clear signal on voice test",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Replace XLR cable with a known-good cable, ensuring it is wired pin 1-1, 2-2, 3-3 with no shield breaks",
+              "verification": "Microphone signal level restored to expected level; no hum from cable",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "If microphone still fails on known-good cable and interface, send to manufacturer for internal capsule or electronics repair",
+              "verification": "Microphone signal verified against specification output level after service",
+              "time_seconds": 86400
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
