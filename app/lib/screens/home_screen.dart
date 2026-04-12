@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../widgets/safe_screen.dart';
 import '../models/session_record.dart';
 import '../providers/equipment_provider.dart';
 import '../providers/session_history_provider.dart';
@@ -49,6 +50,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     return Scaffold(
       backgroundColor: _scaffoldBackground,
       body: IndexedStack(

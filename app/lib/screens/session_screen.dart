@@ -22,6 +22,7 @@ import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 import '../services/notification_service.dart';
 import '../utils/strings.dart';
+import '../widgets/safe_screen.dart';
 
 /// Active repair session screen.
 ///
@@ -216,6 +217,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final wsStatus = ref.watch(connectionStatusProvider);
 
     return Scaffold(

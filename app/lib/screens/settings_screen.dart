@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../widgets/safe_screen.dart';
 import '../providers/settings_provider.dart';
 import '../utils/constants.dart';
 
@@ -71,6 +72,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final settings = ref.watch(settingsProvider);
 
     return Scaffold(

@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/safe_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Server sessions provider — fetches from REST API and converts to SessionRecord.
@@ -30,6 +31,14 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    try {
+      return _buildContent(context, ref);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref) {
     final localSessions = ref.watch(sessionHistoryProvider);
     final serverAsync = ref.watch(_serverSessionsProvider);
 
