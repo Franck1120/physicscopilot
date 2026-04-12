@@ -24,7 +24,11 @@ type MessageRepo struct {
 }
 
 // NewMessageRepo creates a MessageRepo backed by the given pool.
+// Passing nil results in a nil interface pool field (panics at query time).
 func NewMessageRepo(pool *pgxpool.Pool) *MessageRepo {
+	if pool == nil {
+		return &MessageRepo{}
+	}
 	return &MessageRepo{pool: pool}
 }
 

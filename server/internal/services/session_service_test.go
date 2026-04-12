@@ -290,7 +290,7 @@ func TestBuildContextForGeminiEmptyHistory(t *testing.T) {
 	}
 }
 
-func TestBuildContextForGeminiNonexistentSession(t *testing.T) {
+func TestBuildContextForGeminiNonexistentSessionDirect(t *testing.T) {
 	svc := NewSessionService()
 
 	_, err := svc.BuildContextForGemini("nonexistent")

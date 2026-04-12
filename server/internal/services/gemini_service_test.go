@@ -616,26 +616,6 @@ func TestBuildProxyRequestBodySystemRoleIsSeparate(t *testing.T) {
 // Proxy (CLIProxyAPI) tests
 // ---------------------------------------------------------------------------
 
-func TestBuildProxyRequestBodyWithImage(t *testing.T) {
-	svc := &GeminiService{useProxy: true, proxyURL: "http://example.com"}
-	body, err := svc.buildProxyRequestBody("base64imagedata", "check this", "it")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(body.Messages) < 2 {
-		t.Fatalf("expected at least 2 messages, got %d", len(body.Messages))
-	}
-	// User message content should be a JSON array (multipart) when image is present.
-	userMsg := body.Messages[1]
-	if userMsg.Role != "user" {
-		t.Errorf("second message role: want 'user', got %q", userMsg.Role)
-	}
-	// Raw content should start with '[' (JSON array of parts).
-	if len(userMsg.Content) == 0 || userMsg.Content[0] != '[' {
-		t.Error("expected user content to be a JSON array when image is provided")
-	}
-}
-
 func TestParseProxyResponseSuccess(t *testing.T) {
 	// Build the envelope using json.Marshal to ensure proper escaping of the
 	// inner JSON string (which contains quotes and colons).
@@ -707,25 +687,6 @@ func TestAnalyzeFrameViaProxy(t *testing.T) {
 	}
 	if resp.Analysis != "proxy ok" {
 		t.Errorf("analysis: want 'proxy ok', got %q", resp.Analysis)
-	}
-}
-
-func TestAnalyzeFrameViaProxyHTTPError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(`proxy error`))
-	}))
-	defer server.Close()
-
-	svc := &GeminiService{
-		useProxy:   true,
-		proxyURL:   server.URL,
-		httpClient: server.Client(),
-	}
-
-	_, err := svc.AnalyzeFrame(context.Background(), "", "", "it")
-	if err == nil {
-		t.Fatal("expected error for proxy HTTP error")
 	}
 }
 
@@ -1025,20 +986,6 @@ func TestAnalyzeFrameCircuitBreakerTripsOnErrors(t *testing.T) {
 // parseProxyResponse
 // ---------------------------------------------------------------------------
 
-func TestParseProxyResponseSuccess(t *testing.T) {
-	body := []byte(`{"choices":[{"message":{"content":"{\"analysis\":\"ok\",\"problem\":null,\"instruction\":\"continue\",\"overlay\":{\"boxes\":[],\"arrows\":[]}}"}}]}`)
-	resp, err := parseProxyResponse(body)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if resp.Analysis != "ok" {
-		t.Errorf("expected analysis 'ok', got %q", resp.Analysis)
-	}
-	if resp.Instruction != "continue" {
-		t.Errorf("expected instruction 'continue', got %q", resp.Instruction)
-	}
-}
-
 func TestParseProxyResponseBrokenEnvelope(t *testing.T) {
 	_, err := parseProxyResponse([]byte(`not json`))
 	if err == nil {
@@ -1046,16 +993,6 @@ func TestParseProxyResponseBrokenEnvelope(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "parse proxy response envelope") {
 		t.Errorf("error should mention envelope parse, got: %v", err)
-	}
-}
-
-func TestParseProxyResponseNoChoices(t *testing.T) {
-	_, err := parseProxyResponse([]byte(`{"choices":[]}`))
-	if err == nil {
-		t.Fatal("expected error for no choices")
-	}
-	if !strings.Contains(err.Error(), "no choices") {
-		t.Errorf("error should mention no choices, got: %v", err)
 	}
 }
 

@@ -26,7 +26,11 @@ type SessionRepo struct {
 }
 
 // NewSessionRepo creates a SessionRepo backed by the given pool.
+// Passing nil results in a nil interface pool field (panics at query time).
 func NewSessionRepo(pool *pgxpool.Pool) *SessionRepo {
+	if pool == nil {
+		return &SessionRepo{}
+	}
 	return &SessionRepo{pool: pool}
 }
 
