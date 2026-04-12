@@ -600,13 +600,38 @@ paths:
   /api/domains:
     get:
       summary: List available knowledge-base domains
-      description: Returns the list of problem domains currently loaded in the knowledge base (e.g. "hvac", "printer", "smartphone").
+      description: |
+        Returns the list of problem domains currently loaded in the knowledge base
+        (e.g. "hvac", "printer", "smartphone").
+
+        The response includes an ETag header. Clients may send If-None-Match with
+        the ETag value to receive a 304 Not Modified response when the domain list
+        has not changed. The list is publicly cacheable for 5 minutes.
       tags: [Knowledge Base]
       security:
         - bearerAuth: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          description: ETag from a previous response; triggers 304 when unchanged.
+          schema:
+            type: string
+            example: 'W/"a1b2c3d4e5f6g7h8"'
       responses:
         "200":
           description: List of domain identifiers
+          headers:
+            ETag:
+              description: Weak ETag over the domain list (SHA-256 of JSON, first 8 bytes).
+              schema:
+                type: string
+                example: 'W/"a1b2c3d4e5f6g7h8"'
+            Cache-Control:
+              description: Public cache directive — clients and CDNs may cache for 5 minutes.
+              schema:
+                type: string
+                example: "public, max-age=300"
           content:
             application/json:
               schema:
@@ -617,5 +642,7 @@ paths:
                     items:
                       type: string
                     example: ["hvac", "printer", "smartphone", "appliances"]
+        "304":
+          description: Not Modified — domain list unchanged since the ETag was issued.
         "429":
           $ref: '#/components/responses/TooManyRequests'
