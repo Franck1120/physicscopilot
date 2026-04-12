@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 package services
 
 import (
@@ -7,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -114,11 +119,13 @@ func (c *ragLRU) set(query string, maxResults int, results []KBEntry) {
 
 // kbFile mirrors the top-level structure of the knowledge-base JSON.
 type kbFile struct {
+	Domain   string    `json:"domain"`
 	Problems []KBEntry `json:"problems"`
 }
 
 // KBEntry is a single problem record from the knowledge base.
 type KBEntry struct {
+	Domain         string       `json:"domain,omitempty"`
 	ID             string       `json:"id"`
 	Name           string       `json:"name"`
 	Category       string       `json:"category"`
@@ -149,7 +156,7 @@ type KBStep struct {
 	TimeSeconds  int    `json:"time_seconds"`
 }
 
-// RAGService loads a knowledge-base JSON file at startup and performs
+// RAGService loads knowledge-base JSON files at startup and performs
 // retrieval-augmented generation (RAG) to enrich AI prompts with relevant
 // problem context before sending frames for analysis.
 //
@@ -158,47 +165,111 @@ type KBStep struct {
 // Future implementations (e.g. SQLiteVectorStore using sqlite-vec) can be
 // swapped in without changing RAGService callers.
 //
-// The knowledge-base path is read from the KB_PATH env var.
-// Default: ../kb/data/problems.json (relative to server working directory).
-// If the file is absent the service starts in no-op mode: QueryKB always
+// All *.json files in the directory given by KB_DATA_DIR are loaded. Each file
+// must have a top-level "domain" field; that value is stamped onto every
+// KBEntry loaded from that file so callers can filter by domain.
+// Default directory: ../kb/data/ (relative to server working directory).
+// If no files are found the service starts in no-op mode: QueryKB always
 // returns nil and the server continues to function without KB context.
 type RAGService struct {
-	entries []KBEntry
-	store   VectorStore
-	cache   *ragLRU
+	entries      []KBEntry
+	store        VectorStore            // all-domains store
+	domainStores map[string]VectorStore // per-domain stores
+	domains      []string               // sorted list of loaded domain names
+	cache        *ragLRU
+	domainCaches map[string]*ragLRU
 }
 
-// NewRAGService loads the knowledge-base from the path given by KB_PATH
-// (default ../kb/data/problems.json) and indexes documents into a
-// MemoryVectorStore using TF-IDF scoring.
+// NewRAGService loads all *.json knowledge-base files from the directory given
+// by KB_DATA_DIR (default ../kb/data/) and indexes documents into
+// MemoryVectorStore instances using TF-IDF scoring — one global store and one
+// per-domain store.
 //
-// A missing file is not an error — the service starts in no-op mode and
-// QueryKB always returns nil.
+// A missing directory or no matching files is not an error — the service starts
+// in no-op mode and QueryKB always returns nil.
 func NewRAGService() (*RAGService, error) {
-	return newRAGServiceWith(NewMemoryVectorStore())
+	return newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
 }
 
-// newRAGServiceWith creates a RAGService with a custom VectorStore.
+// newRAGServiceWith creates a RAGService with a custom VectorStore factory.
+// The factory is called once for the global store and once per loaded domain.
 // Intended for tests and future extension points.
-func newRAGServiceWith(store VectorStore) (*RAGService, error) {
-	path := os.Getenv("KB_PATH")
-	if path == "" {
-		path = "../kb/data/problems.json"
+func newRAGServiceWith(storeFactory func() VectorStore) (*RAGService, error) {
+	dir := os.Getenv("KB_DATA_DIR")
+	if dir == "" {
+		// Legacy single-file fallback: when KB_DATA_DIR is unset but KB_PATH is
+		// set, derive the data directory from the file's parent directory so
+		// that tests and deployments that still use KB_PATH keep working.
+		if legacyPath := os.Getenv("KB_PATH"); legacyPath != "" {
+			dir = filepath.Dir(legacyPath)
+		}
+	}
+	if dir == "" {
+		dir = "../kb/data/"
 	}
 
-	data, err := os.ReadFile(path)
+	pattern := filepath.Join(dir, "*.json")
+	files, err := filepath.Glob(pattern)
 	if err != nil {
-		// KB is optional: log-worthy but not fatal.
-		return &RAGService{store: store, cache: newRAGLRU(ragCacheCapacity, ragCacheTTL)}, nil
+		// Malformed pattern — not expected, but treat as no-op.
+		return &RAGService{
+			store:        storeFactory(),
+			domainStores: make(map[string]VectorStore),
+			domainCaches: make(map[string]*ragLRU),
+			cache:        newRAGLRU(ragCacheCapacity, ragCacheTTL),
+		}, nil
 	}
 
-	var kb kbFile
-	if err := json.Unmarshal(data, &kb); err != nil {
-		return nil, fmt.Errorf("parse knowledge base at %s: %w", path, err)
+	// Accumulate all entries across files.
+	var allEntries []KBEntry
+	domainEntries := make(map[string][]KBEntry)
+
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			// Individual missing/unreadable file is non-fatal.
+			continue
+		}
+
+		var kb kbFile
+		if err := json.Unmarshal(data, &kb); err != nil {
+			return nil, fmt.Errorf("parse knowledge base at %s: %w", f, err)
+		}
+
+		// Stamp domain onto each entry.
+		for i := range kb.Problems {
+			kb.Problems[i].Domain = kb.Domain
+		}
+
+		allEntries = append(allEntries, kb.Problems...)
+		domainEntries[kb.Domain] = append(domainEntries[kb.Domain], kb.Problems...)
 	}
 
-	store.Index(kb.Problems)
-	return &RAGService{entries: kb.Problems, store: store, cache: newRAGLRU(ragCacheCapacity, ragCacheTTL)}, nil
+	// Build global store.
+	globalStore := storeFactory()
+	globalStore.Index(allEntries)
+
+	// Build per-domain stores and caches.
+	domainStores := make(map[string]VectorStore, len(domainEntries))
+	domainCaches := make(map[string]*ragLRU, len(domainEntries))
+	domains := make([]string, 0, len(domainEntries))
+	for domain, entries := range domainEntries {
+		ds := storeFactory()
+		ds.Index(entries)
+		domainStores[domain] = ds
+		domainCaches[domain] = newRAGLRU(ragCacheCapacity, ragCacheTTL)
+		domains = append(domains, domain)
+	}
+	sort.Strings(domains)
+
+	return &RAGService{
+		entries:      allEntries,
+		store:        globalStore,
+		domainStores: domainStores,
+		domains:      domains,
+		cache:        newRAGLRU(ragCacheCapacity, ragCacheTTL),
+		domainCaches: domainCaches,
+	}, nil
 }
 
 // Loaded reports whether the knowledge base was successfully loaded.
@@ -221,6 +292,44 @@ func (r *RAGService) QueryKB(query string, maxResults int) []KBEntry {
 	metrics.RagCacheMissesTotal.Inc()
 	results := r.store.Search(query, maxResults)
 	r.cache.set(query, maxResults, results)
+	return results
+}
+
+// KBDomains returns the sorted list of domain names currently loaded.
+// Returns an empty slice when no files were loaded.
+func (r *RAGService) KBDomains() []string { return r.domains }
+
+// QueryKBByDomain performs RAG filtered to a single domain.
+// If domain is "" or does not match a loaded domain, it falls back to the
+// global search (equivalent to QueryKB).
+func (r *RAGService) QueryKBByDomain(domain, query string, maxResults int) []KBEntry {
+	if domain == "" {
+		return r.QueryKB(query, maxResults)
+	}
+
+	ds, ok := r.domainStores[domain]
+	if !ok {
+		return r.QueryKB(query, maxResults)
+	}
+
+	dc, hasDC := r.domainCaches[domain]
+	if !hasDC {
+		// Fallback: query without domain cache.
+		return ds.Search(query, maxResults)
+	}
+
+	if len(query) == 0 {
+		return nil
+	}
+
+	if cached, ok := dc.get(query, maxResults); ok {
+		metrics.RagCacheHitsTotal.Inc()
+		return cached
+	}
+
+	metrics.RagCacheMissesTotal.Inc()
+	results := ds.Search(query, maxResults)
+	dc.set(query, maxResults, results)
 	return results
 }
 
