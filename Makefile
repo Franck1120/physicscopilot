@@ -78,10 +78,14 @@ test-coverage: ## Run Go tests with HTML coverage report
 
 lint: ## Run Go vet + golangci-lint and Flutter analyze
 	cd server && go vet ./...
-	@which golangci-lint > /dev/null 2>&1 \
-		&& cd server && golangci-lint run ./... \
-		|| echo "golangci-lint not installed — see https://golangci-lint.run/usage/install/"
-	cd app && flutter analyze
+	@if which golangci-lint > /dev/null 2>&1; then \
+		cd server && golangci-lint run ./...; \
+	elif [ "$$CI" = "true" ]; then \
+		echo "ERROR: golangci-lint required in CI but not installed" >&2; exit 1; \
+	else \
+		echo "golangci-lint not installed — skipping (install: https://golangci-lint.run/usage/install/)"; \
+	fi
+	cd app && flutter analyze --fatal-infos
 
 # ── Compat aliases ────────────────────────────────────────────────────────────
 
