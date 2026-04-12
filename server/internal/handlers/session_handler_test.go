@@ -43,18 +43,18 @@ func TestCreateSessionReturns201(t *testing.T) {
 		t.Fatalf("want 201, got %d: %s", resp.StatusCode, b)
 	}
 
-	var state services.SessionState
-	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+	var dto sessionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if state.SessionID == "" {
-		t.Error("expected non-empty session_id in response")
+	if dto.ID == "" {
+		t.Error("expected non-empty id in response")
 	}
-	if state.DeviceInfo.Brand != "Prusa" {
-		t.Errorf("expected brand 'Prusa', got %q", state.DeviceInfo.Brand)
+	if dto.Device.Brand != "Prusa" {
+		t.Errorf("expected brand 'Prusa', got %q", dto.Device.Brand)
 	}
-	if state.DeviceInfo.Model != "MK4" {
-		t.Errorf("expected model 'MK4', got %q", state.DeviceInfo.Model)
+	if dto.Device.Model != "MK4" {
+		t.Errorf("expected model 'MK4', got %q", dto.Device.Model)
 	}
 }
 
@@ -140,15 +140,15 @@ func TestGetSessionReturnsState(t *testing.T) {
 		t.Fatalf("want 200, got %d: %s", resp.StatusCode, b)
 	}
 
-	var state services.SessionState
-	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+	var dto sessionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&dto); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if state.SessionID != sess.SessionID {
-		t.Errorf("want session_id %q, got %q", sess.SessionID, state.SessionID)
+	if dto.ID != sess.SessionID {
+		t.Errorf("want id %q, got %q", sess.SessionID, dto.ID)
 	}
-	if state.DeviceInfo.Brand != "Bambu" {
-		t.Errorf("want brand 'Bambu', got %q", state.DeviceInfo.Brand)
+	if dto.Device.Brand != "Bambu" {
+		t.Errorf("want brand 'Bambu', got %q", dto.Device.Brand)
 	}
 }
 
