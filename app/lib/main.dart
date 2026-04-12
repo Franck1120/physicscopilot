@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'providers/prefs_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/equipment_selection_screen.dart';
 import 'screens/home_screen.dart';
@@ -29,12 +30,6 @@ const Color kTextMuted = Color(0xFF6B7280);
 // ---------------------------------------------------------------------------
 // Providers
 // ---------------------------------------------------------------------------
-
-/// Exposes the SharedPreferences instance initialised before runApp.
-/// Public so tests can override it via ProviderScope.overrides.
-final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('Override with ProviderScope.overrides');
-});
 
 /// True if the user has already completed onboarding.
 ///
