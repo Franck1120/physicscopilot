@@ -95,7 +95,7 @@ components:
 
     SessionList:
       type: object
-      required: [sessions, count]
+      required: [sessions, count, total, total_pages, page, page_size]
       properties:
         sessions:
           type: array
@@ -104,7 +104,29 @@ components:
         count:
           type: integer
           minimum: 0
+          description: Number of sessions in this page.
           example: 3
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of sessions matching the current filters.
+          example: 47
+        total_pages:
+          type: integer
+          minimum: 1
+          description: Total number of pages at the requested page_size.
+          example: 3
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number (1-based).
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page.
+          example: 20
 
     CreateSessionRequest:
       type: object
@@ -267,12 +289,63 @@ paths:
 
     get:
       summary: List all sessions
+      description: |
+        Returns a paginated, filtered, and sorted list of sessions.
+        All query parameters are optional and may be combined freely.
       tags: [Sessions]
       security:
         - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: 1-based page number (default 1).
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Items per page (default 20, max 100).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort_by
+          in: query
+          description: Field to sort by.
+          schema:
+            type: string
+            enum: [created_at, last_activity, status]
+            default: last_activity
+        - name: sort_order
+          in: query
+          description: Sort direction.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: status
+          in: query
+          description: Exact match on session status (case-insensitive).
+          schema:
+            type: string
+            example: active
+        - name: device_brand
+          in: query
+          description: Exact match on device brand (case-insensitive).
+          schema:
+            type: string
+            example: Prusa
+        - name: problem
+          in: query
+          description: Substring match on problem_detected field (case-insensitive).
+          schema:
+            type: string
+            example: stringing
       responses:
         '200':
-          description: List of sessions
+          description: Paginated list of sessions
           content:
             application/json:
               schema:
