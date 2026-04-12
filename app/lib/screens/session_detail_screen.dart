@@ -5,13 +5,30 @@ import '../models/session_record.dart';
 
 /// Full-detail view for a single [SessionRecord].
 ///
-/// Displays all available fields: ID, device name, status, timestamps,
-/// problem description, AI summary and a [LinearProgressIndicator] for
-/// step progress (simulated as 0 % for unresolved, 100 % for resolved).
+/// Displays all available session metadata:
+/// - Device name and resolution status
+/// - Step-progress via [LinearProgressIndicator] (100 % resolved, 50 % otherwise)
+/// - Problem description extracted by the AI
+/// - AI-generated session summary
+/// - Metadata card with session ID, date and duration
+///
+/// Navigate to this screen via [slideFromRight] for a consistent
+/// slide-from-right transition:
+/// ```dart
+/// Navigator.of(context).push(
+///   slideFromRight(SessionDetailScreen(session: mySession)),
+/// );
+/// ```
 class SessionDetailScreen extends StatelessWidget {
+  /// Creates the detail view for [session].
+  ///
+  /// [session] must not be null and is displayed in read-only mode.
   const SessionDetailScreen({super.key, required this.session});
 
-  /// The session record to display.
+  /// The session record whose details are displayed.
+  ///
+  /// All fields are shown in their respective sections. Empty strings
+  /// cause the corresponding section to be omitted from the layout.
   final SessionRecord session;
 
   @override
