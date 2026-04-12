@@ -4,13 +4,20 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	defaultMaxConns = 50
+	defaultMinConns = 5
+)
+
 // NewPool creates a PostgreSQL connection pool. It reads DATABASE_URL from the
 // environment. If DATABASE_URL is not set, an error is returned.
-// Max connections: 10.
+// Pool size is controlled via DB_POOL_MAX_CONNS (default 50) and
+// DB_POOL_MIN_CONNS (default 5).
 func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -21,7 +28,8 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse database URL: %w", err)
 	}
-	cfg.MaxConns = 10
+	cfg.MaxConns = envInt32("DB_POOL_MAX_CONNS", defaultMaxConns)
+	cfg.MinConns = envInt32("DB_POOL_MIN_CONNS", defaultMinConns)
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
@@ -34,4 +42,15 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	}
 
 	return pool, nil
+}
+
+// envInt32 reads an environment variable as int32. Returns fallback when the
+// variable is unset or not a positive integer.
+func envInt32(key string, fallback int32) int32 {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 32); err == nil && n > 0 {
+			return int32(n)
+		}
+	}
+	return fallback
 }

@@ -392,6 +392,14 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		)
 	}()
 
+	// ── Connection-scoped context ─────────────────────────────────────────────
+	// connCtx is cancelled when the read loop exits (deferred connCancel).
+	// All AI calls derive from this context so they are cancelled when the
+	// client disconnects, allowing the 30 s request-timeout middleware to
+	// work correctly for WebSocket message handling.
+	connCtx, connCancel := context.WithCancel(context.Background())
+	defer connCancel()
+
 	// ── Ping goroutine ────────────────────────────────────────────────────────
 	// Sends a Ping every pingInterval. If the client doesn't reply with Pong
 	// within pongWait the read deadline expires and the read loop exits,
@@ -422,9 +430,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(sc, sessionID, userID, msg, rateLimiter, sessionStart, &firstResponseSent)
+			h.handleFrame(connCtx, sc, sessionID, userID, msg, rateLimiter, sessionStart, &firstResponseSent)
 		case "text":
-			h.handleText(sc, sessionID, userID, msg, sessionStart, &firstResponseSent)
+			h.handleText(connCtx, sc, sessionID, userID, msg, sessionStart, &firstResponseSent)
 		case "ping":
 			h.handlePing(sc)
 		default:
@@ -458,7 +466,7 @@ func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID strin
 
 // handleFrame processes a camera frame through the conversation service.
 // Frames that exceed the per-connection FPS cap or the per-user API budget are dropped.
-func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter, sessionStart time.Time, firstResponseSent *bool) {
+func (h *WSHandler) handleFrame(ctx context.Context, sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter, sessionStart time.Time, firstResponseSent *bool) {
 	if !rl.allow() {
 		return
 	}
@@ -475,7 +483,6 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 		return
 	}
 
-	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
@@ -500,7 +507,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg Inco
 }
 
 // handleText processes a text-only conversation turn.
-func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg IncomingMessage, sessionStart time.Time, firstResponseSent *bool) {
+func (h *WSHandler) handleText(ctx context.Context, sc *safeConn, sessionID, userID string, msg IncomingMessage, sessionStart time.Time, firstResponseSent *bool) {
 	if !h.userRL.Allow(userID) {
 		writeError(sc, "rate limit exceeded — slow down")
 		return
@@ -520,7 +527,6 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg Incom
 		)
 	}
 
-	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, content)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
