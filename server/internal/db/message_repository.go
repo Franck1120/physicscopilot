@@ -20,7 +20,7 @@ type MessageRecord struct {
 
 // MessageRepo handles persistence for conversation messages.
 type MessageRepo struct {
-	pool *pgxpool.Pool
+	pool pgxPool
 }
 
 // NewMessageRepo creates a MessageRepo backed by the given pool.
