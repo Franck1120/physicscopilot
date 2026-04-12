@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/scheduler.dart';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -485,6 +488,14 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
           child: _TorchButton(isOn: _torchOn, onTap: _toggleTorch),
         ),
 
+        // ── FPS counter (debug builds only) ───────────────────────────────
+        if (kDebugMode)
+          const Positioned(
+            top: 12,
+            right: 12,
+            child: _FpsOverlay(),
+          ),
+
         // ── Frame quality badge ───────────────────────────────────────────
         if (_quality != FrameQuality.ok)
           Positioned(
@@ -656,6 +667,70 @@ class _QualityBadge extends StatelessWidget {
               style: TextStyle(
                   color: color, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+}
+
+// ── FPS overlay (debug mode only) ────────────────────────────────────────────
+
+/// Displays the current UI frame rate in the top-right corner of the camera
+/// preview.  Only compiled into debug builds (guarded by [kDebugMode]).
+class _FpsOverlay extends StatefulWidget {
+  const _FpsOverlay();
+  @override
+  State<_FpsOverlay> createState() => _FpsOverlayState();
+}
+
+class _FpsOverlayState extends State<_FpsOverlay> {
+  double _fps = 0;
+  final _timestamps = <int>[];
+
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance.addTimingsCallback(_onTimings);
+  }
+
+  @override
+  void dispose() {
+    SchedulerBinding.instance.removeTimingsCallback(_onTimings);
+    super.dispose();
+  }
+
+  void _onTimings(List<FrameTiming> timings) {
+    if (!mounted) return;
+    final now = DateTime.now().microsecondsSinceEpoch;
+    // Add one entry per frame timing batch.
+    for (final _ in timings) {
+      _timestamps.add(now);
+    }
+    // Keep only timestamps within the last second.
+    _timestamps.removeWhere((t) => now - t > 1000000);
+    setState(() => _fps = _timestamps.length.toDouble());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _fps >= 55
+        ? Colors.greenAccent
+        : _fps >= 30
+            ? Colors.orangeAccent
+            : Colors.redAccent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(160),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '${_fps.toStringAsFixed(0)} fps',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
     );
   }
