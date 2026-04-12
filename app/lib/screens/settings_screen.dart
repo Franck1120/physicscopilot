@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
 import '../providers/settings_provider.dart';
+import '../providers/voice_provider.dart';
 import '../utils/constants.dart';
 
 /// App settings screen.
@@ -228,6 +229,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ref.read(settingsProvider.notifier).setVoiceEnabled(v),
                     activeThumbColor: kAccent,
                   ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Language ──────────────────────────────────────────────────────
+          _Card(
+            child: Row(
+              children: [
+                const Icon(Icons.language_outlined, color: kAccent, size: 22),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Lingua risposta AI',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600)),
+                      SizedBox(height: 2),
+                      Text('Lingua di Gemini e guida vocale.',
+                          style: TextStyle(color: kTextMuted, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: settings.language,
+                  dropdownColor: kBgCard,
+                  underline: const SizedBox.shrink(),
+                  icon: const Icon(Icons.expand_more, color: kTextMuted, size: 18),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  items: kSupportedLanguages.entries
+                      .map((e) => DropdownMenuItem(
+                            value: e.key,
+                            child: Text(e.value),
+                          ))
+                      .toList(),
+                  onChanged: (lang) async {
+                    if (lang == null) return;
+                    HapticFeedback.selectionClick();
+                    await ref.read(settingsProvider.notifier).setLanguage(lang);
+                    // Update TTS language immediately.
+                    ref.read(voiceServiceProvider).setLanguage(lang);
+                  },
                 ),
               ],
             ),

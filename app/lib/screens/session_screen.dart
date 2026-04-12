@@ -38,12 +38,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
 
+  static const _kCachedResponseKey = 'offline_last_ai_response';
+
   final DateTime _sessionStart = DateTime.now();
   Duration _elapsed = Duration.zero;
   Timer? _ticker;
   String? _firstUserMessage;
   bool _showTutorial = false;
   String? _lastVoiceText; // for play/pause replay
+  String? _cachedResponse; // last AI response from previous session (offline fallback)
 
   static const _kTutorialKey = 'session_tutorial_shown';
 
@@ -59,9 +62,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // Check after first frame so we don't call setState during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final shown =
-          ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false;
+      final prefs = ref.read(sharedPrefsProvider);
+      final shown = prefs.getBool(_kTutorialKey) ?? false;
       if (!shown) setState(() => _showTutorial = true);
+      // Load last cached AI response for offline fallback.
+      final cached = prefs.getString(_kCachedResponseKey);
+      if (cached != null && cached.isNotEmpty) {
+        setState(() => _cachedResponse = cached);
+      }
     });
   }
 
@@ -85,6 +93,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final type = msg['type'] as String?;
     if (type == 'response') {
       ref.read(sessionProvider.notifier).updateFromResponse(msg);
+      // Cache response for offline mode.
+      final responseText = msg['text'] as String?;
+      if (responseText != null && responseText.isNotEmpty) {
+        setState(() => _cachedResponse = responseText);
+        ref.read(sharedPrefsProvider).setString(_kCachedResponseKey, responseText);
+      }
       // Auto-read voice_text if voice guidance is enabled.
       final voiceText = msg['voice_text'] as String?;
       if (voiceText != null && voiceText.isNotEmpty) {
@@ -307,6 +321,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 child: _GuidancePanel(
                   textController: _textController,
                   onSendText: _sendText,
+                  cachedResponse: _cachedResponse,
+                  isOffline: wsStatus.value != ConnectionStatus.connected,
                 ),
               ),
             ],
@@ -458,9 +474,13 @@ class _GuidancePanel extends ConsumerWidget {
   const _GuidancePanel({
     required this.textController,
     required this.onSendText,
+    this.cachedResponse,
+    this.isOffline = false,
   });
   final TextEditingController textController;
   final VoidCallback onSendText;
+  final String? cachedResponse;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -472,7 +492,13 @@ class _GuidancePanel extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Expanded(child: _ResponseArea(session: session)),
+          Expanded(
+            child: _ResponseArea(
+              session: session,
+              cachedResponse: cachedResponse,
+              isOffline: isOffline,
+            ),
+          ),
           _TextInputRow(controller: textController, onSend: onSendText),
         ],
       ),
@@ -483,8 +509,14 @@ class _GuidancePanel extends ConsumerWidget {
 // ── Response area with animations ───────────────────────────────────────────
 
 class _ResponseArea extends StatelessWidget {
-  const _ResponseArea({required this.session});
+  const _ResponseArea({
+    required this.session,
+    this.cachedResponse,
+    this.isOffline = false,
+  });
   final SessionState session;
+  final String? cachedResponse;
+  final bool isOffline;
 
   @override
   Widget build(BuildContext context) {
@@ -516,6 +548,41 @@ class _ResponseArea extends StatelessWidget {
       child = _TypewriterResponse(
         key: ValueKey(session.responseText),
         text: session.responseText!,
+      );
+    } else if (isOffline && cachedResponse != null) {
+      // Offline fallback: show last cached response with a banner.
+      child = Column(
+        key: const ValueKey('offline'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            color: Colors.orangeAccent.withAlpha(25),
+            child: const Row(
+              children: [
+                Icon(Icons.cloud_off_outlined,
+                    color: Colors.orangeAccent, size: 14),
+                SizedBox(width: 8),
+                Text('Modalità offline — ultima risposta disponibile',
+                    style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                cachedResponse!,
+                style: const TextStyle(
+                    color: Colors.white70, fontSize: 14, height: 1.5),
+              ),
+            ),
+          ),
+        ],
       );
     } else {
       child = const Center(

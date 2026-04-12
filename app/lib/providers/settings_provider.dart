@@ -5,6 +5,16 @@ import 'prefs_provider.dart';
 
 const _kServerUrlKey = 'server_url_override';
 const _kVoiceEnabledKey = 'voice_enabled';
+const _kLanguageKey = 'language';
+
+/// Supported response languages (BCP-47 code → display name).
+const Map<String, String> kSupportedLanguages = {
+  'it': 'Italiano',
+  'en': 'English',
+  'fr': 'Français',
+  'de': 'Deutsch',
+  'es': 'Español',
+};
 
 /// User-configurable settings backed by SharedPreferences.
 class AppSettings {
@@ -15,20 +25,26 @@ class AppSettings {
   /// Whether voice synthesis is active during sessions.
   final bool voiceEnabled;
 
+  /// BCP-47 language code for Gemini responses and TTS (default: "it").
+  final String language;
+
   const AppSettings({
     this.serverUrlOverride,
     this.voiceEnabled = true,
+    this.language = 'it',
   });
 
   AppSettings copyWith({
     String? Function()? serverUrlOverride,
     bool? voiceEnabled,
+    String? language,
   }) =>
       AppSettings(
         serverUrlOverride: serverUrlOverride != null
             ? serverUrlOverride()
             : this.serverUrlOverride,
         voiceEnabled: voiceEnabled ?? this.voiceEnabled,
+        language: language ?? this.language,
       );
 }
 
@@ -37,6 +53,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       : super(AppSettings(
           serverUrlOverride: _prefs.getString(_kServerUrlKey),
           voiceEnabled: _prefs.getBool(_kVoiceEnabledKey) ?? true,
+          language: _prefs.getString(_kLanguageKey) ?? 'it',
         ));
 
   final SharedPreferences _prefs;
@@ -55,6 +72,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> setVoiceEnabled(bool enabled) async {
     await _prefs.setBool(_kVoiceEnabledKey, enabled);
     state = state.copyWith(voiceEnabled: enabled);
+  }
+
+  Future<void> setLanguage(String lang) async {
+    await _prefs.setString(_kLanguageKey, lang);
+    state = state.copyWith(language: lang);
   }
 }
 
