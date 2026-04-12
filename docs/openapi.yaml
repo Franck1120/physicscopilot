@@ -182,6 +182,117 @@ components:
           enum: [ok]
           example: "ok"
 
+    VersionResponse:
+      type: object
+      required: [version, build_time, go_version, api_version]
+      properties:
+        version:
+          type: string
+          example: "0.1.0"
+        build_time:
+          type: string
+          format: date-time
+          example: "2026-04-12T00:00:00Z"
+        go_version:
+          type: string
+          example: "go1.24.1"
+        api_version:
+          type: string
+          example: "v1"
+
+    StatsResponse:
+      type: object
+      required: [active_sessions, active_ws_connections, total_sessions_started, kb_loaded, kb_entry_count, uptime_seconds, version, total_messages]
+      properties:
+        active_sessions:
+          type: integer
+          minimum: 0
+          example: 3
+        active_ws_connections:
+          type: integer
+          minimum: 0
+          example: 1
+        total_sessions_started:
+          type: integer
+          format: uint64
+          minimum: 0
+          example: 42
+        kb_loaded:
+          type: boolean
+          example: true
+        kb_entry_count:
+          type: integer
+          minimum: 0
+          example: 95
+        uptime_seconds:
+          type: integer
+          minimum: 0
+          example: 3672
+        version:
+          type: string
+          example: "0.1.0"
+        total_messages:
+          type: integer
+          minimum: 0
+          example: 18
+
+    SessionStepsResponse:
+      type: object
+      required: [session_id, current_step, total_steps, progress_pct]
+      properties:
+        session_id:
+          type: string
+          example: "a1b2c3d4e5f6"
+        current_step:
+          type: integer
+          minimum: 0
+          example: 3
+        total_steps:
+          type: integer
+          minimum: 0
+          example: 5
+        progress_pct:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          example: 60.0
+
+    ConversationMessage:
+      type: object
+      required: [role, content, timestamp]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          example: "user"
+        content:
+          type: string
+          example: "My nozzle seems clogged."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-12T14:31:00Z"
+        has_image:
+          type: boolean
+          example: false
+
+    SessionMessagesResponse:
+      type: object
+      required: [session_id, count, messages]
+      properties:
+        session_id:
+          type: string
+          example: "a1b2c3d4e5f6"
+        count:
+          type: integer
+          minimum: 0
+          example: 4
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+
     Error:
       type: object
       required: [error]
@@ -309,17 +420,85 @@ paths:
 
     get:
       summary: List all sessions
-      description: Returns all active in-memory sessions with total count.
+      description: |
+        Returns active in-memory sessions with pagination, sorting, and filtering.
+        Supports ETag-based conditional requests (304 Not Modified).
       tags: [Sessions]
       security:
         - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: 1-based page number.
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page (max 100).
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, last_activity, status]
+            default: last_activity
+          description: Field to sort by.
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort direction.
+        - name: device_brand
+          in: query
+          schema:
+            type: string
+          description: Exact match on device brand (case-insensitive).
+          example: "Prusa"
+        - name: problem
+          in: query
+          schema:
+            type: string
+          description: Substring match on problem_detected (case-insensitive).
+          example: "stringing"
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Exact match on session status (case-insensitive).
+          example: "active"
       responses:
         '200':
-          description: List of sessions
+          description: Paginated list of sessions
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionList'
+                allOf:
+                  - $ref: '#/components/schemas/SessionList'
+                  - type: object
+                    required: [page, page_size, total, total_pages]
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      page_size:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 42
+                      total_pages:
+                        type: integer
+                        example: 3
+        '304':
+          description: Not Modified — ETag matches, client cache is current
         '401':
           description: Missing or invalid JWT token
           content:
@@ -441,6 +620,159 @@ paths:
                 $ref: '#/components/schemas/Error'
         '429':
           description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /docs:
+    get:
+      summary: Swagger UI — interactive API explorer
+      description: |
+        Serves a self-contained HTML page that embeds Swagger UI (via unpkg CDN)
+        pointed at the OpenAPI spec at `/api/docs`. Open in a browser to explore
+        and try every endpoint interactively. Publicly cacheable for 1 hour.
+      tags: [Monitoring]
+      responses:
+        '200':
+          description: Swagger UI HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /version:
+    get:
+      summary: Build version information
+      description: |
+        Returns the server version, build timestamp, Go runtime version, and API
+        generation string. Response is publicly cacheable for 1 hour — version
+        metadata changes only on deployment.
+      tags: [Monitoring]
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+              example:
+                version: "0.1.0"
+                build_time: "2026-04-12T00:00:00Z"
+                go_version: "go1.24.1"
+                api_version: "v1"
+
+  /api/stats:
+    get:
+      summary: Server operational statistics
+      description: |
+        Returns live server statistics including session counts, active WebSocket
+        connections, knowledge-base status, uptime, and the running version.
+      tags: [Monitoring]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current server statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sessions/{id}/steps:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Session ID returned by POST /api/sessions
+        example: "a1b2c3d4e5f6"
+    get:
+      summary: Get step progress for a session
+      description: |
+        Returns the current step, total steps, and computed progress percentage
+        for the guided repair flow associated with the session.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Step progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStepsResponse'
+              example:
+                session_id: "a1b2c3d4e5f6"
+                current_step: 3
+                total_steps: 5
+                progress_pct: 60.0
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/sessions/{id}/messages:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Session ID returned by POST /api/sessions
+        example: "a1b2c3d4e5f6"
+    get:
+      summary: Get conversation history for a session
+      description: |
+        Returns the conversation messages for a session (rolling window of the last
+        20 messages). Returns an empty array when no messages have been exchanged yet.
+        The `Cache-Control: private, no-cache` header ensures clients always
+        revalidate before using a cached response.
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionMessagesResponse'
+              example:
+                session_id: "a1b2c3d4e5f6"
+                count: 2
+                messages:
+                  - role: "user"
+                    content: "My nozzle seems clogged."
+                    timestamp: "2026-04-12T14:31:00Z"
+                    has_image: false
+                  - role: "assistant"
+                    content: "Try a cold pull to clear the blockage."
+                    timestamp: "2026-04-12T14:31:05Z"
+                    has_image: false
+        '401':
+          description: Missing or invalid JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
           content:
             application/json:
               schema:
