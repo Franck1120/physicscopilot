@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Riverpod provider for the equipment/device profile selected by the user.
 // EquipmentProfile represents the first supported vertical: 3D printers.
 // The schema is defined in assets/data/printer_profiles.json.
