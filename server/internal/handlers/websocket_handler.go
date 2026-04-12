@@ -110,6 +110,7 @@ type ipConnTracker struct {
 	conns map[string]int
 }
 
+// newIPConnTracker creates an ipConnTracker with an empty connection map.
 func newIPConnTracker() *ipConnTracker {
 	return &ipConnTracker{conns: make(map[string]int)}
 }
@@ -146,18 +147,22 @@ type safeConn struct {
 	mu sync.Mutex
 }
 
+// writeJSON serialises v as JSON and sends it to the peer under the write lock.
 func (s *safeConn) writeJSON(v any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.c.WriteJSON(v)
 }
 
+// writePing sends a WebSocket Ping control frame under the write lock.
 func (s *safeConn) writePing() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.c.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait))
 }
 
+// writeClose sends a WebSocket Close frame with the given code and reason,
+// then closes the underlying TCP connection.
 func (s *safeConn) writeClose(code int, text string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -227,6 +232,8 @@ func wsMaxFPS() int {
 	return defaultMaxFPS
 }
 
+// effectivePingInterval returns PingInterval when set (test override),
+// otherwise falls back to the package-level pingInterval constant.
 func (h *WSHandler) effectivePingInterval() time.Duration {
 	if h.PingInterval > 0 {
 		return h.PingInterval
@@ -234,6 +241,8 @@ func (h *WSHandler) effectivePingInterval() time.Duration {
 	return pingInterval
 }
 
+// effectivePongWait returns PongWait when set (test override),
+// otherwise falls back to the package-level pongWait constant.
 func (h *WSHandler) effectivePongWait() time.Duration {
 	if h.PongWait > 0 {
 		return h.PongWait
@@ -257,12 +266,14 @@ func (h *WSHandler) CloseAll() {
 	slog.Info("closed all WebSocket connections", "count", len(h.conns))
 }
 
+// register adds sc to the set of tracked connections for graceful shutdown.
 func (h *WSHandler) register(sc *safeConn) {
 	h.connsMu.Lock()
 	h.conns[sc] = struct{}{}
 	h.connsMu.Unlock()
 }
 
+// deregister removes sc from the tracked-connection set when the connection closes.
 func (h *WSHandler) deregister(sc *safeConn) {
 	h.connsMu.Lock()
 	delete(h.conns, sc)
