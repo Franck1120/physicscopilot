@@ -1,3 +1,8 @@
+// Package models defines the shared domain types used across the
+// PhysicsCopilot server: Session, Device, and their lifecycle enumerations.
+// These types are intentionally free of persistence concerns so they can be
+// imported by both the service and handler layers without introducing circular
+// dependencies.
 package models
 
 import "time"
