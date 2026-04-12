@@ -24,18 +24,26 @@ class _Particle {
   double rotation = 0;
 }
 
-/// Fullscreen confetti overlay that plays once and then removes itself.
+/// A fullscreen confetti overlay that plays once and then removes itself.
 ///
-/// Show this widget when a session milestone is reached (e.g. every 10 sessions).
-/// The overlay runs for [duration] and then calls [onComplete].
+/// Renders [particleCount] coloured particles that fall from the top of the
+/// screen. The overlay runs for [duration], fades out over the final 25 % of
+/// that time, and then calls [onComplete] so the parent can remove the widget.
 ///
-/// Example usage:
+/// Uses a custom [CustomPainter] — no external packages required.
+///
+/// Example:
 /// ```dart
-/// if (sessions.length % 10 == 0 && sessions.length > 0) {
-///   ConfettiOverlay(onComplete: () => setState(() => _showConfetti = false));
-/// }
+/// if (_showConfetti)
+///   ConfettiOverlay(
+///     onComplete: () => setState(() => _showConfetti = false),
+///   )
 /// ```
 class ConfettiOverlay extends StatefulWidget {
+  /// Creates the confetti overlay.
+  ///
+  /// [duration] controls total playback time; [particleCount] controls visual
+  /// density; [onComplete] is called when the animation finishes.
   const ConfettiOverlay({
     super.key,
     this.duration = const Duration(seconds: 3),
@@ -43,13 +51,18 @@ class ConfettiOverlay extends StatefulWidget {
     this.onComplete,
   });
 
-  /// How long the animation runs before fading out.
+  /// Total animation duration, including the fade-out phase.
   final Duration duration;
 
-  /// Number of confetti particles.
+  /// Number of confetti particles rendered simultaneously.
   final int particleCount;
 
-  /// Called when the animation finishes.
+  /// Callback invoked once when the overlay animation finishes.
+  ///
+  /// Use this to remove the overlay from the widget tree:
+  /// ```dart
+  /// onComplete: () => setState(() => _showConfetti = false),
+  /// ```
   final VoidCallback? onComplete;
 
   @override
