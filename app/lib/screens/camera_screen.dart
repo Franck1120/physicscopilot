@@ -28,11 +28,12 @@ class CameraScreen extends ConsumerStatefulWidget {
 }
 
 class _CameraScreenState extends ConsumerState<CameraScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   StreamSubscription<String>? _sttSubscription;
   Timer? _aiTimeoutTimer;
+  ProviderSubscription<AsyncValue<void>>? _cameraInitSub;
 
   late final AnimationController _chatController;
   late final Animation<Offset> _chatSlide;
@@ -43,6 +44,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _chatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 280),
@@ -54,10 +56,25 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       parent: _chatController,
       curve: Curves.easeInOut,
     ));
+    // Start bridging once camera is ready — use listenManual so it's
+    // registered once in initState rather than on every build().
+    _cameraInitSub = ref.listenManual<AsyncValue<void>>(
+      cameraInitProvider,
+      (_, next) {
+        next.whenData((_) {
+          _startForwarding();
+          _startListeningMessages();
+          _startSttForwarding();
+        });
+      },
+      fireImmediately: true,
+    );
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraInitSub?.close();
     _frameSubscription?.cancel();
     _messageSubscription?.cancel();
     _sttSubscription?.cancel();
@@ -65,6 +82,22 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     _chatController.dispose();
     _textInput.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // Stop streaming frames when the app moves to background.
+        _frameSubscription?.cancel();
+        _frameSubscription = null;
+      case AppLifecycleState.resumed:
+        // Restart frame forwarding when the user returns.
+        _startForwarding();
+      default:
+        break;
+    }
   }
 
   // ── Bridge camera frames → WebSocket ──────────────────────────────────────
@@ -165,15 +198,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     final overlayData = ref.watch(overlayDataProvider);
     final stepState = ref.watch(stepProvider);
 
-    // Start bridging once camera is ready.
-    ref.listen<AsyncValue<void>>(cameraInitProvider, (_, next) {
-      next.whenData((_) {
-        _startForwarding();
-        _startListeningMessages();
-        _startSttForwarding();
-      });
-    });
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: cameraInit.when(
@@ -182,7 +206,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
         ),
         error: (e, _) => Center(
           child: Text(
-            'Camera error: $e',
+            'Errore camera: $e',
             style: const TextStyle(color: Colors.white),
           ),
         ),
@@ -462,7 +486,7 @@ class _OfflineBanner extends StatelessWidget {
               Icon(Icons.wifi_off, color: Colors.white, size: 16),
               SizedBox(width: 8),
               Text(
-                'Offline — Reconnecting...',
+                'Offline — Riconnessione in corso…',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -488,11 +512,11 @@ class _ConnectionIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label) = status.when(
       data: (s) => switch (s) {
-        ConnectionStatus.connected => (Colors.greenAccent, 'Online'),
-        ConnectionStatus.connecting => (Colors.orangeAccent, 'Connessione...'),
-        ConnectionStatus.disconnected => (Colors.redAccent, 'Offline'),
+        ConnectionStatus.connected => (Colors.greenAccent, 'Connesso'),
+        ConnectionStatus.connecting => (Colors.orangeAccent, 'Connessione…'),
+        ConnectionStatus.disconnected => (Colors.redAccent, 'Non connesso'),
       },
-      loading: () => (Colors.orangeAccent, 'Connessione...'),
+      loading: () => (Colors.orangeAccent, 'Connessione…'),
       error: (_, __) => (Colors.redAccent, 'Errore'),
     );
 

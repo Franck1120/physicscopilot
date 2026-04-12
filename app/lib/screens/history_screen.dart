@@ -83,22 +83,38 @@ class HistoryScreen extends ConsumerWidget {
                 ),
               ],
       ),
-      body: sessions.isEmpty
-          ? const _EmptyState()
-          : ListView.builder(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: sessions.length,
-              itemBuilder: (context, index) {
-                final session = sessions[index];
-                return _DismissibleCard(
-                  session: session,
-                  onDismissed: () =>
-                      ref.read(sessionHistoryProvider.notifier).remove(session.id),
-                  onTap: () => _showDetailSheet(context, session),
-                );
-              },
-            ),
+      body: RefreshIndicator(
+        color: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF1E1E1E),
+        onRefresh: () {
+          ref.invalidate(_serverSessionsProvider);
+          return ref.read(_serverSessionsProvider.future).then((_) {});
+        },
+        child: sessions.isEmpty
+            // Wrap in a scrollable so pull-to-refresh works on empty state.
+            ? const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: 500,
+                  child: _EmptyState(),
+                ),
+              )
+            : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: sessions.length,
+                itemBuilder: (context, index) {
+                  final session = sessions[index];
+                  return _DismissibleCard(
+                    session: session,
+                    onDismissed: () =>
+                        ref.read(sessionHistoryProvider.notifier).remove(session.id),
+                    onTap: () => _showDetailSheet(context, session),
+                  );
+                },
+              ),
+      ),
     );
   }
 
