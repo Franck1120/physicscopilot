@@ -17,6 +17,7 @@ import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
+import '../services/notification_service.dart';
 import '../utils/strings.dart';
 
 /// Active repair session screen.
@@ -32,7 +33,8 @@ class SessionScreen extends ConsumerStatefulWidget {
   ConsumerState<SessionScreen> createState() => _SessionScreenState();
 }
 
-class _SessionScreenState extends ConsumerState<SessionScreen> {
+class _SessionScreenState extends ConsumerState<SessionScreen>
+    with WidgetsBindingObserver {
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
@@ -48,6 +50,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startListening();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -65,11 +68,28 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    NotificationService.cancelSessionNotification();
     _ticker?.cancel();
     _frameSubscription?.cancel();
     _messageSubscription?.cancel();
     _textController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final session = ref.read(sessionProvider);
+    final isActive = session.responseText != null || session.isProcessing;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        if (isActive) NotificationService.showSessionRunning();
+      case AppLifecycleState.resumed:
+        NotificationService.cancelSessionNotification();
+      default:
+        break;
+    }
   }
 
   void _startListening() {

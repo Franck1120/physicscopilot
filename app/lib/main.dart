@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/prefs_provider.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/notification_service.dart';
 import 'utils/strings.dart';
 import 'screens/equipment_selection_screen.dart';
 import 'screens/home_screen.dart';
@@ -64,6 +65,8 @@ void main() async {
   // Replace Flutter's red-screen with a friendly dark error widget.
   ErrorWidget.builder = (FlutterErrorDetails details) =>
       _AppErrorWidget(message: details.exceptionAsString());
+
+  await NotificationService.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   runApp(
