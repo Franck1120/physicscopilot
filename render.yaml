@@ -11,11 +11,23 @@ services:
     envVars:
       - key: PORT
         value: 8080
+      - key: APP_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: METRICS_PASSWORD
+        sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_BASE_URL
+        sync: false
+      - key: CLIPROXY_URL
         sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
-      - key: CLIPROXY_URL
+      - key: SUPABASE_JWT_SECRET
         sync: false
