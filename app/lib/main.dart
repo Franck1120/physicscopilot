@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/prefs_provider.dart';
 import 'screens/onboarding_screen.dart';
+import 'utils/strings.dart';
 import 'screens/equipment_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
@@ -204,7 +205,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'PhysicsCopilot',
+      title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: _buildDarkTheme(),
       routerConfig: _router,
@@ -395,7 +396,7 @@ class _AppErrorWidget extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Qualcosa è andato storto',
+                AppStrings.errorGeneric,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -405,7 +406,7 @@ class _AppErrorWidget extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Riavvia l\'app per riprendere.',
+                AppStrings.restartApp,
                 style: TextStyle(color: kTextMuted, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -539,7 +540,7 @@ class _SplashScreenState extends State<_SplashScreen>
                 child: FadeTransition(
                   opacity: _titleFade,
                   child: const Text(
-                    'PhysicsCopilot',
+                    AppStrings.appName,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -555,7 +556,7 @@ class _SplashScreenState extends State<_SplashScreen>
               FadeTransition(
                 opacity: _subtitleFade,
                 child: const Text(
-                  'Il tuo assistente AI per le riparazioni',
+                  AppStrings.appTagline,
                   style: TextStyle(
                     fontSize: 14,
                     color: kAccent,
@@ -581,6 +582,7 @@ class _SplashScreenState extends State<_SplashScreen>
               ),
             ),
           ),
+
         ],
       ),
     );

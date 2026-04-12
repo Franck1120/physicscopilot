@@ -16,6 +16,7 @@ import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
+import '../utils/strings.dart';
 
 /// Active repair session screen.
 ///
@@ -209,7 +210,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
               color: Colors.white, size: 20),
-          tooltip: 'Termina sessione',
+          tooltip: AppStrings.sessionEndSession,
           onPressed: () {
             _saveSessionIfNeeded();
             Navigator.of(context).pop();
@@ -219,7 +220,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded,
                 color: Colors.white54, size: 20),
-            tooltip: 'Nuova analisi',
+            tooltip: AppStrings.sessionNewAnalysis,
             onPressed: _resetSession,
           ),
           Padding(
@@ -480,7 +481,7 @@ class _ResponseArea extends StatelessWidget {
       child = const Center(
         key: ValueKey('idle'),
         child: Text(
-          'Punta la camera sull\'oggetto\nper avviare l\'analisi AI.',
+          AppStrings.sessionIdle,
           textAlign: TextAlign.center,
           style: TextStyle(color: kTextMuted, fontSize: 13, height: 1.5),
         ),
@@ -586,7 +587,7 @@ class _TypewriterResponseState extends State<_TypewriterResponse> {
                               ClipboardData(text: widget.text));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Risposta copiata negli appunti'),
+                              content: Text(AppStrings.sessionResponseCopied),
                             ),
                           );
                         }
@@ -845,7 +846,7 @@ class _TutorialOverlayState extends State<_TutorialOverlay>
                               ],
                             ),
                             child: const Text(
-                              'Tocca qui per analizzare',
+                              AppStrings.tutorialHint,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -870,7 +871,7 @@ class _TutorialOverlayState extends State<_TutorialOverlay>
               right: 0,
               child: Center(
                 child: Text(
-                  'Tocca ovunque per chiudere',
+                  AppStrings.tutorialDismiss,
                   style: TextStyle(
                     color: Colors.white.withAlpha(140),
                     fontSize: 12,
