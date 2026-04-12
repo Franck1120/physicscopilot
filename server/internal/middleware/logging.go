@@ -14,9 +14,31 @@ import (
 // requestIDKey is the Locals key used to pass the correlation ID down the chain.
 const requestIDKey = "request_id"
 
+// ctxRequestIDKey is the context key type used to store the request ID in a
+// context.Context so that handler-level slog calls can retrieve it via
+// WithRequestID / RequestIDFromCtx.
+type ctxRequestIDKeyType struct{}
+
+var ctxKey = ctxRequestIDKeyType{}
+
+// WithRequestID returns a new context carrying the given request ID.
+// Handlers can retrieve it with RequestIDFromCtx to annotate slog calls with
+// the same correlation ID that is logged by StructuredLogger.
+func WithRequestID(ctx context.Context, reqID string) context.Context {
+	return context.WithValue(ctx, ctxKey, reqID)
+}
+
+// RequestIDFromCtx retrieves the request ID stored by WithRequestID.
+// Returns an empty string when the context carries no request ID.
+func RequestIDFromCtx(ctx context.Context) string {
+	id, _ := ctx.Value(ctxKey).(string)
+	return id
+}
+
 // StructuredLogger returns a Fiber middleware that:
 //   - generates a random 8-byte hex request ID per request
 //   - stores it in c.Locals(requestIDKey) for downstream handlers
+//   - propagates the ID into the request's user context via WithRequestID
 //   - logs method, path, status code, and latency via the global slog logger
 //
 // Log level escalates automatically: INFO for 2xx/3xx, WARN for 4xx, ERROR for 5xx.
@@ -34,6 +56,9 @@ func StructuredLogger() fiber.Handler {
 			reqID = generateRequestID()
 			c.Locals(requestIDKey, reqID)
 		}
+		// Propagate the request ID into the user context so handler-level slog
+		// calls can attach the same correlation ID without accessing c.Locals.
+		c.SetUserContext(WithRequestID(c.UserContext(), reqID))
 
 		err := c.Next()
 

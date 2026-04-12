@@ -97,9 +97,9 @@ class HistoryScreen extends ConsumerWidget {
       body: RefreshIndicator(
         color: const Color(0xFF10B981),
         backgroundColor: const Color(0xFF1E1E1E),
-        onRefresh: () {
+        onRefresh: () async {
           ref.invalidate(_serverSessionsProvider);
-          return ref.read(_serverSessionsProvider.future).then((_) {});
+          await ref.read(_serverSessionsProvider.future).catchError((_) {});
         },
         child: sessions.isEmpty
             // Wrap in a scrollable so pull-to-refresh works on empty state.
