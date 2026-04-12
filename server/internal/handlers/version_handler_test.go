@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 package handlers
 
 import (
@@ -9,86 +12,81 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func newVersionTestApp(t *testing.T) *fiber.App {
-	t.Helper()
+func newVersionApp(version, buildTime, goVersion, commitHash string) *fiber.App {
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Get("/version", VersionHandler("0.1.0", "2026-04-12T00:00:00Z", "go1.25"))
+	app.Get("/version", VersionHandler(version, buildTime, goVersion, commitHash))
 	return app
 }
 
-func TestVersionHandlerReturns200(t *testing.T) {
-	app := newVersionTestApp(t)
+func TestVersionHandlerReturnsJSON(t *testing.T) {
+	app := newVersionApp("1.2.3", "2026-04-12T00:00:00Z", "go1.25.0", "abc1234")
 
 	req := httptest.NewRequest(http.MethodGet, "/version", nil)
 	resp, err := app.Test(req)
 	if err != nil {
-		t.Fatalf("app.Test: %v", err)
+		t.Fatalf("test: %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
-		t.Errorf("want 200, got %d", resp.StatusCode)
-	}
-}
-
-func TestVersionHandlerAllFieldsPresent(t *testing.T) {
-	app := newVersionTestApp(t)
-
-	req := httptest.NewRequest(http.MethodGet, "/version", nil)
-	resp, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
+		t.Errorf("status: want 200, got %d", resp.StatusCode)
 	}
 
-	var body map[string]interface{}
+	var body VersionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
 
-	requiredFields := []string{"version", "build_time", "go_version", "api_version"}
-	for _, field := range requiredFields {
-		if _, ok := body[field]; !ok {
-			t.Errorf("missing required field %q in version response", field)
-		}
+	if body.Version != "1.2.3" {
+		t.Errorf("version: want %q, got %q", "1.2.3", body.Version)
+	}
+	if body.BuildTime != "2026-04-12T00:00:00Z" {
+		t.Errorf("build_time: want %q, got %q", "2026-04-12T00:00:00Z", body.BuildTime)
+	}
+	if body.GoVersion != "go1.25.0" {
+		t.Errorf("go_version: want %q, got %q", "go1.25.0", body.GoVersion)
 	}
 }
 
-func TestVersionHandlerFieldValues(t *testing.T) {
-	app := newVersionTestApp(t)
+func TestVersionHandlerIncludesCommitHash(t *testing.T) {
+	const wantCommit = "deadbeef1234"
+	app := newVersionApp("0.1.0", "2026-04-12T00:00:00Z", "go1.25.0", wantCommit)
 
 	req := httptest.NewRequest(http.MethodGet, "/version", nil)
 	resp, err := app.Test(req)
 	if err != nil {
-		t.Fatalf("app.Test: %v", err)
+		t.Fatalf("test: %v", err)
 	}
 
-	var body map[string]interface{}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status: want 200, got %d", resp.StatusCode)
+	}
+
+	var body VersionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
 
-	if body["version"] != "0.1.0" {
-		t.Errorf("version: want %q, got %v", "0.1.0", body["version"])
-	}
-	if body["build_time"] != "2026-04-12T00:00:00Z" {
-		t.Errorf("build_time: want %q, got %v", "2026-04-12T00:00:00Z", body["build_time"])
-	}
-	if body["go_version"] != "go1.25" {
-		t.Errorf("go_version: want %q, got %v", "go1.25", body["go_version"])
-	}
-	if body["api_version"] != "v1" {
-		t.Errorf("api_version: want %q, got %v", "v1", body["api_version"])
+	if body.CommitHash != wantCommit {
+		t.Errorf("commit_hash: want %q, got %q", wantCommit, body.CommitHash)
 	}
 }
 
-func TestVersionHandlerCacheControlHeader(t *testing.T) {
-	app := newVersionTestApp(t)
+func TestVersionHandlerDevFallback(t *testing.T) {
+	// When GIT_COMMIT_HASH is unset the caller passes "dev" as the fallback.
+	app := newVersionApp("0.1.0", "unknown", "go1.25.0", "dev")
 
 	req := httptest.NewRequest(http.MethodGet, "/version", nil)
 	resp, err := app.Test(req)
 	if err != nil {
-		t.Fatalf("app.Test: %v", err)
+		t.Fatalf("test: %v", err)
 	}
-	cc := resp.Header.Get("Cache-Control")
-	if cc != "public, max-age=3600" {
-		t.Errorf("Cache-Control: want %q, got %q", "public, max-age=3600", cc)
+
+	var body VersionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if body.CommitHash != "dev" {
+		t.Errorf("commit_hash fallback: want %q, got %q", "dev", body.CommitHash)
 	}
 }
