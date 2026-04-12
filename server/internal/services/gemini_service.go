@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -31,6 +33,59 @@ const geminiMaxOutputTokens = 1024
 
 // httpTimeout is the deadline for each individual HTTP request.
 const httpTimeout = 30 * time.Second
+
+// Circuit breaker constants.
+const (
+	circuitBreakerThreshold = 5
+	circuitBreakerTimeout   = 30 * time.Second
+)
+
+// ErrAIUnavailable is returned by AnalyzeFrame when the circuit breaker is open
+// (i.e. Gemini has failed 5 times consecutively and the cooldown has not elapsed).
+var ErrAIUnavailable = errors.New("AI temporaneamente non disponibile, riprova tra poco")
+
+// circuitBreaker is a simple two-state (Closed / Open) circuit breaker.
+// After threshold consecutive failures it opens for timeout seconds; the next
+// call after the cooldown acts as a half-open probe — success resets the
+// counter, failure restarts the timer.
+type circuitBreaker struct {
+	mu              sync.Mutex
+	consecutiveErrs int
+	openUntil       time.Time
+	threshold       int
+	timeout         time.Duration
+}
+
+func newCircuitBreaker() *circuitBreaker {
+	return &circuitBreaker{threshold: circuitBreakerThreshold, timeout: circuitBreakerTimeout}
+}
+
+// isOpen returns true when the breaker is tripped and the cooldown has not
+// yet elapsed. Callers must not invoke the upstream service in this state.
+func (cb *circuitBreaker) isOpen() bool {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	return !cb.openUntil.IsZero() && time.Now().Before(cb.openUntil)
+}
+
+// recordSuccess resets the consecutive-error counter and closes the breaker.
+func (cb *circuitBreaker) recordSuccess() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.consecutiveErrs = 0
+	cb.openUntil = time.Time{}
+}
+
+// recordFailure increments the error counter and opens the breaker once the
+// threshold is reached.
+func (cb *circuitBreaker) recordFailure() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.consecutiveErrs++
+	if cb.consecutiveErrs >= cb.threshold {
+		cb.openUntil = time.Now().Add(cb.timeout)
+	}
+}
 
 // systemPromptBase is the language-independent part of the Gemini system prompt.
 const systemPromptBase = `You are PhysicsCopilot, an expert field technician assistant. You see what the user's camera shows in real-time. Analyze the image, identify any issues (damaged components, wear, misalignment, failure signs, incorrect assembly, etc.), and provide clear step-by-step repair or maintenance guidance. Respond ONLY with valid JSON with these fields: {"analysis": "what you see", "problem": "identified issue or null", "instruction": "next step for user", "overlay": {"boxes": [{"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4, "label": "damage"}], "arrows": [{"x1": 0.1, "y1": 0.2, "x2": 0.3, "y2": 0.4}]}}`
@@ -99,6 +154,7 @@ type GeminiService struct {
 	proxyURL   string
 	httpClient *http.Client
 	apiLimiter *rate.Limiter
+	cb         *circuitBreaker
 }
 
 // geminiRPM reads GEMINI_RPM from the environment, falling back to defaultGeminiRPM.
@@ -136,6 +192,7 @@ func NewGeminiService() (*GeminiService, error) {
 				Timeout: httpTimeout,
 			},
 			apiLimiter: newAPILimiter(),
+			cb:         newCircuitBreaker(),
 		}, nil
 	}
 
@@ -152,6 +209,7 @@ func NewGeminiService() (*GeminiService, error) {
 			Timeout: httpTimeout,
 		},
 		apiLimiter: newAPILimiter(),
+		cb:         newCircuitBreaker(),
 	}, nil
 }
 
@@ -165,15 +223,34 @@ func NewGeminiService() (*GeminiService, error) {
 // respecting Google's GEMINI_RPM limit across all concurrent sessions.
 // If the context is cancelled while waiting, an error is returned immediately.
 func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*AIResponse, error) {
+	if g.cb != nil && g.cb.isOpen() {
+		return nil, ErrAIUnavailable
+	}
+
 	if g.apiLimiter != nil {
 		if err := g.apiLimiter.Wait(ctx); err != nil {
 			return nil, fmt.Errorf("gemini rate limiter: %w", err)
 		}
 	}
+
+	var (
+		resp *AIResponse
+		err  error
+	)
 	if g.useProxy {
-		return g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext, language)
+		resp, err = g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext, language)
+	} else {
+		resp, err = g.analyzeFrameViaGemini(ctx, frameBase64, conversationContext, language)
 	}
-	return g.analyzeFrameViaGemini(ctx, frameBase64, conversationContext, language)
+
+	if g.cb != nil {
+		if err != nil {
+			g.cb.recordFailure()
+		} else {
+			g.cb.recordSuccess()
+		}
+	}
+	return resp, err
 }
 
 // ── Gemini REST API path ──────────────────────────────────────────────────────
