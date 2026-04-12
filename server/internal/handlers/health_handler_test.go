@@ -20,6 +20,15 @@ type mockDBPinger struct{ err error }
 
 func (m *mockDBPinger) Ping(_ context.Context) error { return m.err }
 
+// mockPoolStatter implements PoolStatter so we can verify pool stats are
+// forwarded to the health response.
+type mockPoolStatter struct {
+	mockDBPinger
+	stats services.DBPoolStats
+}
+
+func (m *mockPoolStatter) PoolStats() services.DBPoolStats { return m.stats }
+
 func newHealthApp(version string, startTime time.Time) (*fiber.App, *WSHandler) {
 	sessionSvc := services.NewSessionService()
 	convSvc := services.NewConversationService(sessionSvc, nil, nil)
@@ -168,5 +177,67 @@ func TestHealthEndpointDBStatusUnavailable(t *testing.T) {
 	}
 	if body.DBStatus != "unavailable" {
 		t.Errorf("db_status: want 'unavailable', got %q", body.DBStatus)
+	}
+}
+
+func TestHealthEndpointDBPoolStatsIncluded(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := NewWSHandler(convSvc, sessionSvc)
+
+	ps := &mockPoolStatter{
+		stats: services.DBPoolStats{
+			TotalConns:    3,
+			IdleConns:     2,
+			AcquiredConns: 1,
+			MaxConns:      10,
+		},
+	}
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/health", NewHealthHandler("0.1.0", time.Now(), ws, ps))
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.DBPool == nil {
+		t.Fatal("expected db_pool to be present when PoolStatter is provided")
+	}
+	if body.DBPool.TotalConns != 3 {
+		t.Errorf("total_conns: want 3, got %d", body.DBPool.TotalConns)
+	}
+	if body.DBPool.MaxConns != 10 {
+		t.Errorf("max_conns: want 10, got %d", body.DBPool.MaxConns)
+	}
+}
+
+func TestHealthEndpointDBPoolStatsAbsentForPlainPinger(t *testing.T) {
+	// A plain DBPinger (no PoolStats method) must NOT include db_pool.
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := NewWSHandler(convSvc, sessionSvc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/health", NewHealthHandler("0.1.0", time.Now(), ws, &mockDBPinger{}))
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body HealthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.DBPool != nil {
+		t.Errorf("expected db_pool to be absent for plain DBPinger, got %+v", body.DBPool)
 	}
 }

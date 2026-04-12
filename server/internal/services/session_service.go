@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Franck1120/physicscopilot/server/internal/metrics"
 	"github.com/google/uuid"
 )
 
@@ -287,17 +288,37 @@ func (s *SessionService) DeleteSession(sessionID string) error {
 	return nil
 }
 
-// CleanupExpiredSessions removes all sessions whose LastActivity is older than maxAge.
+// CleanupExpiredSessions removes all sessions whose LastActivity is older
+// than maxAge from the in-memory store and marks them as 'expired' in Postgres
+// (best-effort; a DB error is logged but does not abort the cleanup).
+// Returns the number of sessions that were cleaned up.
 // Designed to be called periodically in a background goroutine.
-func (s *SessionService) CleanupExpiredSessions(maxAge time.Duration) {
+func (s *SessionService) CleanupExpiredSessions(maxAge time.Duration) int {
 	cutoff := time.Now().Add(-maxAge)
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
+	var expired []string
 	for id, session := range s.sessions {
 		if session.LastActivity.Before(cutoff) {
 			delete(s.sessions, id)
+			expired = append(expired, id)
 		}
 	}
+	s.mu.Unlock()
+
+	if len(expired) == 0 {
+		return 0
+	}
+
+	metrics.SessionsExpiredTotal.Add(float64(len(expired)))
+
+	if s.db != nil {
+		for _, id := range expired {
+			if err := s.db.ExpireSession(context.Background(), id); err != nil {
+				slog.Warn("failed to expire session in DB", "session_id", id, "err", err)
+			}
+		}
+	}
+
+	return len(expired)
 }
