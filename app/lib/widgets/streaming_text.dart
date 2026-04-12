@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../main.dart' show kAccent;
 
+/// Displays incrementally-streamed AI text with a blinking cursor.
+///
+/// Renders [text] as it grows; a [_BlinkingCursor] is appended so the user
+/// can see that more content is still arriving. Replace with a plain [Text]
+/// once streaming is complete.
 class StreamingText extends StatelessWidget {
   const StreamingText({super.key, required this.text});
   final String text;
