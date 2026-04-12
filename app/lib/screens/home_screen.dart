@@ -3,9 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../models/session_record.dart';
 import '../providers/equipment_provider.dart';
+import '../providers/session_history_provider.dart';
 import '../providers/websocket_provider.dart';
+import '../services/api_service.dart' show serverOnlineProvider;
 import '../services/websocket_service.dart';
+import '../utils/extensions.dart';
 import 'history_screen.dart';
 
 
@@ -143,10 +147,51 @@ class _HomeTab extends ConsumerWidget {
               equipmentName: equipment?.name,
               onChangeEquipment: onChangeEquipment,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            const _ServerStatusBanner(),
+            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             const _RecentSessionsSection(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Server Status Banner
+// ---------------------------------------------------------------------------
+
+/// Shows a warning banner when the server is offline.
+///
+/// Returns [SizedBox.shrink] when the server is reachable so it takes no
+/// space in the layout.
+class _ServerStatusBanner extends ConsumerWidget {
+  const _ServerStatusBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(serverOnlineProvider);
+
+    if (isOnline) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A0000),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.redAccent.withAlpha(80)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: const Row(
+        children: [
+          Icon(Icons.warning_amber_outlined, color: Colors.redAccent, size: 16),
+          SizedBox(width: 8),
+          Text(
+            'Server non raggiungibile',
+            style: TextStyle(color: Colors.redAccent, fontSize: 13),
+          ),
+        ],
       ),
     );
   }
@@ -316,15 +361,22 @@ class _EquipmentSection extends StatelessWidget {
 // Recent Sessions Section
 // ---------------------------------------------------------------------------
 
-class _RecentSessionsSection extends StatelessWidget {
+/// Reads the last 3 sessions from [sessionHistoryProvider] and renders them.
+///
+/// Renders [_NoSessionsCard] when the history is empty, or a list of
+/// [_SessionMiniCard] widgets with an optional "Vedi tutte" link otherwise.
+class _RecentSessionsSection extends ConsumerWidget {
   const _RecentSessionsSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessions = ref.watch(sessionHistoryProvider);
+    final recent = sessions.take(3).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
+      children: [
+        const Text(
           'ULTIME SESSIONI',
           style: TextStyle(
             color: kTextMuted,
@@ -333,9 +385,96 @@ class _RecentSessionsSection extends StatelessWidget {
             letterSpacing: 0.8,
           ),
         ),
-        SizedBox(height: 10),
-        _NoSessionsCard(),
+        const SizedBox(height: 10),
+        if (sessions.isEmpty)
+          const _NoSessionsCard()
+        else
+          Column(
+            children: [
+              for (final session in recent)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _SessionMiniCard(session: session),
+                ),
+              if (sessions.length > 3)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.push('/history'),
+                    child: const Text(
+                      'Vedi tutte →',
+                      style: TextStyle(
+                        color: kAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Session Mini Card
+// ---------------------------------------------------------------------------
+
+/// Compact card for a single [SessionRecord] shown in the recent sessions list.
+class _SessionMiniCard extends StatelessWidget {
+  const _SessionMiniCard({required this.session});
+
+  final SessionRecord session;
+
+  @override
+  Widget build(BuildContext context) {
+    final isResolved = session.status == SessionStatus.resolved;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: kBgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kBgCardBorder, width: 1),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Icon(
+            isResolved ? Icons.check_circle_outline : Icons.cancel_outlined,
+            color: isResolved ? kAccent : Colors.redAccent,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.equipmentName.isEmpty
+                      ? 'Sessione'
+                      : session.equipmentName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  session.date.relativeLabel,
+                  style: const TextStyle(color: kTextMuted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            session.duration.formatted,
+            style: const TextStyle(color: kTextMuted, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }
