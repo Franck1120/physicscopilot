@@ -12,6 +12,7 @@ import 'screens/home_screen.dart';
 import 'screens/camera_screen.dart';
 import 'screens/session_screen.dart';
 import 'screens/history_screen.dart';
+import 'screens/settings_screen.dart';
 import 'providers/equipment_provider.dart';
 
 // ---------------------------------------------------------------------------
@@ -148,6 +149,10 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         GoRoute(
           path: '/history',
           pageBuilder: (_, state) => _fadePage(state, const HistoryScreen()),
+        ),
+        GoRoute(
+          path: '/settings',
+          pageBuilder: (_, state) => _fadePage(state, const SettingsScreen()),
         ),
       ],
     );

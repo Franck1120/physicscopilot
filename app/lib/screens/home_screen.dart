@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
 import '../providers/equipment_provider.dart';
 import '../providers/websocket_provider.dart';
@@ -470,20 +471,38 @@ class _ProfileHeader extends StatelessWidget {
 class _ProfileTileList extends StatelessWidget {
   const _ProfileTileList();
 
-  static const List<_ProfileTileData> _tiles = [
-    _ProfileTileData(icon: Icons.settings_outlined, label: 'Impostazioni'),
-    _ProfileTileData(icon: Icons.lock_outline, label: 'Privacy'),
-    _ProfileTileData(icon: Icons.info_outline, label: 'Informazioni app'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: _tiles.map(_buildTile).toList(),
+      children: [
+        _buildTile(
+          context,
+          icon: Icons.settings_outlined,
+          label: 'Impostazioni',
+          onTap: () => context.push('/settings'),
+        ),
+        _buildTile(
+          context,
+          icon: Icons.lock_outline,
+          label: 'Privacy',
+          onTap: null,
+        ),
+        _buildTile(
+          context,
+          icon: Icons.info_outline,
+          label: 'Informazioni app',
+          onTap: null,
+        ),
+      ],
     );
   }
 
-  Widget _buildTile(_ProfileTileData t) {
+  Widget _buildTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -492,27 +511,24 @@ class _ProfileTileList extends StatelessWidget {
         border: Border.all(color: kBgCardBorder, width: 1),
       ),
       child: ListTile(
-        leading: Icon(t.icon, color: kTextMuted),
+        leading: Icon(icon, color: onTap != null ? kAccent : kTextMuted),
         title: Text(
-          t.label,
-          style: const TextStyle(color: Colors.white, fontSize: 15),
+          label,
+          style: TextStyle(
+            color: onTap != null ? Colors.white : Colors.white54,
+            fontSize: 15,
+          ),
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.arrow_forward_ios_rounded,
-          color: kTextMuted,
+          color: onTap != null ? kTextMuted : kTextMuted.withAlpha(80),
           size: 16,
         ),
-        enabled: false,
-        onTap: null,
+        enabled: onTap != null,
+        onTap: onTap,
       ),
     );
   }
-}
-
-class _ProfileTileData {
-  const _ProfileTileData({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
 }
 
 // ---------------------------------------------------------------------------
