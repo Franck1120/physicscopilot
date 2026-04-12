@@ -54,7 +54,7 @@ dependencies:
   # Sharing / export
   share_plus: ^10.0.0
   # Local notifications
-  flutter_local_notifications: ^18.0.0
+  flutter_local_notifications: ^21.0.0
   # Deep links
   app_links: ^6.3.0
   # Fonts
