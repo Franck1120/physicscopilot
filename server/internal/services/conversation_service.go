@@ -27,20 +27,24 @@ type StepInfo struct {
 }
 
 // ConversationService orchestrates frame analysis and text conversations
-// by coordinating SessionService (state) and GeminiService (AI).
+// by coordinating SessionService (state), GeminiService (AI), and an
+// optional RAGService (knowledge-base context enrichment).
 type ConversationService struct {
 	sessions    *SessionService
 	gemini      *GeminiService
+	rag         *RAGService
 	frameHashes map[string]string // sessionID -> hash of last processed frame
 	mu          sync.Mutex
 }
 
 // NewConversationService creates a ConversationService wired to the given
-// session store and Gemini client.
-func NewConversationService(sessions *SessionService, gemini *GeminiService) *ConversationService {
+// session store, Gemini client, and optional knowledge-base service.
+// rag may be nil, in which case KB enrichment is skipped.
+func NewConversationService(sessions *SessionService, gemini *GeminiService, rag *RAGService) *ConversationService {
 	return &ConversationService{
 		sessions:    sessions,
 		gemini:      gemini,
+		rag:         rag,
 		frameHashes: make(map[string]string),
 	}
 }
@@ -73,6 +77,25 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 	if err != nil {
 		c.clearFrameHash(sessionID)
 		return nil, fmt.Errorf("build context: %w", err)
+	}
+
+	// Enrich context with KB matches when RAG is available.
+	// Query with userText; fall back to detected problem if text is empty.
+	if c.rag != nil {
+		query := userText
+		if query == "" {
+			if snap, snapErr := c.sessions.GetSessionSnapshot(sessionID); snapErr == nil {
+				query = snap.ProblemDetected
+			}
+		}
+		if kb := c.rag.QueryKB(query, 3); len(kb) > 0 {
+			kbCtx := c.rag.FormatForPrompt(kb)
+			if conversationCtx != "" {
+				conversationCtx = kbCtx + "\n" + conversationCtx
+			} else {
+				conversationCtx = kbCtx
+			}
+		}
 	}
 
 	// Call Gemini Vision API
@@ -124,6 +147,18 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 	conversationCtx, err := c.sessions.BuildContextForGemini(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("build context: %w", err)
+	}
+
+	// Enrich context with KB matches when RAG is available.
+	if c.rag != nil {
+		if kb := c.rag.QueryKB(userText, 3); len(kb) > 0 {
+			kbCtx := c.rag.FormatForPrompt(kb)
+			if conversationCtx != "" {
+				conversationCtx = kbCtx + "\n" + conversationCtx
+			} else {
+				conversationCtx = kbCtx
+			}
+		}
 	}
 
 	response, err := c.gemini.AnalyzeFrame(ctx, "", conversationCtx)

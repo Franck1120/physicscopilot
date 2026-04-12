@@ -39,7 +39,15 @@ func main() {
 		slog.Error("Gemini service init failed", "err", err)
 		os.Exit(1)
 	}
-	convSvc := services.NewConversationService(sessionSvc, geminiSvc)
+	ragSvc, err := services.NewRAGService()
+	if err != nil {
+		slog.Error("KB init failed", "err", err)
+		os.Exit(1)
+	}
+	if !ragSvc.Loaded() {
+		slog.Warn("knowledge base not loaded — KB_PATH absent or file missing; running without KB context")
+	}
+	convSvc := services.NewConversationService(sessionSvc, geminiSvc, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 
 	// Background cleanup of expired sessions every 5 minutes

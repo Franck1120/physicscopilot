@@ -45,7 +45,7 @@ func setupConversationTest(t *testing.T, structuredJSON string) (*ConversationSe
 	}
 
 	gemini := newTestGeminiService(server.URL)
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 
 	return svc, session.SessionID, server.Close
 }
@@ -54,7 +54,7 @@ func TestNewConversationService(t *testing.T) {
 	sessions := NewSessionService()
 	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
 
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 	if svc == nil {
 		t.Fatal("expected non-nil ConversationService")
 	}
@@ -273,7 +273,7 @@ func TestGetSessionStep(t *testing.T) {
 	_ = sessions.UpdateStep(session.SessionID, 5, 12)
 
 	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 
 	step, err := svc.GetSessionStep(session.SessionID)
 	if err != nil {
@@ -290,7 +290,7 @@ func TestGetSessionStep(t *testing.T) {
 func TestGetSessionStepNonexistentSession(t *testing.T) {
 	sessions := NewSessionService()
 	gemini := &GeminiService{apiKey: "k", baseURL: "http://test", httpClient: &http.Client{}}
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 
 	_, err := svc.GetSessionStep("nonexistent")
 	if err == nil {
@@ -339,7 +339,7 @@ func TestProcessFrameGeminiError(t *testing.T) {
 	sessions := NewSessionService()
 	session, _ := sessions.CreateSession("Creality", "Ender 3")
 	gemini := newTestGeminiService(server.URL)
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 
 	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "")
 	if err == nil {
@@ -372,7 +372,7 @@ func TestProcessFrameClearsHashOnGeminiError(t *testing.T) {
 	sessions := NewSessionService()
 	session, _ := sessions.CreateSession("Creality", "Ender 3")
 	gemini := newTestGeminiService(server.URL)
-	svc := NewConversationService(sessions, gemini)
+	svc := NewConversationService(sessions, gemini, nil)
 
 	// First call with "frame" fails -- hash should be cleared
 	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "")
