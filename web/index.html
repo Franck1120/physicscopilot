@@ -499,6 +499,56 @@
       line-height: 1.5;
     }
 
+    /* ── Use cases ───────────────────────────────────────────── */
+    .use-cases {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 0;
+    }
+
+    .use-cases-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .use-case-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .use-case-card:hover {
+      border-color: var(--accent-border);
+      background: var(--bg-card-hover);
+    }
+
+    .use-case-emoji {
+      font-size: 32px;
+      line-height: 1;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .use-case-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+    }
+
+    .use-case-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 960px) { .use-cases-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px)  { .use-cases-grid { grid-template-columns: 1fr; } }
+
     /* ── How it works ────────────────────────────────────────── */
     .how-section { background: var(--bg-2); }
 
@@ -1126,18 +1176,18 @@
 
     <div class="hero-badge reveal">
       <span class="hero-badge-dot"></span>
-      Real-time AI · Multimodal · YC Application 2026
+      Real-time AI · Multimodal · Physical-world guidance
     </div>
 
     <h1 class="reveal reveal-delay-1">
-      AI-Powered<br>
-      <span class="line-accent">Repair Guidance</span>
+      AI Guidance for<br>
+      <span class="line-accent">Physical Work</span>
     </h1>
 
     <p class="hero-subtitle reveal reveal-delay-2">
-      The <strong>$400B repair industry</strong> runs on guesswork and outdated manuals.
-      PhysicsCopilot gives every technician a multimodal AI copilot —
-      point your camera, get real-time voice guidance, fix it right the first time.
+      Point your camera at any machine. PhysicsCopilot analyzes what it sees in real time
+      and walks you through <strong>repairs, maintenance, assembly, and inspections</strong> —
+      step by step, hands-free.
     </p>
 
     <div class="hero-cta-group reveal reveal-delay-3">
@@ -1158,12 +1208,12 @@
         <div class="stat-label">Global repair market</div>
       </div>
       <div class="stat-item">
-        <div class="stat-number blue">60%</div>
-        <div class="stat-label">First-time fix rate (avg)</div>
+        <div class="stat-number blue">5 fps</div>
+        <div class="stat-label">Max frame rate over WebSocket</div>
       </div>
       <div class="stat-item">
         <div class="stat-number white">&lt;2s</div>
-        <div class="stat-label">AI response latency</div>
+        <div class="stat-label">Gemini inference latency</div>
       </div>
     </div>
 
@@ -1208,6 +1258,38 @@
   </div>
 </div>
 
+<!-- ── Use cases ─────────────────────────────────────────────────── -->
+<div class="use-cases">
+  <div class="container">
+    <div class="section-header centered reveal" style="margin-bottom:40px">
+      <p class="section-eyebrow">Use Cases</p>
+      <h2 class="section-title">Any physical task. Any machine.</h2>
+    </div>
+    <div class="use-cases-grid">
+      <div class="use-case-card reveal reveal-delay-1">
+        <span class="use-case-emoji">🔧</span>
+        <h3>Repairs</h3>
+        <p>Appliances, electronics, plumbing, mechanical failures — diagnose and fix without calling a technician.</p>
+      </div>
+      <div class="use-case-card reveal reveal-delay-2">
+        <span class="use-case-emoji">🛠️</span>
+        <h3>Maintenance</h3>
+        <p>HVAC, industrial equipment, automotive — scheduled and corrective maintenance guided step by step.</p>
+      </div>
+      <div class="use-case-card reveal reveal-delay-3">
+        <span class="use-case-emoji">🔩</span>
+        <h3>Assembly</h3>
+        <p>Furniture, kit builds, component installations — the AI checks each step and flags mistakes before they compound.</p>
+      </div>
+      <div class="use-case-card reveal reveal-delay-4">
+        <span class="use-case-emoji">🔍</span>
+        <h3>Inspections</h3>
+        <p>Quality control, safety audits, visual reviews — systematic, consistent, and fully documented.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── How it works ──────────────────────────────────────────────── -->
 <section id="how-it-works" class="how-section">
   <div class="container">
@@ -1220,20 +1302,22 @@
       <div class="step reveal reveal-delay-1">
         <div class="step-num">Step 01</div>
         <span class="step-emoji">📱</span>
-        <h3>Point your camera</h3>
+        <h3>Point</h3>
         <p>Open PhysicsCopilot and aim your phone at the machine. The live video stream starts instantly — no photo uploads, no typing.</p>
+        <div class="step-connector">→</div>
       </div>
       <div class="step reveal reveal-delay-2">
         <div class="step-num">Step 02</div>
         <span class="step-emoji">🧠</span>
-        <h3>AI sees &amp; diagnoses</h3>
-        <p>Multimodal AI analyzes the stream in real time — identifies faults, worn parts, and misconfigurations, then retrieves the exact repair procedure.</p>
+        <h3>Analyze</h3>
+        <p>Multimodal AI analyzes the live stream in real time — identifies faults, worn parts, and misalignments, highlighting them directly on your camera feed.</p>
+        <div class="step-connector">→</div>
       </div>
       <div class="step reveal reveal-delay-3">
         <div class="step-num">Step 03</div>
         <span class="step-emoji">🔧</span>
-        <h3>Follow voice guidance</h3>
-        <p>Every step is read aloud. Confirm hands-free. The AI watches your progress, corrects mistakes, and moves you forward when ready.</p>
+        <h3>Guide</h3>
+        <p>Every step is read aloud. Keep your eyes on the work and your hands free. The AI tracks progress and moves you forward when ready.</p>
       </div>
     </div>
   </div>
@@ -1245,38 +1329,38 @@
     <div class="section-header reveal">
       <p class="section-eyebrow">Features</p>
       <h2 class="section-title">Built for hands-on work</h2>
-      <p class="section-desc">No pausing to type. No reading screens. Just point and fix — the AI handles the rest.</p>
+      <p class="section-desc">No pausing to type. No reading screens. Just point — the AI handles the rest.</p>
     </div>
     <div class="features-grid">
       <div class="feature-card reveal reveal-delay-1">
         <div class="feature-icon">📷</div>
         <h3>Real-time Vision</h3>
-        <p>Streams your camera to a multimodal AI that detects faults, worn parts, and misconfigurations instantly — no photo uploads, no lag.</p>
+        <p>Streams your camera to Gemini 2.5 Flash which detects faults, worn parts, and misalignments in real time — no photo uploads, no lag.</p>
       </div>
       <div class="feature-card reveal reveal-delay-2">
         <div class="feature-icon">🎙️</div>
         <h3>Hands-free Voice</h3>
-        <p>Every step read aloud. Confirm progress with your voice. Keep your eyes on the machine and your hands on the work.</p>
+        <p>Every step read aloud via TTS. Keep your eyes on the machine and your hands on the work — no screen interaction needed.</p>
       </div>
       <div class="feature-card reveal reveal-delay-3">
         <div class="feature-icon">✅</div>
         <h3>Gated Step Flow</h3>
-        <p>Complex repairs become simple checklists. Each step is gated on the previous — you can't skip ahead and miss something critical.</p>
+        <p>Complex tasks become simple checklists. Each step is gated — you can't skip ahead and miss something critical.</p>
       </div>
       <div class="feature-card reveal reveal-delay-1">
-        <div class="feature-icon">🗄️</div>
-        <h3>Knowledge Base</h3>
-        <p>Upload manuals, schematics, and service bulletins. The AI retrieves the exact procedure for each machine automatically.</p>
+        <div class="feature-icon">🗺️</div>
+        <h3>Visual Overlays</h3>
+        <p>Bounding boxes and directional arrows drawn directly on your camera feed — the AI points at exactly what to look at and where to act.</p>
       </div>
       <div class="feature-card reveal reveal-delay-2">
-        <div class="feature-icon">📊</div>
-        <h3>Session History</h3>
-        <p>Every repair logged automatically. Review what was done, replay the AI guidance, and build institutional knowledge over time.</p>
+        <div class="feature-icon">🏷️</div>
+        <h3>Context Profiles</h3>
+        <p>Select your device type before starting to get domain-specific guidance. Custom device names work too — no setup required.</p>
       </div>
       <div class="feature-card reveal reveal-delay-3">
         <div class="feature-icon">🔌</div>
-        <h3>Works Offline</h3>
-        <p>Core guidance works without internet. Critical repairs shouldn't depend on connectivity — field work happens everywhere.</p>
+        <h3>LAN-First</h3>
+        <p>The server runs on your local network. No cloud dependency for core guidance — workshops, factories, and basements all work fine.</p>
       </div>
     </div>
   </div>
