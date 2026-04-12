@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 /// Status of a session: active, completed, or abandoned.
 enum SessionStatus {
   active,
