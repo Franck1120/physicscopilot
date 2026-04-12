@@ -168,6 +168,87 @@ func BenchmarkListSessionsFiltered(b *testing.B) {
 	}
 }
 
+// BenchmarkStatsHandler measures the throughput of GET /api/stats with 10
+// pre-created sessions so the handler iterates a non-trivial list.
+func BenchmarkStatsHandler(b *testing.B) {
+	svc := services.NewSessionService()
+	sh := NewStatsHandler(svc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/stats", sh.GetStats)
+
+	b.StopTimer()
+	for i := 0; i < 10; i++ {
+		if _, err := svc.CreateSession("Prusa", "MK4", "", ""); err != nil {
+			b.Fatalf("CreateSession: %v", err)
+		}
+	}
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
+// BenchmarkVersionHandler measures the throughput of GET /version. The handler
+// serves a static JSON response baked in at startup, so the benchmark primarily
+// measures Fiber routing and serialization overhead.
+func BenchmarkVersionHandler(b *testing.B) {
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/version", VersionHandler("0.1.0", "2026-04-12T00:00:00Z", "go1.25"))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/version", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
+// BenchmarkGetSessionSteps measures GET /api/sessions/:id/steps with a session
+// that has 3 of 5 steps completed. Setup is excluded via b.StopTimer / b.StartTimer.
+func BenchmarkGetSessionSteps(b *testing.B) {
+	svc := services.NewSessionService()
+	sh := NewSessionHandler(svc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app.Get("/api/sessions/:id/steps", sh.GetSessionSteps)
+
+	b.StopTimer()
+	session, err := svc.CreateSession("Bambu", "X1C", "", "")
+	if err != nil {
+		b.Fatalf("CreateSession: %v", err)
+	}
+	if err := svc.UpdateStep(session.SessionID, 3, 5); err != nil {
+		b.Fatalf("UpdateStep: %v", err)
+	}
+	path := "/api/sessions/" + session.SessionID + "/steps"
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
