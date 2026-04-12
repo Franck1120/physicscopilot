@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
+
+const maxDeviceFieldLen = 100
 
 // SessionHandler exposes REST endpoints for session lifecycle management.
 // Sessions are stored in-memory via SessionService; they are not persisted
@@ -66,11 +69,15 @@ func toResponse(s services.SessionState) sessionResponse {
 //
 // Body (JSON): {"device_brand": "Prusa", "device_model": "MK4"}
 // Response 201: full SessionState JSON.
-// Response 400: malformed body.
+// Response 400: malformed body or invalid field values.
 func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 	var req createSessionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body: "+err.Error())
+	}
+
+	if err := validateSessionRequest(req); err != nil {
+		return err
 	}
 
 	session, err := h.sessions.CreateSession(req.DeviceBrand, req.DeviceModel)
@@ -79,6 +86,25 @@ func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(toResponse(*session))
+}
+
+// validateSessionRequest enforces input constraints on device fields:
+//   - max length: 100 chars each
+//   - no HTML/script injection: reject values containing '<' or '>'
+func validateSessionRequest(req createSessionRequest) error {
+	if len(req.DeviceBrand) > maxDeviceFieldLen {
+		return fiber.NewError(fiber.StatusBadRequest,
+			"device_brand exceeds maximum length of 100 characters")
+	}
+	if len(req.DeviceModel) > maxDeviceFieldLen {
+		return fiber.NewError(fiber.StatusBadRequest,
+			"device_model exceeds maximum length of 100 characters")
+	}
+	if strings.ContainsAny(req.DeviceBrand, "<>") || strings.ContainsAny(req.DeviceModel, "<>") {
+		return fiber.NewError(fiber.StatusBadRequest,
+			"device fields must not contain HTML characters")
+	}
+	return nil
 }
 
 // ListSessions handles GET /api/sessions.

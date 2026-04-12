@@ -30,9 +30,12 @@ var startTime = time.Now()
 
 func main() {
 	applogger.Init()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	// Initialize services
+	// ── Services ────────────────────────────────────────────────────────────
 	sessionSvc := services.NewSessionService()
+
 	geminiSvc, err := services.NewGeminiService()
 	if err != nil {
 		slog.Error("Gemini service init failed", "err", err)
@@ -46,6 +49,22 @@ func main() {
 	if !ragSvc.Loaded() {
 		slog.Warn("knowledge base not loaded — KB_PATH absent or file missing; running without KB context")
 	}
+
+	// ── Optional Postgres backend ────────────────────────────────────────────
+	var dbSvc *services.DBService
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		svc, err := services.NewDBService(ctx, dbURL)
+		if err != nil {
+			slog.Warn("DB init failed — running without persistence", "err", err)
+		} else {
+			dbSvc = svc
+			sessionSvc.SetDB(dbSvc)
+			if err := sessionSvc.HydrateFromDB(ctx); err != nil {
+				slog.Warn("failed to hydrate sessions from DB", "err", err)
+			}
+		}
+	}
+
 	convSvc := services.NewConversationService(sessionSvc, geminiSvc, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
@@ -59,111 +78,13 @@ func main() {
 		}
 	}()
 
-	app := fiber.New(fiber.Config{
-		AppName: "PhysicsCopilot Server v" + version,
-		// JSON error responses for all errors (including panics after recover)
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-			if e, ok := err.(*fiber.Error); ok {
-				code = e.Code
-			}
-			slog.Error("request error", "path", c.Path(), "method", c.Method(), "status", code, "err", err)
-			return c.Status(code).JSON(fiber.Map{"error": err.Error()})
-		},
-	})
-
-	// Recovery — catch panics, log with slog, return JSON 500
-	app.Use(recover.New(recover.Config{
-		EnableStackTrace: true,
-		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
-			slog.Error("panic recovered",
-				"error", fmt.Sprintf("%v", e),
-				"path", c.Path(),
-				"method", c.Method(),
-			)
-		},
-	}))
-
-	// CORS — origins controlled by ALLOWED_ORIGINS env var.
-	// Development default: "*" (permissive).
-	// Production: set ALLOWED_ORIGINS to a comma-separated list of exact origins,
-	// e.g. "https://yourapp.com,https://www.yourapp.com".
-	// If ALLOWED_ORIGINS is unset in production the empty string is forwarded to
-	// the Fiber CORS middleware, which will block all cross-origin requests.
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
-	if allowedOrigins == "" {
-		if os.Getenv("APP_ENV") == "production" {
-			slog.Warn("ALLOWED_ORIGINS is not set — cross-origin requests will be blocked")
-		} else {
-			allowedOrigins = "*"
-		}
-	}
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: allowedOrigins,
-		AllowMethods: "GET,POST,DELETE,OPTIONS",
-		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
-	}))
-
-	// Structured request logger — replaces the default Fiber text logger.
-	// Emits JSON in production (APP_ENV=production), text otherwise.
-	// Each request gets a random request_id for correlation.
-	app.Use(middleware.StructuredLogger())
-
-	// Prometheus metrics middleware — records request count and latency for
-	// every non-/metrics route (recording /metrics itself would be noisy).
-	app.Use(func(c *fiber.Ctx) error {
-		if c.Path() == "/metrics" {
-			return c.Next()
-		}
-		start := time.Now()
-		err := c.Next()
-		status := strconv.Itoa(c.Response().StatusCode())
-		dur := time.Since(start).Seconds()
-		metrics.HttpRequestsTotal.WithLabelValues(c.Method(), c.Path(), status).Inc()
-		metrics.HttpRequestDuration.WithLabelValues(c.Method(), c.Path()).Observe(dur)
-		return err
-	})
-
-	// REST API rate limiting — 60 req/min per IP
-	apiLimiter := middleware.NewIPRateLimiter()
-	app.Use("/health", apiLimiter.Middleware())
-
-	// Health check — version, uptime, active connections, memory
-	app.Get("/health", handlers.NewHealthHandler(version, startTime, wsHandler))
-
-	// Session REST API — rate-limited + JWT auth (no-op when SUPABASE_JWT_SECRET is unset).
-	// In production the client must send: Authorization: Bearer <supabase-jwt>
-	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
-	api.Post("/sessions", sessionHandler.CreateSession)
-	api.Get("/sessions", sessionHandler.ListSessions)
-	api.Get("/sessions/:id", sessionHandler.GetSession)
-	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
-
-	// Prometheus metrics endpoint — protected by HTTP Basic Auth.
-	// Credentials: user=admin, password=$METRICS_PASSWORD.
-	// Returns 503 if METRICS_PASSWORD is not set (endpoint disabled).
-	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
-
-	// WebSocket: JWT auth → upgrade guard → handler
-	// WSAuthMiddleware is a no-op when SUPABASE_JWT_SECRET is unset (dev mode).
-	app.Use("/ws", handlers.WSAuthMiddleware(), func(c *fiber.Ctx) error {
-		if websocket.IsWebSocketUpgrade(c) {
-			return c.Next()
-		}
-		return fiber.ErrUpgradeRequired
-	})
-
-	// WebSocket endpoint — real-time repair guidance session
-	app.Get("/ws", websocket.New(wsHandler.Handle))
+	// ── HTTP app ─────────────────────────────────────────────────────────────
+	app := newFiberApp(version, sessionHandler, wsHandler, dbSvc)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	// Graceful shutdown on SIGINT / SIGTERM
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	go func() {
 		slog.Info("server starting", "port", port, "version", version)
@@ -183,5 +104,93 @@ func main() {
 		slog.Error("shutdown error", "err", err)
 		os.Exit(1)
 	}
+	if dbSvc != nil {
+		dbSvc.Close()
+	}
 	slog.Info("server stopped cleanly")
+}
+
+// newFiberApp builds and returns the configured Fiber application.
+// Extracted from main() so tests can construct the app without starting a
+// listener or requiring env vars beyond the test's control.
+func newFiberApp(
+	ver string,
+	sessionHandler *handlers.SessionHandler,
+	wsHandler *handlers.WSHandler,
+	db handlers.DBPinger, // nil when DATABASE_URL not set
+) *fiber.App {
+	app := fiber.New(fiber.Config{
+		AppName: "PhysicsCopilot Server v" + ver,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			slog.Error("request error", "path", c.Path(), "method", c.Method(), "status", code, "err", err)
+			return c.Status(code).JSON(fiber.Map{"error": err.Error()})
+		},
+	})
+
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+			slog.Error("panic recovered",
+				"error", fmt.Sprintf("%v", e),
+				"path", c.Path(),
+				"method", c.Method(),
+			)
+		},
+	}))
+
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		if os.Getenv("APP_ENV") == "production" {
+			slog.Warn("ALLOWED_ORIGINS is not set — cross-origin requests will be blocked")
+		} else {
+			allowedOrigins = "*"
+		}
+	}
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: allowedOrigins,
+		AllowMethods: "GET,POST,DELETE,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
+	}))
+
+	app.Use(middleware.StructuredLogger())
+
+	app.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/metrics" {
+			return c.Next()
+		}
+		start := time.Now()
+		err := c.Next()
+		status := strconv.Itoa(c.Response().StatusCode())
+		dur := time.Since(start).Seconds()
+		metrics.HttpRequestsTotal.WithLabelValues(c.Method(), c.Path(), status).Inc()
+		metrics.HttpRequestDuration.WithLabelValues(c.Method(), c.Path()).Observe(dur)
+		return err
+	})
+
+	apiLimiter := middleware.NewIPRateLimiter()
+	app.Use("/health", apiLimiter.Middleware())
+
+	app.Get("/health", handlers.NewHealthHandler(ver, startTime, wsHandler, db))
+
+	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
+	api.Post("/sessions", sessionHandler.CreateSession)
+	api.Get("/sessions", sessionHandler.ListSessions)
+	api.Get("/sessions/:id", sessionHandler.GetSession)
+	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
+
+	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
+
+	app.Use("/ws", handlers.WSAuthMiddleware(), func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	app.Get("/ws", websocket.New(wsHandler.Handle))
+
+	return app
 }
