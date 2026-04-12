@@ -10,6 +10,7 @@ import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMut
 import '../models/session_record.dart';
 import '../providers/camera_provider.dart';
 import '../providers/equipment_provider.dart';
+import '../providers/prefs_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
@@ -38,6 +39,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Duration _elapsed = Duration.zero;
   Timer? _ticker;
   String? _firstUserMessage;
+  bool _showTutorial = false;
+
+  static const _kTutorialKey = 'session_tutorial_shown';
 
   @override
   void initState() {
@@ -47,6 +51,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (mounted) {
         setState(() => _elapsed = DateTime.now().difference(_sessionStart));
       }
+    });
+    // Check after first frame so we don't call setState during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final shown =
+          ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false;
+      if (!shown) setState(() => _showTutorial = true);
     });
   }
 
@@ -160,6 +171,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     } catch (_) {}
   }
 
+  void _dismissTutorial() {
+    setState(() => _showTutorial = false);
+    // Fire-and-forget; we don't need to await the write.
+    ref.read(sharedPrefsProvider).setBool(_kTutorialKey, true);
+  }
+
   void _resetSession() {
     HapticFeedback.mediumImpact();
     ref.read(sessionProvider.notifier).reset();
@@ -227,28 +244,34 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          wsStatus.when(
-            data: (s) => s != ConnectionStatus.connected
-                ? _ConnectionBanner(status: s)
-                : const SizedBox.shrink(),
-            loading: () =>
-                const _ConnectionBanner(status: ConnectionStatus.connecting),
-            error: (_, __) =>
-                const _ConnectionBanner(status: ConnectionStatus.disconnected),
+          Column(
+            children: [
+              wsStatus.when(
+                data: (s) => s != ConnectionStatus.connected
+                    ? _ConnectionBanner(status: s)
+                    : const SizedBox.shrink(),
+                loading: () => const _ConnectionBanner(
+                    status: ConnectionStatus.connecting),
+                error: (_, __) => const _ConnectionBanner(
+                    status: ConnectionStatus.disconnected),
+              ),
+              Expanded(
+                flex: 6,
+                child: _CameraSection(onCapture: _captureAndSend),
+              ),
+              Expanded(
+                flex: 4,
+                child: _GuidancePanel(
+                  textController: _textController,
+                  onSendText: _sendText,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            flex: 6,
-            child: _CameraSection(onCapture: _captureAndSend),
-          ),
-          Expanded(
-            flex: 4,
-            child: _GuidancePanel(
-              textController: _textController,
-              onSendText: _sendText,
-            ),
-          ),
+          if (_showTutorial)
+            _TutorialOverlay(onDismiss: _dismissTutorial),
         ],
       ),
     );
@@ -732,6 +755,131 @@ class _TextInputRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Tutorial overlay ──────────────────────────────────────────────────────────
+
+/// Shown once on the first use of the session screen.
+/// Tapping anywhere dismisses it and marks it as seen in SharedPreferences.
+class _TutorialOverlay extends StatefulWidget {
+  const _TutorialOverlay({required this.onDismiss});
+
+  final VoidCallback onDismiss;
+
+  @override
+  State<_TutorialOverlay> createState() => _TutorialOverlayState();
+}
+
+class _TutorialOverlayState extends State<_TutorialOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+  late final Animation<double> _pulseScale;
+  late final Animation<double> _arrowBounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulseScale = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+    );
+    _arrowBounce = Tween<double>(begin: 0, end: 8).animate(
+      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    // Camera section occupies the top ~60 % of the body.
+    // The capture FAB is near the bottom-right of that section.
+    final fabAreaTop = size.height * 0.55;
+
+    return GestureDetector(
+      onTap: widget.onDismiss,
+      child: Container(
+        color: Colors.black.withAlpha(160),
+        width: double.infinity,
+        height: double.infinity,
+        child: Stack(
+          children: [
+            // Hint badge + bouncing arrow anchored near the capture FAB
+            Positioned(
+              top: fabAreaTop - 110,
+              right: 20,
+              child: AnimatedBuilder(
+                animation: _pulse,
+                builder: (_, __) {
+                  return Transform.translate(
+                    offset: Offset(0, -_arrowBounce.value),
+                    child: ScaleTransition(
+                      scale: _pulseScale,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: kAccent,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: kAccent.withAlpha(100),
+                                  blurRadius: 16,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Tocca qui per analizzare',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Icon(Icons.arrow_downward_rounded,
+                              color: kAccent, size: 28),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Dismiss hint
+            Positioned(
+              bottom: size.height * 0.42,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'Tocca ovunque per chiudere',
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(140),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
