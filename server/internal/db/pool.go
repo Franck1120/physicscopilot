@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package db provides PostgreSQL connectivity primitives for the
 // PhysicsCopilot server. It exposes a connection-pool constructor and
 // repository types for sessions and messages.
