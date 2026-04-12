@@ -1,0 +1,69 @@
+# .gitattributes — normalize line endings and mark binary files.
+
+# Default: normalize text files to LF
+* text=auto eol=lf
+
+# Go source
+*.go    text eol=lf diff=golang
+
+# Dart / Flutter
+*.dart  text eol=lf
+
+# Shell scripts
+*.sh    text eol=lf
+
+# Web
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+
+# Data / config
+*.json  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.toml  text eol=lf
+*.env   text eol=lf
+*.sql   text eol=lf
+
+# Docs
+*.md    text eol=lf
+*.txt   text eol=lf
+
+# Makefile MUST use tabs
+Makefile text eol=lf
+
+# ── Binary files (no diff, no merge) ─────────────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.svg   text eol=lf
+*.ttf   binary
+*.woff  binary
+*.woff2 binary
+*.pdf   binary
+*.zip   binary
+*.tar   binary
+*.gz    binary
+
+# Flutter/Android build artifacts (never merge)
+*.apk   binary
+*.aab   binary
+*.ipa   binary
+*.dex   binary
+*.class binary
+*.jar   binary
+
+# Go binary
+*.exe   binary
+
+# Linguist overrides (GitHub language statistics)
+app/android/**  linguist-vendored
+app/ios/**      linguist-vendored
+app/linux/**    linguist-vendored
+app/macos/**    linguist-vendored
+app/windows/**  linguist-vendored
+web/**          linguist-vendored
