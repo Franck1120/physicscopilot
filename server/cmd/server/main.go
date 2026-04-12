@@ -1,3 +1,6 @@
+// Package main is the entry point for the PhysicsCopilot server.
+// It wires together all services, configures the Fiber HTTP application,
+// and manages the process lifecycle including graceful shutdown.
 package main
 
 import (
