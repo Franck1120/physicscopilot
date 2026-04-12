@@ -9,6 +9,8 @@
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Franck1120/physicscopilot/server)](https://goreportcard.com/report/github.com/Franck1120/physicscopilot/server)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://ghcr.io/franck1120/physicscopilot)
 
 **Point your phone at any machine. Get step-by-step guidance in real time.**
 
