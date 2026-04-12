@@ -1,10 +1,13 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/step_progress.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-/// Immutable state for the multi-step guided procedure.
+/// ProcedureState - immutable state for the multi-step guided procedure.
 class ProcedureState {
   final List<StepInfo> steps;
 
