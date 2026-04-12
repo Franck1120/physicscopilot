@@ -516,27 +516,49 @@ class _NoSessionsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
       decoration: BoxDecoration(
         color: kBgCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBgCardBorder, width: 1),
       ),
-      child: const Column(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.history_outlined, color: kTextMuted, size: 32),
-          SizedBox(height: 10),
-          Text(
-            'Nessuna sessione recente',
+          // Illustrazione: cerchio con icona science
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: kAccent.withAlpha(16),
+              border: Border.all(color: kAccent.withAlpha(50), width: 1.5),
+            ),
+            child: const Icon(
+              Icons.science_rounded,
+              color: kAccent,
+              size: 44,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Pronto per iniziare?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Avvia la tua prima sessione\ne lascia che l\'AI ti guidi nella diagnosi.',
             style: TextStyle(
               color: kTextMuted,
               fontSize: 13,
+              height: 1.5,
             ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'Le tue sessioni di diagnosi appariranno qui.',
-            style: TextStyle(color: kTextMuted, fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],
