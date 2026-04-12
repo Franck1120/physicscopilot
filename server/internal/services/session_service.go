@@ -194,7 +194,7 @@ func (s *SessionService) AddMessage(sessionID, role, content string, hasImage bo
 	session.ConversationHistory = append(session.ConversationHistory, msg)
 
 	// Trim to rolling window
-	if len(session.ConversationHistory) > maxConversationHistory {
+	if maxConversationHistory > 0 && len(session.ConversationHistory) > maxConversationHistory {
 		session.ConversationHistory = session.ConversationHistory[len(session.ConversationHistory)-maxConversationHistory:]
 	}
 
