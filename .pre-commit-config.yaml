@@ -1,0 +1,40 @@
+repos:
+  # ── General file hygiene ───────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # ── Go (server/) ───────────────────────────────────────────────────────────
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        files: ^server/
+      - id: go-vet
+        files: ^server/
+      - id: golangci-lint
+        files: ^server/
+
+  # ── Flutter / Dart (app/) ──────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: flutter-format
+        name: flutter format
+        entry: dart format --set-exit-if-changed
+        language: system
+        files: ^app/.*\.dart$
+        types: [file]
+
+      - id: flutter-analyze
+        name: flutter analyze
+        entry: bash -c 'cd app && flutter analyze --fatal-infos'
+        language: system
+        files: ^app/.*\.dart$
+        pass_filenames: false
