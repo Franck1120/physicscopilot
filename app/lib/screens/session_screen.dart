@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../services/camera_service.dart' show FrameQuality;
 import '../models/session_record.dart';
 import '../providers/camera_provider.dart';
 import '../providers/equipment_provider.dart';
@@ -319,36 +320,127 @@ class _ConnectionBanner extends StatelessWidget {
   }
 }
 
-// ── Camera section ──────────────────────────────────────────────────────────
+// ── Camera section — flash, zoom, tap-focus, quality badge ──────────────────
 
-class _CameraSection extends ConsumerWidget {
+class _CameraSection extends ConsumerStatefulWidget {
   const _CameraSection({required this.onCapture});
   final VoidCallback onCapture;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CameraSection> createState() => _CameraSectionState();
+}
+
+class _CameraSectionState extends ConsumerState<_CameraSection> {
+  bool _torchOn = false;
+  double _currentZoom = 1.0;
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _baseZoom = 1.0;
+  Offset? _focusPoint; // screen-space position for the focus ring
+  FrameQuality _quality = FrameQuality.ok;
+  StreamSubscription<FrameQuality>? _qualitySub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setup());
+  }
+
+  Future<void> _setup() async {
+    final service = ref.read(cameraServiceProvider);
+    _qualitySub = service.quality.listen((q) {
+      if (mounted) setState(() => _quality = q);
+    });
+    final controller = service.controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    try {
+      final min = await controller.getMinZoomLevel();
+      final max = await controller.getMaxZoomLevel();
+      if (mounted) setState(() { _minZoom = min; _maxZoom = max; });
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _qualitySub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _toggleTorch() async {
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    try {
+      await controller.setFlashMode(
+        _torchOn ? FlashMode.off : FlashMode.torch,
+      );
+      if (mounted) setState(() => _torchOn = !_torchOn);
+      HapticFeedback.selectionClick();
+    } catch (_) {}
+  }
+
+  void _onScaleStart(ScaleStartDetails _) => _baseZoom = _currentZoom;
+
+  Future<void> _onScaleUpdate(ScaleUpdateDetails details) async {
+    if (details.pointerCount < 2) return; // only pinch, not single-finger pan
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    final target = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
+    try {
+      await controller.setZoomLevel(target);
+      if (mounted) setState(() => _currentZoom = target);
+    } catch (_) {}
+  }
+
+  Future<void> _onTapUp(TapUpDetails details, BoxConstraints box) async {
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    final norm = Offset(
+      details.localPosition.dx / box.maxWidth,
+      details.localPosition.dy / box.maxHeight,
+    );
+    try {
+      await controller.setFocusPoint(norm);
+      await controller.setExposurePoint(norm);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _focusPoint = details.localPosition);
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _focusPoint = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cameraInit = ref.watch(cameraInitProvider);
     final cameraService = ref.watch(cameraServiceProvider);
 
     return Stack(
       fit: StackFit.expand,
       children: [
+        // ── Camera preview with gestures ──────────────────────────────────
         cameraInit.when(
           data: (_) {
             final controller = cameraService.controller;
             if (controller == null || !controller.value.isInitialized) {
               return const _CameraPlaceholder();
             }
-            return ClipRect(
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: controller.value.previewSize?.height ?? 1,
-                    height: controller.value.previewSize?.width ?? 1,
-                    child: CameraPreview(controller),
+            return LayoutBuilder(
+              builder: (context, constraints) => GestureDetector(
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onTapUp: (d) => _onTapUp(d, constraints),
+                child: ClipRect(
+                  child: OverflowBox(
+                    maxWidth: double.infinity,
+                    maxHeight: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: controller.value.previewSize?.height ?? 1,
+                        height: controller.value.previewSize?.width ?? 1,
+                        child: CameraPreview(controller),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -357,6 +449,58 @@ class _CameraSection extends ConsumerWidget {
           loading: () => const _CameraPlaceholder(),
           error: (_, __) => const _CameraError(),
         ),
+
+        // ── Focus ring ────────────────────────────────────────────────────
+        if (_focusPoint != null)
+          Positioned(
+            left: _focusPoint!.dx - 28,
+            top: _focusPoint!.dy - 28,
+            child: const _FocusRing(),
+          ),
+
+        // ── Flash toggle ──────────────────────────────────────────────────
+        Positioned(
+          top: 12,
+          left: 12,
+          child: _TorchButton(isOn: _torchOn, onTap: _toggleTorch),
+        ),
+
+        // ── Frame quality badge ───────────────────────────────────────────
+        if (_quality != FrameQuality.ok)
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(child: _QualityBadge(quality: _quality)),
+          ),
+
+        // ── Zoom level indicator ──────────────────────────────────────────
+        if (_currentZoom > 1.05)
+          Positioned(
+            bottom: 70,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentZoom.toStringAsFixed(1)}×',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // ── Capture FAB ───────────────────────────────────────────────────
         Positioned(
           bottom: 16,
           right: 16,
@@ -365,11 +509,134 @@ class _CameraSection extends ConsumerWidget {
             backgroundColor: kAccent,
             foregroundColor: Colors.white,
             tooltip: 'Cattura frame e invia all\'AI',
-            onPressed: onCapture,
+            onPressed: widget.onCapture,
             child: const Icon(Icons.camera_alt),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Focus ring ────────────────────────────────────────────────────────────────
+
+class _FocusRing extends StatefulWidget {
+  const _FocusRing();
+  @override
+  State<_FocusRing> createState() => _FocusRingState();
+}
+
+class _FocusRingState extends State<_FocusRing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+    _scale = Tween<double>(begin: 1.4, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+    _opacity = Tween<double>(begin: 1.0, end: 0.3).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Opacity(
+        opacity: _opacity.value,
+        child: Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: kAccent, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Torch button ──────────────────────────────────────────────────────────────
+
+class _TorchButton extends StatelessWidget {
+  const _TorchButton({required this.isOn, required this.onTap});
+  final bool isOn;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: isOn ? kAccent : Colors.black54,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isOn ? Icons.flash_on : Icons.flash_off,
+          color: Colors.white,
+          size: 18,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Frame quality badge ───────────────────────────────────────────────────────
+
+class _QualityBadge extends StatelessWidget {
+  const _QualityBadge({required this.quality});
+  final FrameQuality quality;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, color) = switch (quality) {
+      FrameQuality.tooDark => (Icons.brightness_2_outlined, 'Troppo scuro', Colors.orangeAccent),
+      FrameQuality.tooBright => (Icons.brightness_7, 'Troppo luminoso', Colors.amberAccent),
+      FrameQuality.ok => (Icons.check_circle_outline, '', Colors.greenAccent),
+    };
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(180),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }

@@ -4,14 +4,58 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
+// ── Isolate types ─────────────────────────────────────────────────────────────
+
+/// Result returned by the background isolate — processed JPEG + average luminance.
+typedef _FrameResult = ({Uint8List? jpeg, double luminance});
+
 /// Top-level function executed in an isolate via [compute].
 /// Decodes [bytes] as JPEG, resizes to 512×512, re-encodes at quality 60.
-Uint8List? _processFrameIsolate(Uint8List bytes) {
+/// Also computes average luminance (0–255) by sampling every 32nd pixel.
+_FrameResult _processFrameIsolate(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
-  if (decoded == null) return null;
+  if (decoded == null) return (jpeg: null, luminance: 128.0);
+
   final resized = img.copyResize(decoded, width: 512, height: 512);
-  return img.encodeJpg(resized, quality: 60);
+
+  // Compute average luminance from a coarse pixel sample (16×16 grid).
+  var lum = 0.0;
+  var count = 0;
+  for (var y = 0; y < resized.height; y += 32) {
+    for (var x = 0; x < resized.width; x += 32) {
+      final p = resized.getPixel(x, y);
+      lum += 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+      count++;
+    }
+  }
+
+  return (
+    jpeg: img.encodeJpg(resized, quality: 60),
+    luminance: count > 0 ? lum / count : 128.0,
+  );
 }
+
+// ── FrameQuality ──────────────────────────────────────────────────────────────
+
+/// Perceptual brightness classification of the last captured frame.
+enum FrameQuality {
+  /// Luminance in a normal range — no warning needed.
+  ok,
+
+  /// Average luminance < 40 — image too dark to analyse reliably.
+  tooDark,
+
+  /// Average luminance > 215 — image too bright / overexposed.
+  tooBright,
+}
+
+FrameQuality _classify(double luminance) {
+  if (luminance < 40) return FrameQuality.tooDark;
+  if (luminance > 215) return FrameQuality.tooBright;
+  return FrameQuality.ok;
+}
+
+// ── CameraService ─────────────────────────────────────────────────────────────
 
 /// Manages the device camera lifecycle and produces a stream of compressed
 /// frames suitable for transmission to the backend.
@@ -27,9 +71,13 @@ class CameraService {
   Duration _captureInterval = const Duration(milliseconds: 333); // ~3 fps
 
   final _frameController = StreamController<Uint8List>.broadcast();
+  final _qualityController = StreamController<FrameQuality>.broadcast();
 
   /// Emits compressed 512×512 JPEG frames ready for transmission.
   Stream<Uint8List> get frames => _frameController.stream;
+
+  /// Emits the brightness classification of every processed frame.
+  Stream<FrameQuality> get quality => _qualityController.stream;
 
   /// The underlying [CameraController]; available after [initialize].
   CameraController? get controller => _controller;
@@ -58,8 +106,7 @@ class CameraService {
   }
 
   void _startCapturing() {
-    _captureTimer =
-        Timer.periodic(_captureInterval, (_) => _captureFrame());
+    _captureTimer = Timer.periodic(_captureInterval, (_) => _captureFrame());
   }
 
   /// Captures a single frame immediately and returns the processed bytes.
@@ -70,7 +117,11 @@ class CameraService {
     try {
       final xFile = await _controller!.takePicture();
       final rawBytes = await xFile.readAsBytes();
-      return await compute(_processFrameIsolate, rawBytes);
+      final result = await compute(_processFrameIsolate, rawBytes);
+      if (!_qualityController.isClosed) {
+        _qualityController.add(_classify(result.luminance));
+      }
+      return result.jpeg;
     } catch (_) {
       return null;
     } finally {
@@ -102,10 +153,14 @@ class CameraService {
       if (hash == _lastHash) return;
       _lastHash = hash;
 
-      // Resize and re-encode in a background isolate.
-      final processed = await compute(_processFrameIsolate, rawBytes);
-      if (processed != null && !_frameController.isClosed) {
-        _frameController.add(processed);
+      // Resize, re-encode and compute luminance in a background isolate.
+      final result = await compute(_processFrameIsolate, rawBytes);
+
+      if (!_qualityController.isClosed) {
+        _qualityController.add(_classify(result.luminance));
+      }
+      if (result.jpeg != null && !_frameController.isClosed) {
+        _frameController.add(result.jpeg!);
       }
     } catch (_) {
       // Silently skip individual frame failures.
@@ -130,6 +185,7 @@ class CameraService {
   Future<void> dispose() async {
     _captureTimer?.cancel();
     await _frameController.close();
+    await _qualityController.close();
     await _controller?.dispose();
     _controller = null;
   }
