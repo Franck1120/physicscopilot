@@ -1,3 +1,8 @@
+// Package handlers exposes HTTP and WebSocket handlers for the PhysicsCopilot
+// server. Each handler is a thin adapter between the Fiber framework and the
+// underlying business-logic services (conversation, session, RAG, auth).
+// Handlers are intentionally free of business logic — routing, validation, and
+// serialisation live here; domain rules live in internal/services.
 package handlers
 
 import (
