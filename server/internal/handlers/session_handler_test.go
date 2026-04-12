@@ -276,3 +276,113 @@ func TestCreateSessionModelTooLongReturns400(t *testing.T) {
 		t.Errorf("model too long: want 400, got %d", resp.StatusCode)
 	}
 }
+
+// ── ETag tests ────────────────────────────────────────────────────────────────
+
+func TestGetSessionReturnsETagHeader(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	etag := resp.Header.Get("ETag")
+	if etag == "" {
+		t.Error("expected ETag header to be present in 200 response")
+	}
+	if !strings.HasPrefix(etag, `W/"`) {
+		t.Errorf("expected weak ETag starting with W/\", got %q", etag)
+	}
+}
+
+func TestGetSessionIfNoneMatchReturns304(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Bambu", "X1C", "", "")
+
+	// First request — get the ETag.
+	req1 := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
+	resp1, err := app.Test(req1)
+	if err != nil {
+		t.Fatalf("first request: %v", err)
+	}
+	etag := resp1.Header.Get("ETag")
+	if etag == "" {
+		t.Fatal("first response missing ETag header")
+	}
+
+	// Second request with matching If-None-Match → 304.
+	req2 := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
+	req2.Header.Set("If-None-Match", etag)
+	resp2, err := app.Test(req2)
+	if err != nil {
+		t.Fatalf("second request: %v", err)
+	}
+	if resp2.StatusCode != http.StatusNotModified {
+		t.Errorf("want 304, got %d", resp2.StatusCode)
+	}
+}
+
+func TestGetSessionIfNoneMatchMismatchReturns200(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sess, _ := sessions.CreateSession("Prusa", "MK4", "", "")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions/"+sess.SessionID, nil)
+	req.Header.Set("If-None-Match", `W/"stale-etag"`)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("want 200 on ETag mismatch, got %d", resp.StatusCode)
+	}
+}
+
+func TestListSessionsReturnsETagHeader(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+	etag := resp.Header.Get("ETag")
+	if etag == "" {
+		t.Error("expected ETag header in ListSessions 200 response")
+	}
+}
+
+func TestListSessionsIfNoneMatchReturns304(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Bambu", "X1C", "", "") //nolint:errcheck
+
+	// First request — get ETag.
+	req1 := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	resp1, err := app.Test(req1)
+	if err != nil {
+		t.Fatalf("first request: %v", err)
+	}
+	etag := resp1.Header.Get("ETag")
+	if etag == "" {
+		t.Fatal("first response missing ETag header")
+	}
+
+	// Second request with matching If-None-Match → 304.
+	req2 := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	req2.Header.Set("If-None-Match", etag)
+	resp2, err := app.Test(req2)
+	if err != nil {
+		t.Fatalf("second request: %v", err)
+	}
+	if resp2.StatusCode != http.StatusNotModified {
+		t.Errorf("want 304, got %d", resp2.StatusCode)
+	}
+}

@@ -88,6 +88,7 @@ func run(ctx context.Context) error {
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
+	statsHandler := handlers.NewStatsHandler(sessionSvc)
 
 	// Background memory metrics collection every 30 seconds.
 	// Warns at slog.Warn level when heap usage exceeds 80 % of GOMEMLIMIT.
@@ -122,7 +123,7 @@ func run(ctx context.Context) error {
 	}()
 
 	// ── HTTP app ─────────────────────────────────────────────────────────────
-	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, dbSvc)
+	app := newFiberApp(version, sessionHandler, feedbackHandler, wsHandler, dbSvc, statsHandler)
 
 	port := resolvePort()
 
@@ -205,6 +206,7 @@ func newFiberApp(
 	feedbackHandler *handlers.FeedbackHandler,
 	wsHandler *handlers.WSHandler,
 	db handlers.DBPinger, // nil when DATABASE_URL not set
+	statsHandler *handlers.StatsHandler,
 ) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "PhysicsCopilot Server v" + ver,
@@ -313,6 +315,7 @@ func newFiberApp(
 	api.Get("/sessions/:id", sessionHandler.GetSession)
 	api.Delete("/sessions/:id", sessionHandler.DeleteSession)
 	api.Post("/feedback", feedbackHandler.Submit)
+	api.Get("/stats", statsHandler.GetStats)
 
 	app.Get("/metrics", middleware.MetricsBasicAuth(), adaptor.HTTPHandler(promhttp.Handler()))
 

@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -46,6 +49,21 @@ type sessionResponse struct {
 	TotalSteps      int           `json:"total_steps"`
 	CreatedAt       time.Time     `json:"created_at"`
 	LastActivity    time.Time     `json:"last_activity"`
+}
+
+// sessionETag computes a weak ETag over a single sessionResponse by hashing
+// the first 8 bytes of its SHA-256 JSON digest.
+func sessionETag(s sessionResponse) string {
+	b, _ := json.Marshal(s)
+	h := sha256.Sum256(b)
+	return fmt.Sprintf(`W/"%x"`, h[:8])
+}
+
+// sessionListETag computes a weak ETag over a slice of sessionResponse values.
+func sessionListETag(dtos []sessionResponse) string {
+	b, _ := json.Marshal(dtos)
+	h := sha256.Sum256(b)
+	return fmt.Sprintf(`W/"%x"`, h[:8])
 }
 
 // toResponse converts an internal SessionState to the public DTO.
@@ -109,13 +127,19 @@ func validateSessionRequest(req createSessionRequest) error {
 
 // ListSessions handles GET /api/sessions.
 //
-// Response 200: {"sessions": [...], "count": N}
+// Response 200: {"sessions": [...], "count": N} with ETag header.
+// Response 304: when If-None-Match matches the current ETag.
 func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 	all := h.sessions.ListSessions()
 	dtos := make([]sessionResponse, len(all))
 	for i, s := range all {
 		dtos[i] = toResponse(s)
 	}
+	etag := sessionListETag(dtos)
+	if c.Get("If-None-Match") == etag {
+		return c.SendStatus(fiber.StatusNotModified)
+	}
+	c.Set("ETag", etag)
 	return c.JSON(fiber.Map{
 		"sessions": dtos,
 		"count":    len(dtos),
@@ -124,7 +148,8 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 
 // GetSession handles GET /api/sessions/:id.
 //
-// Response 200: session JSON.
+// Response 200: session JSON with ETag header.
+// Response 304: when If-None-Match matches the current ETag.
 // Response 404: session not found.
 func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -132,7 +157,13 @@ func (h *SessionHandler) GetSession(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	}
-	return c.JSON(toResponse(*session))
+	dto := toResponse(*session)
+	etag := sessionETag(dto)
+	if c.Get("If-None-Match") == etag {
+		return c.SendStatus(fiber.StatusNotModified)
+	}
+	c.Set("ETag", etag)
+	return c.JSON(dto)
 }
 
 // DeleteSession handles DELETE /api/sessions/:id.
