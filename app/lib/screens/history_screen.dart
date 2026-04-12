@@ -176,21 +176,27 @@ class _DismissibleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: ValueKey(session.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.redAccent.withAlpha(40),
-          borderRadius: BorderRadius.circular(12),
+    final name =
+        session.equipmentName.isEmpty ? 'Sessione' : session.equipmentName;
+    return Semantics(
+      label: name,
+      hint: 'Scorri verso sinistra per eliminare. Tocca per i dettagli.',
+      child: Dismissible(
+        key: ValueKey(session.id),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.redAccent.withAlpha(40),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.delete_outline, color: Colors.redAccent),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.redAccent),
+        onDismissed: (_) => onDismissed(),
+        child: _SessionCard(session: session, onTap: onTap),
       ),
-      onDismissed: (_) => onDismissed(),
-      child: _SessionCard(session: session, onTap: onTap),
     );
   }
 }

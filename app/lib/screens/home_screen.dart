@@ -180,18 +180,22 @@ class _ServerHealthDot extends StatelessWidget {
       error: (_, __) => (Colors.redAccent, 'Server non raggiungibile'),
     );
 
-    return Tooltip(
-      message: tooltip,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        width: 9,
-        height: 9,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: color.withAlpha(120), blurRadius: 5),
-          ],
+    return Semantics(
+      label: tooltip,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: tooltip,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: color.withAlpha(120), blurRadius: 5),
+            ],
+          ),
         ),
       ),
     );
@@ -449,61 +453,67 @@ class _RecentSessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isResolved = session.status == SessionStatus.resolved;
     final statusColor = isResolved ? kAccent : Colors.redAccent;
+    final statusLabel = isResolved ? 'Risolto' : 'Non risolto';
+    final name =
+        session.equipmentName.isEmpty ? 'Sessione' : session.equipmentName;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: kBgCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBgCardBorder, width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: statusColor.withAlpha(80), blurRadius: 4),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  session.equipmentName.isEmpty
-                      ? 'Sessione'
-                      : session.equipmentName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+    return Semantics(
+      label: '$name, $statusLabel, ${_formatSessionDate(session.date)}',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: kBgCard,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: kBgCardBorder, width: 1),
+        ),
+        child: Row(
+          children: [
+            ExcludeSemantics(
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: statusColor.withAlpha(80), blurRadius: 4),
+                  ],
                 ),
-                if (session.summary.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    session.summary,
-                    style: const TextStyle(color: kTextMuted, fontSize: 11),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _formatSessionDate(session.date),
-            style: const TextStyle(color: kTextMuted, fontSize: 11),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (session.summary.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      session.summary,
+                      style: const TextStyle(color: kTextMuted, fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _formatSessionDate(session.date),
+              style: const TextStyle(color: kTextMuted, fontSize: 11),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -776,28 +786,32 @@ class _WsStatusChip extends StatelessWidget {
       error: (_, __) => (Colors.redAccent, 'Errore', Icons.error_outline),
     );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(80), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+    return Semantics(
+      label: 'Stato connessione: $label',
+      excludeSemantics: true,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withAlpha(80), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

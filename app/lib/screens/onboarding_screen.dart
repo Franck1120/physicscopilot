@@ -273,22 +273,24 @@ class _OnboardingPageState extends State<_OnboardingPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Illustrated icon container
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.data.color.withAlpha(25),
-                  border: Border.all(
-                    color: widget.data.color.withAlpha(60),
-                    width: 1.5,
+              // Illustrated icon container — decorative, excluded from screen reader
+              ExcludeSemantics(
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.data.color.withAlpha(25),
+                    border: Border.all(
+                      color: widget.data.color.withAlpha(60),
+                      width: 1.5,
+                    ),
                   ),
-                ),
-                child: Icon(
-                  widget.data.icon,
-                  size: 64,
-                  color: widget.data.color,
+                  child: Icon(
+                    widget.data.icon,
+                    size: 64,
+                    color: widget.data.color,
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -371,22 +373,27 @@ class _PageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(pageCount, (index) {
-        final isActive = index == currentPage;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : const Color(0x66FFFFFF),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
+    return Semantics(
+      label: 'Slide ${currentPage + 1} di $pageCount',
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(pageCount, (index) {
+            final isActive = index == currentPage;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isActive ? Colors.white : const Color(0x66FFFFFF),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 }

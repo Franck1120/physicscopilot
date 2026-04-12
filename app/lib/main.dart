@@ -26,7 +26,8 @@ const Color kBgPrimary = Color(0xFF0A0A0A);
 const Color kBgSurface = Color(0xFF141414);
 const Color kBgCard = Color(0xFF1A1A1A);
 const Color kBgCardBorder = Color(0xFF2A2A2A);
-const Color kTextMuted = Color(0xFF6B7280);
+// WCAG AA contrast (≥4.5:1) on kBgPrimary (#0A0A0A): #9CA3AF ≈ 7.8:1
+const Color kTextMuted = Color(0xFF9CA3AF);
 
 // ---------------------------------------------------------------------------
 // Providers

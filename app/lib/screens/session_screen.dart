@@ -196,14 +196,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
-              child: Text(
-                _formatElapsed(_elapsed),
-                style: const TextStyle(
-                  color: kAccent,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
-                  fontFeatures: [FontFeature.tabularFigures()],
+              child: Semantics(
+                label: 'Durata sessione: ${_formatElapsed(_elapsed)}',
+                child: ExcludeSemantics(
+                  child: Text(
+                    _formatElapsed(_elapsed),
+                    style: const TextStyle(
+                      color: kAccent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -253,20 +258,26 @@ class _ConnectionBanner extends StatelessWidget {
         ? 'Connessione al server in corso…'
         : 'Server non raggiungibile — i dati non vengono inviati';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-      color: color.withAlpha(30),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 14),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(message,
-                style: TextStyle(
-                    color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+    return Semantics(
+      liveRegion: true,
+      label: message,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        color: color.withAlpha(30),
+        child: ExcludeSemantics(
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(message,
+                    style: TextStyle(
+                        color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -495,20 +506,27 @@ class _ThinkingIndicatorState extends State<_ThinkingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(3, (i) => _Dot(ctrl: _ctrl, index: i)),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'L\'AI sta analizzando…',
-            style: TextStyle(color: kTextMuted, fontSize: 13),
-          ),
-        ],
+    return Semantics(
+      label: "L'AI sta analizzando",
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ExcludeSemantics(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) => _Dot(ctrl: _ctrl, index: i)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const ExcludeSemantics(
+              child: Text(
+                "L'AI sta analizzando…",
+                style: TextStyle(color: kTextMuted, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

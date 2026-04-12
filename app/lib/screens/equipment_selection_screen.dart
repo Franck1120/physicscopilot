@@ -167,21 +167,24 @@ class _SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: _kOnSurface),
-        cursorColor: _kAccent,
-        decoration: InputDecoration(
-          hintText: 'Cerca dispositivo…',
-          hintStyle: const TextStyle(color: Colors.white38),
-          prefixIcon: const Icon(Icons.search, color: Colors.white38),
-          filled: true,
-          fillColor: _kSurface,
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Semantics(
+        label: 'Cerca dispositivo',
+        child: TextField(
+          controller: controller,
+          style: const TextStyle(color: _kOnSurface),
+          cursorColor: _kAccent,
+          decoration: InputDecoration(
+            hintText: 'Cerca dispositivo…',
+            hintStyle: const TextStyle(color: Colors.white38),
+            prefixIcon: const Icon(Icons.search, color: Colors.white38),
+            filled: true,
+            fillColor: _kSurface,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ),
@@ -197,35 +200,39 @@ class _EquipmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: _kSurface,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                profile.name,
-                style: const TextStyle(
-                  color: _kOnSurface,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+    return Semantics(
+      button: true,
+      label: '${profile.name}, ${profile.manufacturer}',
+      child: Card(
+        color: _kSurface,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.name,
+                  style: const TextStyle(
+                    color: _kOnSurface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                profile.manufacturer,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 13,
+                const SizedBox(height: 4),
+                Text(
+                  profile.manufacturer,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -240,31 +247,35 @@ class _CustomEquipmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: _kSurface,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: _kAccent, width: 1),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(Icons.add_circle_outline, color: _kAccent, size: 22),
-              SizedBox(width: 12),
-              Text(
-                'Altro dispositivo',
-                style: TextStyle(
-                  color: _kAccent,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+    return Semantics(
+      button: true,
+      label: 'Aggiungi dispositivo personalizzato',
+      child: Card(
+        color: _kSurface,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: _kAccent, width: 1),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(Icons.add_circle_outline, color: _kAccent, size: 22),
+                SizedBox(width: 12),
+                Text(
+                  'Altro dispositivo',
+                  style: TextStyle(
+                    color: _kAccent,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
