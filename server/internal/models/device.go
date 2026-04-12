@@ -1,3 +1,6 @@
+// Package models contains the domain types that map directly to Supabase
+// database tables. These types are shared across the handlers and services
+// layers and are used as DTOs when serialising to/from JSON.
 package models
 
 import "time"
