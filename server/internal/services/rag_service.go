@@ -127,7 +127,10 @@ func (c *ragLRU) set(query string, maxResults int, results []KBEntry) {
 	c.items[key] = entry
 }
 
-// kbFile mirrors the top-level structure of the knowledge-base JSON.
+// kbFile mirrors the top-level structure of a knowledge-base JSON file.
+// Domain names the problem domain (e.g. "hvac", "printer") and is stamped
+// onto each KBEntry after unmarshalling so callers can filter by domain.
+// Problems holds all problem entries declared in the file.
 type kbFile struct {
 	Domain   string    `json:"domain"`
 	Problems []KBEntry `json:"problems"`
