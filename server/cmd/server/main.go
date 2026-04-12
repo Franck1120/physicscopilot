@@ -326,6 +326,7 @@ func newFiberApp(
 	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
 	api.Get("/docs", handlers.OpenAPIHandler())
 	api.Get("/swagger", handlers.SwaggerUIHandler())
+	api.Get("/version", handlers.VersionHandler(ver, buildTime, runtime.Version()))
 	api.Post("/sessions", sessionHandler.CreateSession)
 	api.Get("/sessions", sessionHandler.ListSessions)
 	api.Get("/sessions/:id", sessionHandler.GetSession)

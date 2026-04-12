@@ -8,6 +8,10 @@ import "github.com/gofiber/fiber/v2"
 //
 // The response is publicly cacheable for one hour — version metadata changes
 // only on deployment, so clients may cache it aggressively.
+//
+// This handler is registered twice:
+//   - GET /version  — outside the /api group, for operator tooling
+//   - GET /api/version — inside the /api group, for consistent API namespacing
 func VersionHandler(version, buildTime, goVersion string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		c.Set("Cache-Control", "public, max-age=3600")
