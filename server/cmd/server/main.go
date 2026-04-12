@@ -40,6 +40,10 @@ const version = "0.1.0"
 // Defaults to "unknown" when building locally without the flag.
 var buildDate = "unknown" //nolint:gochecknoglobals
 
+// buildTime is the ISO-8601 timestamp of the build. Defaults to a fixed value
+// for local builds; in CI it should be injected via -ldflags "-X main.buildTime=...".
+var buildTime = "2026-04-12T00:00:00Z" //nolint:gochecknoglobals
+
 var startTime = time.Now()
 
 func main() {
@@ -316,6 +320,7 @@ func newFiberApp(
 	app.Use("/health", apiLimiter.Middleware())
 
 	app.Get("/health", handlers.NewHealthHandler(ver, startTime, wsHandler, db))
+	app.Get("/version", handlers.VersionHandler(ver, buildTime, runtime.Version()))
 
 	api := app.Group("/api", apiLimiter.Middleware(), handlers.WSAuthMiddleware())
 	api.Get("/docs", handlers.OpenAPIHandler())
