@@ -1,0 +1,788 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-04-12",
+  "domain": "iot",
+  "total": 15,
+  "problems": [
+    {
+      "id": "wifi_disconnection",
+      "name": "WiFi Disconnection",
+      "category": "connectivity",
+      "severity": "warning",
+      "description": "IoT device repeatedly drops its WiFi connection, causing interruptions in data reporting and remote control.",
+      "visual_symptoms": [
+        "Device LED indicator flashing error pattern instead of solid connected state",
+        "Device offline status shown in cloud dashboard",
+        "Periodic gaps in sensor data time series",
+        "Device unresponsive to remote commands intermittently"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Weak WiFi signal at device location causing frequent deauthentication",
+          "probability": 0.45,
+          "test": "Measure RSSI at device location — below -70 dBm is insufficient for stable connection"
+        },
+        {
+          "cause": "Router DHCP lease expiry or IP conflict causing disconnection",
+          "probability": 0.35,
+          "test": "Check router DHCP logs for lease conflicts; assign static IP to device MAC address"
+        },
+        {
+          "cause": "WiFi driver bug in firmware causing periodic stack overflow and reset",
+          "probability": 0.20,
+          "test": "Check device serial log for WiFi driver exception or watchdog reset at disconnection time"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Log into router admin panel and assign a static DHCP reservation to the device MAC address",
+              "verification": "Device always receives same IP; no DHCP conflict entries in router log",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Measure WiFi signal strength at device location using a phone WiFi analyser; reposition device or add a WiFi extender if RSSI is below -70 dBm",
+              "verification": "RSSI at device location is -65 dBm or better",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Update device firmware to latest version to benefit from WiFi driver stability fixes",
+              "verification": "Device uptime in dashboard exceeds 24 hours without reconnection event",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mqtt_broker_unreachable",
+      "name": "MQTT Broker Unreachable",
+      "category": "cloud",
+      "severity": "error",
+      "description": "IoT device cannot connect to the MQTT broker, preventing all message publishing and subscription.",
+      "visual_symptoms": [
+        "Device log shows repeated MQTT connection refused or timeout errors",
+        "No messages arriving on broker topic subscriptions",
+        "Device cloud status shows disconnected with broker error code",
+        "Alert: all devices offline simultaneously"
+      ],
+      "probable_causes": [
+        {
+          "cause": "MQTT broker service stopped or crashed on server",
+          "probability": 0.40,
+          "test": "SSH into broker host and run 'systemctl status mosquitto' or equivalent; check process is running"
+        },
+        {
+          "cause": "Firewall rule blocking port 1883 or 8883 between device and broker",
+          "probability": 0.35,
+          "test": "Run 'telnet <broker_ip> 1883' from device network — connection refused indicates firewall block"
+        },
+        {
+          "cause": "Incorrect broker hostname or port in device configuration after network change",
+          "probability": 0.25,
+          "test": "Compare device configured broker address with actual broker IP; check if broker IP changed after router reset"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "SSH into broker server and restart the MQTT service: 'systemctl restart mosquitto'",
+              "verification": "Service status shows 'active (running)'; broker accepts test connection from MQTT client tool",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "Verify firewall rules allow inbound TCP on port 1883 from device subnet; add rule if missing",
+              "verification": "Telnet or netcat to broker port 1883 succeeds from device network",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Update broker hostname or IP in device configuration if it has changed; reflash or OTA update the config",
+              "verification": "Device connects to broker and publishes test message within 30 seconds of boot",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sensor_calibration_drift",
+      "name": "Sensor Calibration Drift",
+      "category": "sensors",
+      "severity": "warning",
+      "description": "Sensor readings gradually deviate from true values over time due to environmental factors or component ageing.",
+      "visual_symptoms": [
+        "Sensor readings consistently offset from reference instrument by fixed amount",
+        "Readings drift upward or downward monotonically over days or weeks",
+        "Sensor output exceeds rated operating range despite normal environment",
+        "Two identical sensors in same location show diverging readings"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Sensor exposed to conditions outside rated operating range causing permanent offset",
+          "probability": 0.45,
+          "test": "Compare sensor datasheet operating range with actual measured temperature/humidity at sensor location"
+        },
+        {
+          "cause": "Reference voltage source on ADC input drifting due to component ageing",
+          "probability": 0.35,
+          "test": "Measure ADC reference voltage with calibrated multimeter; compare to design specification"
+        },
+        {
+          "cause": "Contamination of sensor element from dust, chemicals or humidity",
+          "probability": 0.20,
+          "test": "Visually inspect sensor membrane or element; compare readings before and after gentle cleaning"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Place a calibrated reference sensor alongside the device sensor and record both readings for 24 hours",
+              "verification": "Systematic offset or drift pattern quantified from reference comparison data",
+              "time_seconds": 86400
+            },
+            {
+              "instruction": "Apply a software calibration offset or scale factor in firmware to correct the measured drift",
+              "verification": "Corrected readings match reference sensor within stated accuracy specification",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "If drift exceeds 10% of full scale, replace sensor element and repeat calibration procedure",
+              "verification": "New sensor readings within specification without software correction",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ota_update_failure",
+      "name": "OTA Firmware Update Failure",
+      "category": "firmware",
+      "severity": "error",
+      "description": "Over-the-air firmware update fails mid-process, leaving device in an inconsistent or non-booting state.",
+      "visual_symptoms": [
+        "Device stuck in boot loop after update attempt",
+        "Update progress stops at specific percentage and device reboots",
+        "OTA update error code in cloud dashboard for device",
+        "Device no longer appears online after update was initiated"
+      ],
+      "probable_causes": [
+        {
+          "cause": "WiFi disconnection during firmware download causing partial write to flash",
+          "probability": 0.50,
+          "test": "Check device log for network errors during OTA download phase; verify WiFi signal strength"
+        },
+        {
+          "cause": "Insufficient flash partition size for new firmware image",
+          "probability": 0.30,
+          "test": "Compare new firmware binary size with OTA partition size defined in partition table"
+        },
+        {
+          "cause": "Firmware image checksum mismatch due to corrupted download",
+          "probability": 0.20,
+          "test": "Re-download firmware image from server and verify SHA256 checksum matches release manifest"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "If device boots to recovery partition, trigger OTA retry from cloud dashboard or serial console",
+              "verification": "Device enters OTA update mode and begins download",
+              "time_seconds": 120
+            },
+            {
+              "instruction": "If device is completely unresponsive, connect via UART serial and flash firmware using esptool or platform-specific flasher",
+              "verification": "Flash write completes at 100%; device boots to normal firmware",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Verify OTA partition size in partition table accommodates new firmware; update partition table if necessary before next OTA",
+              "verification": "New firmware size is at least 10% smaller than OTA partition; update succeeds without truncation",
+              "time_seconds": 900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "factory_reset_loop",
+      "name": "Factory Reset Loop",
+      "category": "firmware",
+      "severity": "error",
+      "description": "Device repeatedly performs factory reset on boot due to corrupted configuration storage, unable to retain settings.",
+      "visual_symptoms": [
+        "Device requires re-pairing every time it is power cycled",
+        "All configured settings lost after each reboot",
+        "Factory reset LED pattern on every startup",
+        "Device provisioning log shows NVS (non-volatile storage) erase on each boot"
+      ],
+      "probable_causes": [
+        {
+          "cause": "NVS flash partition corrupted causing firmware to trigger automatic reset",
+          "probability": 0.55,
+          "test": "Read NVS partition via serial console; check for filesystem errors or blank pages where config should exist"
+        },
+        {
+          "cause": "Hardware reset button or GPIO line stuck in asserted state triggering reset logic",
+          "probability": 0.30,
+          "test": "Measure voltage on reset GPIO pin at boot; should not assert for more than 200 ms"
+        },
+        {
+          "cause": "Firmware bug treating invalid config version as signal to factory reset",
+          "probability": 0.15,
+          "test": "Check firmware changelog for known factory-reset-loop bugs in current version"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Connect via serial console and erase the NVS partition manually using esptool: 'esptool.py erase_region <nvs_offset> <nvs_size>'",
+              "verification": "NVS partition fully erased; device boots without triggering factory reset",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Update to latest firmware version which may include NVS corruption recovery logic",
+              "verification": "Device retains configuration across 5 consecutive power cycles",
+              "time_seconds": 900
+            },
+            {
+              "instruction": "Inspect hardware for stuck reset button or moisture on reset GPIO; clean or replace button if mechanically stuck",
+              "verification": "Reset GPIO reads high (logic 1) at boot; no unintended reset assertion detected",
+              "time_seconds": 600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "power_supply_noise",
+      "name": "Power Supply Noise",
+      "category": "power",
+      "severity": "warning",
+      "description": "Electrical noise on the power supply rail causes erratic sensor readings, random resets, or communication errors.",
+      "visual_symptoms": [
+        "Sensor readings spike randomly without environmental change",
+        "Device resets at high load events such as WiFi transmission",
+        "Oscilloscope shows ripple over 100 mV peak-to-peak on 3.3V rail",
+        "ADC measurements show high variance on stable signal source"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Insufficient bulk capacitance on power rail causing voltage sag during WiFi TX burst",
+          "probability": 0.50,
+          "test": "Scope 3.3V rail during WiFi transmission; sag below 3.0V during burst confirms insufficient bulk capacitance"
+        },
+        {
+          "cause": "Switching power supply EMI coupling onto signal lines sharing ground plane",
+          "probability": 0.30,
+          "test": "Replace switching supply with linear LDO on test bench; observe if noise and resets disappear"
+        },
+        {
+          "cause": "Ground loop between device and peripherals causing common-mode noise injection",
+          "probability": 0.20,
+          "test": "Disconnect all peripheral cables one at a time; identify if noise correlates with specific peripheral"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Add a 470 uF electrolytic capacitor in parallel with a 100 nF ceramic capacitor on the 3.3V rail near the MCU",
+              "verification": "Oscilloscope shows voltage sag during WiFi burst reduced to less than 50 mV",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Add a ferrite bead on the power supply input line to filter high-frequency switching noise",
+              "verification": "High-frequency ripple above 1 MHz reduced by at least 20 dB measured on scope",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Ensure separate ground planes for power and signal sections; use star grounding topology at single point",
+              "verification": "ADC noise floor reduced; variance on stable reference input below 2 LSB",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_leak_firmware",
+      "name": "Memory Leak in Firmware",
+      "category": "firmware",
+      "severity": "error",
+      "description": "Firmware gradually consumes all available heap memory, eventually causing a watchdog reset or undefined behaviour.",
+      "visual_symptoms": [
+        "Device uptime resets every few hours or days regularly",
+        "Heap free memory decreasing monotonically in telemetry",
+        "Device becomes unresponsive before watchdog reset",
+        "Log shows heap allocation failure errors before crash"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Dynamic memory allocated in task loop without corresponding free call",
+          "probability": 0.55,
+          "test": "Instrument code with heap_caps_get_free_size() logging every minute; identify which task period correlates with memory decrease"
+        },
+        {
+          "cause": "String or buffer dynamically allocated on MQTT/HTTP received data not freed after processing",
+          "probability": 0.35,
+          "test": "Review all malloc/new calls in network receive callbacks; trace each allocation to its free counterpart"
+        },
+        {
+          "cause": "Third-party library leaking memory on specific error paths",
+          "probability": 0.10,
+          "test": "Comment out third-party library usage and observe if leak persists; update library to latest version"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Enable heap trace using ESP-IDF heap tracing or equivalent RTOS tool; run device for 30 minutes and dump trace",
+              "verification": "Heap trace output identifies unfreed allocation sites with call stack",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Fix identified allocation sites by adding matching free() or delete calls on all code paths including error exits",
+              "verification": "Heap free size remains stable (less than 1% change) over 24 hours of operation",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "As interim mitigation, implement a scheduled safe restart every 48 hours using RTC alarm or NTP-triggered reboot",
+              "verification": "Device restarts cleanly at scheduled time and reconnects within 30 seconds",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ssl_certificate_expiry",
+      "name": "SSL Certificate Expiry",
+      "category": "security",
+      "severity": "error",
+      "description": "TLS certificate on MQTT broker or HTTPS endpoint expires, causing all devices to reject the connection.",
+      "visual_symptoms": [
+        "All devices show TLS handshake failure simultaneously",
+        "Device log shows SSL_ERROR_CERTIFICATE_VERIFY_FAILED",
+        "Cloud dashboard shows all devices offline at same timestamp",
+        "Certificate expiry date matches current date in server certificate"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Server TLS certificate expired due to missed renewal",
+          "probability": 0.65,
+          "test": "Run 'openssl s_client -connect <broker>:8883' and check certificate Not After date"
+        },
+        {
+          "cause": "Device CA root certificate bundle outdated and does not include new certificate authority",
+          "probability": 0.25,
+          "test": "Compare device CA bundle with current Mozilla root store; check if signing CA is present in device bundle"
+        },
+        {
+          "cause": "System clock on device incorrect causing valid certificate to appear expired",
+          "probability": 0.10,
+          "test": "Print device RTC time to serial log; compare with actual UTC time — discrepancy of months indicates clock error"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Renew TLS certificate on broker server using Let's Encrypt certbot or CA provider; reload broker service",
+              "verification": "'openssl s_client' shows new certificate with Not After date at least 90 days in future",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Set up automatic certificate renewal via cron: '0 12 * * * certbot renew --quiet'",
+              "verification": "Certbot dry-run completes successfully; cron job visible in crontab listing",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Push updated CA bundle to devices via OTA update if root CA has changed",
+              "verification": "All devices reconnect successfully; TLS handshake completes without error in device log",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hub_pairing_failure",
+      "name": "Hub Pairing Failure",
+      "category": "connectivity",
+      "severity": "warning",
+      "description": "IoT device fails to pair with the hub or gateway during provisioning, remaining inaccessible from the app.",
+      "visual_symptoms": [
+        "Device LED shows pairing mode but hub app reports no device found",
+        "Pairing timeout error in hub app after full wait period",
+        "Device visible in WiFi scan but app cannot complete provisioning",
+        "Hub log shows rejected association from device MAC address"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Device and hub on different network subnets preventing mDNS or broadcast discovery",
+          "probability": 0.45,
+          "test": "Confirm phone, hub and device are all on same 2.4 GHz WiFi SSID during pairing"
+        },
+        {
+          "cause": "Hub firmware and device firmware using incompatible pairing protocol versions",
+          "probability": 0.35,
+          "test": "Check hub firmware version in app and compare with device minimum hub version requirement in product documentation"
+        },
+        {
+          "cause": "Hub at maximum paired device capacity refusing new associations",
+          "probability": 0.20,
+          "test": "Check number of paired devices in hub app; compare with documented maximum device limit"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Ensure phone, hub and device are all connected to the same 2.4 GHz WiFi network; disable 5 GHz temporarily if router combines both bands",
+              "verification": "All three devices shown on same subnet in router DHCP table",
+              "time_seconds": 180
+            },
+            {
+              "instruction": "Update hub firmware to latest version via hub app before retrying pairing",
+              "verification": "Hub firmware version shows latest release number; pairing mode initiated fresh",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Factory reset the device and retry pairing within 60 seconds of reset",
+              "verification": "Device paired successfully; appears in hub app device list with online status",
+              "time_seconds": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zigbee_mesh_fragmentation",
+      "name": "Zigbee Mesh Fragmentation",
+      "category": "connectivity",
+      "severity": "warning",
+      "description": "Zigbee network splits into disconnected clusters, with some devices no longer reachable from the coordinator.",
+      "visual_symptoms": [
+        "Subset of Zigbee devices show offline despite being powered",
+        "Network map in coordinator app shows isolated device islands",
+        "Commands to unreachable devices time out consistently",
+        "Devices rejoin network temporarily then drop off again"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Router device removed or powered off, severing mesh path for child devices",
+          "probability": 0.50,
+          "test": "Review network topology map — identify which router device is missing and which end devices are orphaned"
+        },
+        {
+          "cause": "Interference on Zigbee channel (2.4 GHz overlap with WiFi channels 1, 6, or 11)",
+          "probability": 0.35,
+          "test": "Use Zigbee channel analyser to check PER (packet error rate) on current channel; compare with alternate channels"
+        },
+        {
+          "cause": "Coordinator firmware bug causing incorrect routing table entries",
+          "probability": 0.15,
+          "test": "Restart coordinator and observe if orphaned devices rejoin automatically within 5 minutes"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Restore or replace the missing router device to re-establish mesh path; add additional router devices if coverage is insufficient",
+              "verification": "Network topology map shows all previously offline devices reconnected",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Change Zigbee coordinator channel to 15, 20, 25, or 26 to avoid WiFi 2.4 GHz overlap",
+              "verification": "PER on new channel below 5%; all devices rejoin on new channel within 10 minutes",
+              "time_seconds": 1200
+            },
+            {
+              "instruction": "Update coordinator firmware and rebuild network by re-pairing fragmented devices",
+              "verification": "All devices show online and respond to commands within 2 seconds",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dhcp_ip_conflict",
+      "name": "DHCP IP Conflict",
+      "category": "connectivity",
+      "severity": "warning",
+      "description": "Two devices on the network receive the same IP address, causing intermittent connectivity failures for both.",
+      "visual_symptoms": [
+        "Device goes offline periodically without rebooting",
+        "Router ARP table shows two different MAC addresses for same IP",
+        "Cloud dashboard shows device toggling between online and offline",
+        "Network scan tools report duplicate IP warning"
+      ],
+      "probable_causes": [
+        {
+          "cause": "DHCP server assigned same address to two devices due to exhausted lease pool",
+          "probability": 0.50,
+          "test": "Check DHCP pool size in router settings versus total number of devices; count remaining available leases"
+        },
+        {
+          "cause": "Static IP configured on device conflicts with DHCP range",
+          "probability": 0.35,
+          "test": "Check if device has a hardcoded static IP within the router DHCP range; compare device IP with DHCP pool boundaries"
+        },
+        {
+          "cause": "Stale DHCP lease not released by previous device leaving network",
+          "probability": 0.15,
+          "test": "Review router DHCP lease table for expired leases not yet cleared; check lease duration setting"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "beginner",
+          "steps": [
+            {
+              "instruction": "Log into router admin panel and expand DHCP pool range or reduce lease time to reclaim unused addresses",
+              "verification": "DHCP pool has at least 20 free addresses; no duplicate IP entries in lease table",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Assign static DHCP reservations for all IoT devices using their MAC addresses",
+              "verification": "Each device MAC has a unique reserved IP; no conflicts in DHCP reservation list",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Power cycle all conflicting devices to force DHCP renegotiation with new addresses",
+              "verification": "All devices online with unique IPs confirmed in router ARP table",
+              "time_seconds": 180
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ntp_sync_failure",
+      "name": "NTP Sync Failure",
+      "category": "cloud",
+      "severity": "warning",
+      "description": "Device cannot synchronise time with NTP server, causing incorrect timestamps on sensor data and TLS certificate validation failures.",
+      "visual_symptoms": [
+        "Device log timestamps diverging from real time by minutes or hours",
+        "TLS connections failing due to certificate time validation error",
+        "Sensor data timestamps in cloud dashboard showing wrong times",
+        "Device log shows NTP request timeout or unreachable server"
+      ],
+      "probable_causes": [
+        {
+          "cause": "UDP port 123 blocked by firewall between device and NTP server",
+          "probability": 0.45,
+          "test": "Test UDP connectivity to time.cloudflare.com:123 using netcat or UDP probe tool from device network"
+        },
+        {
+          "cause": "NTP server hostname not resolving due to DNS configuration error",
+          "probability": 0.35,
+          "test": "Verify DNS resolution of NTP hostname from device network; switch to IP address as fallback"
+        },
+        {
+          "cause": "RTC hardware failure causing time to reset to epoch on every boot",
+          "probability": 0.20,
+          "test": "Set time manually and power cycle; if time resets to 1970-01-01, RTC battery or module has failed"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Update device firmware to use multiple fallback NTP servers: pool.ntp.org, time.cloudflare.com, time.google.com",
+              "verification": "Device successfully syncs time from at least one server within 30 seconds of network connection",
+              "time_seconds": 600
+            },
+            {
+              "instruction": "Configure router/firewall to allow UDP port 123 outbound from IoT VLAN to internet",
+              "verification": "NTP sync succeeds; device log shows 'NTP time sync OK' with correct timestamp",
+              "time_seconds": 300
+            },
+            {
+              "instruction": "Replace RTC module battery if RTC resets to epoch on every power cycle",
+              "verification": "Device retains correct time across power cycles without NTP resync",
+              "time_seconds": 1200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "watchdog_timer_reboot",
+      "name": "Watchdog Timer Reboot",
+      "category": "firmware",
+      "severity": "error",
+      "description": "Device reboots unexpectedly due to watchdog timer expiry, caused by a blocked task preventing the watchdog from being fed.",
+      "visual_symptoms": [
+        "Device reboots every few minutes under specific conditions",
+        "Boot log shows 'WDT reset' as reset reason",
+        "Device becomes unresponsive during specific operations before rebooting",
+        "Crash dump shows task stack overflow or blocked task"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Blocking I/O call or infinite loop in main task preventing watchdog feed",
+          "probability": 0.55,
+          "test": "Add watchdog-triggered core dump to identify blocked task name and stack trace at time of WDT expiry"
+        },
+        {
+          "cause": "Watchdog timeout set too short for legitimate long-running operations",
+          "probability": 0.30,
+          "test": "Compare watchdog timeout value with maximum legitimate blocking duration of all tasks"
+        },
+        {
+          "cause": "Stack overflow in high-priority task corrupting watchdog feed mechanism",
+          "probability": 0.15,
+          "test": "Enable stack overflow detection in RTOS; check for stack overflow notifications in log before WDT reset"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Enable core dump to flash on WDT reset; analyse dump with xtensa-gdb or equivalent to identify blocked task",
+              "verification": "Core dump analysis identifies specific function and line number causing block",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Replace blocking synchronous calls with async equivalents or move them to a separate RTOS task with adequate stack size",
+              "verification": "Watchdog reboot no longer occurs under previously failing conditions",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Increase task stack sizes for all tasks that perform network or flash operations to prevent overflow",
+              "verification": "Minimum free stack watermark above 512 bytes for all tasks after 24 hours of operation",
+              "time_seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "high_power_consumption",
+      "name": "High Power Consumption",
+      "category": "power",
+      "severity": "warning",
+      "description": "Device consumes significantly more power than expected, reducing battery life or exceeding power supply capacity.",
+      "visual_symptoms": [
+        "Battery-powered device draining much faster than rated life",
+        "Power supply runs hot indicating near-overload condition",
+        "Current measurement significantly exceeds device datasheet specification",
+        "Deep-sleep mode not reducing current as expected"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Deep-sleep mode not entered due to GPIO hold configuration error",
+          "probability": 0.45,
+          "test": "Measure current in intended sleep mode with multimeter; above 1 mA on ESP32 deep sleep indicates sleep not entered"
+        },
+        {
+          "cause": "Peripheral left powered on during sleep — sensor, display or external module not powered down",
+          "probability": 0.35,
+          "test": "Power peripherals via GPIO-controlled transistor switch; measure current with and without peripheral power switch"
+        },
+        {
+          "cause": "Firmware polling loop running at too-high frequency keeping CPU at full utilisation",
+          "probability": 0.20,
+          "test": "Profile CPU utilisation in firmware; identify task with highest runtime percentage"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "intermediate",
+          "steps": [
+            {
+              "instruction": "Review deep-sleep entry code; ensure all GPIOs are configured to hold correct states and wake-up source is configured",
+              "verification": "Measured sleep current below 100 uA for ESP32 or per-chip specification",
+              "time_seconds": 1800
+            },
+            {
+              "instruction": "Add transistor switch (or load switch IC) on peripheral power rail controlled by GPIO; disable before entering sleep",
+              "verification": "Peripheral current drops to zero during sleep; measured total sleep current meets target",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Replace polling loops with interrupt-driven or event-driven wake patterns to reduce active CPU time",
+              "verification": "CPU utilisation below 30% in idle state; average power consumption reduced by at least 40%",
+              "time_seconds": 3600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data_corruption_flash",
+      "name": "Data Corruption in Flash",
+      "category": "firmware",
+      "severity": "error",
+      "description": "Persistent data stored in flash memory becomes corrupted, causing configuration loss, invalid readings or boot failures.",
+      "visual_symptoms": [
+        "Device boots with corrupted or default settings after power loss",
+        "Stored calibration data reads as 0xFF or random values",
+        "Filesystem check at boot reports errors or forces reformatting",
+        "CRC or checksum validation failures in application log"
+      ],
+      "probable_causes": [
+        {
+          "cause": "Power loss during flash write operation leaving page in incomplete state",
+          "probability": 0.50,
+          "test": "Simulate power cut during write in test environment; verify data integrity after restore"
+        },
+        {
+          "cause": "Flash wear limit exceeded on frequently written sector causing unreliable writes",
+          "probability": 0.30,
+          "test": "Read erase count from flash wear log if available; compare with flash manufacturer endurance specification"
+        },
+        {
+          "cause": "Incorrect flash write sequence missing erase-before-write step",
+          "probability": 0.20,
+          "test": "Review flash write code path to confirm erase is performed before every page write"
+        }
+      ],
+      "solutions": [
+        {
+          "difficulty": "advanced",
+          "steps": [
+            {
+              "instruction": "Implement CRC32 checksum on all stored data structures; validate checksum on read and fall back to defaults if invalid",
+              "verification": "Application detects and recovers gracefully from corruption without crashing",
+              "time_seconds": 3600
+            },
+            {
+              "instruction": "Use a wear-levelling filesystem (LittleFS or SPIFFS with wear levelling) instead of raw flash writes",
+              "verification": "Filesystem erase counts distributed evenly across sectors; no single sector disproportionately worn",
+              "time_seconds": 7200
+            },
+            {
+              "instruction": "Implement write-ahead logging or dual-bank storage with atomic commit to survive power loss during write",
+              "verification": "Power-cut simulation during write results in valid data recovery from backup bank on next boot",
+              "time_seconds": 7200
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
