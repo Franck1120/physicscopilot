@@ -15,7 +15,7 @@ import (
 
 func newHealthApp(version string, startTime time.Time) (*fiber.App, *WSHandler) {
 	sessionSvc := services.NewSessionService()
-	convSvc := services.NewConversationService(sessionSvc, nil)
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
 	ws := NewWSHandler(convSvc, sessionSvc)
 
 	app := fiber.New(fiber.Config{DisableStartupMessage: true})

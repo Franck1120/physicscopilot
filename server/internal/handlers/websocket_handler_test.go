@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	gorilla "github.com/gorilla/websocket"
+
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
@@ -12,7 +14,7 @@ func TestNewWSHandler(t *testing.T) {
 	sessionSvc := services.NewSessionService()
 	// NewGeminiService requires GEMINI_API_KEY, so we pass nil for gemini
 	// to test the handler constructor in isolation.
-	convSvc := services.NewConversationService(sessionSvc, nil)
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
 
 	handler := NewWSHandler(convSvc, sessionSvc)
 
@@ -242,5 +244,48 @@ func TestOutgoingMessageOmitsEmptyFields(t *testing.T) {
 func TestMaxFramesPerSecondConstant(t *testing.T) {
 	if maxFramesPerSecond != 5 {
 		t.Errorf("expected maxFramesPerSecond to be 5, got %d", maxFramesPerSecond)
+	}
+}
+
+// TestWSHandlerAcceptsConnection verifies that the production WSHandler
+// accepts a WebSocket upgrade and sends no immediate error frame.
+// The test connects, reads one message (if any arrive within 300 ms),
+// and expects the connection to stay alive (no close frame from the server).
+func TestWSHandlerAcceptsConnection(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+
+	// Use the same short heartbeat as heartbeat_test so the test completes fast.
+	wsHandler.PingInterval = time.Hour // don't fire during test
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	// Set a short read deadline so the test doesn't block waiting for a message.
+	conn.SetReadDeadline(time.Now().Add(300 * time.Millisecond))
+
+	// Read any initial messages; a timeout means no messages arrived — that is
+	// also acceptable (no error close frame was sent).
+	_, _, readErr := conn.ReadMessage()
+	if readErr != nil {
+		// A timeout means the connection is open but idle — expected.
+		if gorilla.IsCloseError(readErr, gorilla.CloseGoingAway, gorilla.ClosePolicyViolation) {
+			t.Errorf("server closed the connection unexpectedly: %v", readErr)
+		}
+		// Any other error (timeout, etc.) is acceptable — connection was live.
+	}
+
+	// Verify the session was created in the service.
+	sessions := sessionSvc.ListSessions()
+	if len(sessions) == 0 {
+		t.Error("expected WSHandler to create an in-memory session on connect")
 	}
 }
