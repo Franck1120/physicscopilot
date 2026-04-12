@@ -1,0 +1,89 @@
+# golangci-lint configuration for PhysicsCopilot server.
+# Docs: https://golangci-lint.run/usage/configuration/
+
+version: "2"
+
+linters:
+  enable:
+    - bodyclose       # ensure HTTP response bodies are closed
+    - contextcheck    # check context.Context is passed correctly
+    - errcheck        # check error return values
+    - errorlint       # detect common error wrapping mistakes
+    - exhaustruct     # ensure structs are fully initialised (optional fields tagged)
+    - gocognit        # cognitive complexity threshold
+    - gocritic        # advanced diagnostics
+    - godot           # doc comments end with period
+    - godox           # flag TODO/FIXME without linked issue
+    - gofmt           # format check
+    - goimports       # import ordering
+    - govet           # vet checks
+    - ineffassign     # detect ineffectual assignments
+    - mirror          # suggest more readable alternatives
+    - misspell        # spell-check comments and strings
+    - noctx           # detect HTTP requests without context
+    - nolintlint      # enforce proper nolint directives
+    - prealloc        # suggest slice pre-allocation
+    - reassign        # detect variable shadowing via reassignment
+    - revive          # opinionated but configurable Go linter
+    - staticcheck     # advanced static analysis
+    - testifylint     # testify usage correctness
+    - unconvert       # remove redundant type conversions
+    - unparam         # detect unused function parameters
+    - unused          # detect unused code
+    - wastedassign    # detect wasted assignments
+    - whitespace      # detect leading/trailing whitespace
+
+  disable:
+    - depguard        # not using custom import restrictions
+    - exhaustive      # too strict for this project size
+    - funlen          # covered by gocognit
+    - gochecknoglobals # we use module-level providers intentionally
+    - lll             # line length handled by formatter
+    - wrapcheck       # too verbose for internal packages
+
+linters-settings:
+  gocognit:
+    min-complexity: 20
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+      - style
+
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+
+  godox:
+    keywords:
+      - FIXME
+      - HACK
+      # NOTE and TODO are allowed without issues
+
+  misspell:
+    locale: US
+
+issues:
+  exclude-rules:
+    # Test files: relax some rules
+    - path: _test\.go
+      linters:
+        - exhaustruct
+        - unparam
+        - godot
+
+    # main.go: allow init-style globals
+    - path: cmd/server/main\.go
+      linters:
+        - gochecknoglobals
+        - exhaustruct
+
+  max-same-issues: 5
+  new: false
+
+run:
+  timeout: 3m
+  tests: true
