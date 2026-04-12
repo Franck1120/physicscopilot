@@ -447,6 +447,47 @@ func TestConcurrentAccess(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Concurrent CreateSession: 10 goroutines → all IDs unique, no panics
+// ---------------------------------------------------------------------------
+
+func TestConcurrentCreateSessionUniqueIDs(t *testing.T) {
+	t.Parallel()
+
+	svc := NewSessionService()
+
+	const workers = 10
+	ids := make([]string, workers)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+
+	for i := 0; i < workers; i++ {
+		i := i
+		go func() {
+			defer wg.Done()
+			sess, err := svc.CreateSession("Creality", "Ender 3", "", "")
+			if err != nil {
+				t.Errorf("worker %d: unexpected error: %v", i, err)
+				return
+			}
+			ids[i] = sess.SessionID
+		}()
+	}
+	wg.Wait()
+
+	seen := make(map[string]struct{}, workers)
+	for i, id := range ids {
+		if id == "" {
+			t.Errorf("worker %d: got empty session ID", i)
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate session ID detected: %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // DB error path tests
 // ---------------------------------------------------------------------------
 
