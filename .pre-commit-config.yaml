@@ -1,0 +1,60 @@
+# .pre-commit-config.yaml — hooks run before every local commit.
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Docs: https://pre-commit.com
+
+repos:
+  # ── General hygiene ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  # ── Go ───────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        files: '^server/'
+      - id: go-vet
+        files: '^server/'
+
+  # ── Secrets ──────────────────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # ── Dart / Flutter ───────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format
+        entry: dart format --set-exit-if-changed
+        language: system
+        files: '\.dart$'
+        pass_filenames: true
+      - id: flutter-analyze
+        name: flutter analyze
+        entry: bash -c 'cd app && flutter analyze --fatal-warnings'
+        language: system
+        pass_filenames: false
+        files: '\.dart$'
+
+  # ── YAML lint ─────────────────────────────────────────────────────────────────
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: relaxed, rules: {line-length: {max: 120}}}']
+        exclude: 'app/.*'
