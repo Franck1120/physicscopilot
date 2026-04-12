@@ -310,7 +310,11 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	}
 	sessionID := session.SessionID
 
+	// Track active sessions per language.
+	metrics.WsActiveSessionsByLanguage.WithLabelValues(lang).Inc()
+
 	defer func() {
+		metrics.WsActiveSessionsByLanguage.WithLabelValues(lang).Dec()
 		if delErr := h.sessions.DeleteSession(sessionID); delErr != nil {
 			slog.Warn("failed to delete session", "session_id", sessionID, "err", delErr)
 		}
@@ -400,6 +404,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessFrame error", "session_id", sessionID, "err", err)
+		metrics.GeminiErrorsTotal.WithLabelValues("frame").Inc()
 		writeError(sc, err.Error())
 		return
 	}
@@ -409,6 +414,7 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 		return
 	}
 
+	metrics.WsFramesProcessedTotal.Inc()
 	writeResponse(sc, result)
 }
 
@@ -420,6 +426,7 @@ func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessa
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		slog.Error("ProcessTextMessage error", "session_id", sessionID, "err", err)
+		metrics.GeminiErrorsTotal.WithLabelValues("text").Inc()
 		writeError(sc, err.Error())
 		return
 	}
