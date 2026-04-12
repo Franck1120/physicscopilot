@@ -48,8 +48,26 @@ class VoiceService {
     );
   }
 
+  // ── Language ─────────────────────────────────────────────────────────────
+
+  /// Maps a BCP-47 language code to the corresponding TTS locale string.
+  static String _toTtsLocale(String lang) => switch (lang) {
+        'it' => 'it-IT',
+        'en' => 'en-US',
+        'fr' => 'fr-FR',
+        'de' => 'de-DE',
+        'es' => 'es-ES',
+        'pt' => 'pt-PT',
+        _ => '$lang-${lang.toUpperCase()}', // best-effort fallback
+      };
+
+  /// Updates the TTS and STT language at runtime.
+  Future<void> setLanguage(String langCode) async {
+    await _tts.setLanguage(_toTtsLocale(langCode));
+  }
+
   Future<void> _configureTts() async {
-    await _tts.setLanguage('en-US');
+    await _tts.setLanguage('it-IT');
     await _tts.setSpeechRate(0.9);
     await _tts.setPitch(1.0);
     await _tts.setVolume(1.0);

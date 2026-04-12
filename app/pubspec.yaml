@@ -46,6 +46,8 @@ dependencies:
   permission_handler: ^11.3.1
   # Image processing
   image: ^4.0.0
+  # Auth
+  supabase_flutter: ^2.9.0
   # Navigation & preferences
   shared_preferences: ^2.3.0
   go_router: ^14.6.3
@@ -80,6 +82,7 @@ flutter:
 
   assets:
     - assets/data/printer_profiles.json
+    - assets/data/kb_problems.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:
