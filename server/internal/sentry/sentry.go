@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // Package sentry provides a thin wrapper around the Sentry Go SDK.
 // It initialises Sentry from SENTRY_DSN and exposes helpers used by the
 // server's error handler.
