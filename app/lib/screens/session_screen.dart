@@ -10,10 +10,12 @@ import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMut
 import '../providers/camera_provider.dart';
 import '../providers/session_provider.dart';
 import '../providers/websocket_provider.dart';
+import '../services/websocket_service.dart';
 
 /// Active repair session screen.
 ///
 /// Layout:
+///   - Connection banner (shown only when WS is not connected)
 ///   - Top 60 %: live camera preview with manual capture button
 ///   - Bottom 40 %: AI guidance panel (response text + text input)
 ///
@@ -64,7 +66,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
+  /// Returns true if the WebSocket is currently connected.
+  bool get _isConnected {
+    final status = ref.read(connectionStatusProvider).value;
+    return status == ConnectionStatus.connected;
+  }
+
   Future<void> _captureAndSend() async {
+    if (!_isConnected) {
+      ref.read(sessionProvider.notifier).setError(
+        'Server non raggiungibile — attendi la riconnessione.',
+      );
+      return;
+    }
     HapticFeedback.mediumImpact();
     final cameraService = ref.read(cameraServiceProvider);
     final wsService = ref.read(webSocketServiceProvider);
@@ -78,6 +92,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   void _sendText() {
+    if (!_isConnected) {
+      ref.read(sessionProvider.notifier).setError(
+        'Server non raggiungibile — attendi la riconnessione.',
+      );
+      return;
+    }
     final text = _textController.text.trim();
     if (text.isEmpty) return;
     final wsService = ref.read(webSocketServiceProvider);
@@ -89,6 +109,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final wsStatus = ref.watch(connectionStatusProvider);
+
     return Scaffold(
       backgroundColor: kBgPrimary,
       appBar: AppBar(
@@ -110,6 +132,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       ),
       body: Column(
         children: [
+          // Connection banner — shown only when WS is not fully connected.
+          wsStatus.when(
+            data: (s) => s != ConnectionStatus.connected
+                ? _ConnectionBanner(status: s)
+                : const SizedBox.shrink(),
+            loading: () => const _ConnectionBanner(
+              status: ConnectionStatus.connecting,
+            ),
+            error: (_, __) => const _ConnectionBanner(
+              status: ConnectionStatus.disconnected,
+            ),
+          ),
           Expanded(
             flex: 6,
             child: _CameraSection(onCapture: _captureAndSend),
@@ -119,6 +153,46 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             child: _GuidancePanel(
               textController: _textController,
               onSendText: _sendText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Connection banner ────────────────────────────────────────────────────────
+
+class _ConnectionBanner extends StatelessWidget {
+  const _ConnectionBanner({required this.status});
+
+  final ConnectionStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final isConnecting = status == ConnectionStatus.connecting;
+    final color = isConnecting ? Colors.orangeAccent : Colors.redAccent;
+    final icon = isConnecting ? Icons.wifi_find : Icons.wifi_off;
+    final message = isConnecting
+        ? 'Connessione al server in corso…'
+        : 'Server non raggiungibile — i dati non vengono inviati';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+      color: color.withAlpha(30),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -329,7 +403,7 @@ class _ResponseArea extends StatelessWidget {
 
     return const Center(
       child: Text(
-        'Punta la camera sulla stampante\nper avviare l\'analisi AI.',
+        'Punta la camera sull\'oggetto\nper avviare l\'analisi AI.',
         textAlign: TextAlign.center,
         style: TextStyle(color: kTextMuted, fontSize: 13, height: 1.5),
       ),
