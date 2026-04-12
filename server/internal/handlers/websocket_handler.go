@@ -161,13 +161,15 @@ func (s *safeConn) writePing() error {
 func (s *safeConn) writeClose(code int, text string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// Errors are intentionally ignored: the connection may already be closing
-	// from the peer side, making write failures expected and non-actionable.
-	_ = s.c.WriteMessage(
+	if err := s.c.WriteMessage(
 		websocket.CloseMessage,
 		websocket.FormatCloseMessage(code, text),
-	)
-	_ = s.c.Close()
+	); err != nil {
+		slog.Debug("writeClose: close frame write failed", "err", err)
+	}
+	if err := s.c.Close(); err != nil {
+		slog.Debug("writeClose: connection close failed", "err", err)
+	}
 }
 
 // ---------------------------------------------------------------------------
