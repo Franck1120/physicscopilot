@@ -138,6 +138,12 @@ class WebSocketService {
     if (!_statusController.isClosed) _statusController.add(status);
   }
 
+  /// Permanently closes the WebSocket connection and releases all resources.
+  ///
+  /// Cancels any pending reconnect timer, closes the underlying channel sink,
+  /// and closes the [statusStream] and [messages] broadcast streams.
+  /// After calling this method the service must not be reused — create a new
+  /// instance instead.
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     _disposed = true;
