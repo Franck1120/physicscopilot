@@ -95,6 +95,34 @@ func newBenchRAGService(b *testing.B) *services.RAGService {
 	return svc
 }
 
+// BenchmarkListSessions measures the throughput of GET /api/sessions with 100
+// pre-created sessions in the store.
+func BenchmarkListSessions(b *testing.B) {
+	sessionSvc := services.NewSessionService()
+	for i := 0; i < 100; i++ {
+		sessionSvc.CreateSession("BrandA", "ModelA", "", "") //nolint:errcheck
+	}
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	ws := NewWSHandler(convSvc, sessionSvc)
+
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	sh := NewSessionHandler(sessionSvc)
+	app.Get("/api/sessions", sh.ListSessions)
+	app.Get("/health", NewHealthHandler("bench", time.Now(), ws, nil))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+		resp, err := app.Test(req, -1)
+		if err != nil {
+			b.Fatalf("request error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			b.Fatalf("unexpected status: %d", resp.StatusCode)
+		}
+	}
+}
+
 // BenchmarkRAGQuery measures the throughput of RAGService.QueryKB.
 func BenchmarkRAGQuery(b *testing.B) {
 	svc := newBenchRAGService(b)
