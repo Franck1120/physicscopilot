@@ -86,4 +86,44 @@ var (
 		},
 		[]string{"language"},
 	)
+
+	// ── Funnel analytics ─────────────────────────────────────────────────────
+
+	// SessionStartedTotal counts every WebSocket session that successfully
+	// completed creation (session row written, first message loop entered).
+	SessionStartedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "session_started_total",
+			Help: "Total WebSocket sessions started.",
+		},
+	)
+
+	// SessionCompletedTotal counts sessions that ended with a clean close
+	// (CloseNormalClosure or CloseGoingAway from the server side on shutdown).
+	SessionCompletedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "session_completed_total",
+			Help: "Total WebSocket sessions ended with a clean close.",
+		},
+	)
+
+	// SessionAbandonedTotal counts sessions that ended unexpectedly (network
+	// drop, unexpected close code, or read error after at least one message).
+	SessionAbandonedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "session_abandoned_total",
+			Help: "Total WebSocket sessions that ended unexpectedly (network drop or error).",
+		},
+	)
+
+	// TimeToFirstResponseSeconds measures the wall-clock time from session
+	// creation to the first AI response sent to the client (TTFR).
+	// Buckets cover 100 ms – 15 s, which spans typical Gemini cold/warm paths.
+	TimeToFirstResponseSeconds = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "session_time_to_first_response_seconds",
+			Help:    "Time from session start to first AI response (TTFR).",
+			Buckets: []float64{0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0},
+		},
+	)
 )
