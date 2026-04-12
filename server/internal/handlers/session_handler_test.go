@@ -357,6 +357,76 @@ func TestListSessionsPaginationBeyondEndReturnsEmpty(t *testing.T) {
 	}
 }
 
+// ── Sorting tests ─────────────────────────────────────────────────────────────
+
+func TestListSessionsSortByCreatedAtAsc(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("Alpha", "M1", "", "") //nolint:errcheck
+	sessions.CreateSession("Beta", "M2", "", "")  //nolint:errcheck
+	sessions.CreateSession("Gamma", "M3", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?sort_by=created_at&sort_order=asc", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	sessionsList, ok := body["sessions"].([]interface{})
+	if !ok || len(sessionsList) != 3 {
+		t.Fatalf("expected 3 sessions, got %v", body["sessions"])
+	}
+
+	// Verify ordering: each created_at must be <= the next one.
+	for i := 0; i < len(sessionsList)-1; i++ {
+		curr := sessionsList[i].(map[string]interface{})
+		next := sessionsList[i+1].(map[string]interface{})
+		currTime := curr["created_at"].(string)
+		nextTime := next["created_at"].(string)
+		if currTime > nextTime {
+			t.Errorf("sessions not sorted asc by created_at: index %d (%s) > index %d (%s)",
+				i, currTime, i+1, nextTime)
+		}
+	}
+}
+
+func TestListSessionsSortByLastActivityDesc(t *testing.T) {
+	app, sessions := newSessionTestApp(t)
+	sessions.CreateSession("X", "M1", "", "") //nolint:errcheck
+	sessions.CreateSession("Y", "M2", "", "") //nolint:errcheck
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions?sort_by=last_activity&sort_order=desc", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+
+	var body map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&body) //nolint:errcheck
+
+	sessionsList, ok := body["sessions"].([]interface{})
+	if !ok || len(sessionsList) != 2 {
+		t.Fatalf("expected 2 sessions, got %v", body["sessions"])
+	}
+
+	for i := 0; i < len(sessionsList)-1; i++ {
+		curr := sessionsList[i].(map[string]interface{})
+		next := sessionsList[i+1].(map[string]interface{})
+		currTime := curr["last_activity"].(string)
+		nextTime := next["last_activity"].(string)
+		if currTime < nextTime {
+			t.Errorf("sessions not sorted desc by last_activity at index %d", i)
+		}
+	}
+}
+
 // ── ETag tests ────────────────────────────────────────────────────────────────
 
 func TestGetSessionReturnsETagHeader(t *testing.T) {

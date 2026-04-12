@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -178,11 +179,42 @@ func totalPages(total, pageSize int) int {
 	return pages
 }
 
+// sortSessions sorts the provided slice in-place according to sortBy and
+// sortOrder. Supported sortBy values: "created_at", "last_activity", "status".
+// sortOrder must be "asc" or "desc" (default "desc").
+func sortSessions(dtos []sessionResponse, sortBy, sortOrder string) {
+	if sortBy == "" {
+		sortBy = "last_activity"
+	}
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	asc := sortOrder == "asc"
+
+	sort.Slice(dtos, func(i, j int) bool {
+		var less bool
+		switch sortBy {
+		case "created_at":
+			less = dtos[i].CreatedAt.Before(dtos[j].CreatedAt)
+		case "status":
+			less = dtos[i].Status < dtos[j].Status
+		default: // "last_activity"
+			less = dtos[i].LastActivity.Before(dtos[j].LastActivity)
+		}
+		if asc {
+			return less
+		}
+		return !less
+	})
+}
+
 // ListSessions handles GET /api/sessions.
 //
 // Query parameters:
 //   - page (int, default 1): 1-based page number
 //   - page_size (int, default 20, max 100): items per page
+//   - sort_by (string): "created_at" | "last_activity" | "status" (default "last_activity")
+//   - sort_order (string): "asc" | "desc" (default "desc")
 //
 // Response 200: {"sessions":[...],"count":N,"page":P,"page_size":S,"total":T,"total_pages":TP} with ETag header.
 // Response 304: when If-None-Match matches the current ETag.
@@ -193,11 +225,15 @@ func (h *SessionHandler) ListSessions(c *fiber.Ctx) error {
 		dtos[i] = toResponse(s)
 	}
 
+	// 1. Sort
+	sortSessions(dtos, c.Query("sort_by"), c.Query("sort_order"))
+
 	etag := sessionListETag(dtos)
 	if c.Get("If-None-Match") == etag {
 		return c.SendStatus(fiber.StatusNotModified)
 	}
 
+	// 2. Paginate
 	page, pageSize := parsePagination(c)
 	paged, total := paginateSessions(dtos, page, pageSize)
 
