@@ -5,56 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 import '../main.dart' show onboardingCompletedProvider;
 import '../providers/prefs_provider.dart' show sharedPrefsProvider;
 
-// ---------------------------------------------------------------------------
-// Data model for each onboarding slide
-// ---------------------------------------------------------------------------
-
-class _PageData {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  final String detail;
-
-  const _PageData({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.detail,
-  });
-}
-
-const List<_PageData> _pages = [
-  _PageData(
-    icon: Icons.camera_alt_rounded,
-    color: Color(0xFF10B981), // emerald
-    title: 'Punta la camera',
-    subtitle: 'PhysicsCopilot vede il dispositivo in tempo reale',
-    detail:
-        'Inquadra il problema: errori, cavi, componenti rotti — l\'AI vede tutto.',
-  ),
-  _PageData(
-    icon: Icons.auto_fix_high_rounded,
-    color: Color(0xFF6366F1), // indigo
-    title: 'L\'AI analizza',
-    subtitle: 'Gemini identifica il problema in secondi',
-    detail:
-        'Riconoscimento visivo + knowledge base di riparazione per una diagnosi precisa.',
-  ),
-  _PageData(
-    icon: Icons.check_circle_rounded,
-    color: Color(0xFF10B981), // emerald
-    title: 'Segui le istruzioni',
-    subtitle: 'Guida passo-passo vocale e visiva',
-    detail: 'Ogni step è verificato. Se hai dubbi, chiedi all\'AI direttamente.',
-  ),
-];
-
-// ---------------------------------------------------------------------------
-// Main screen — logic unchanged, UI enhanced
-// ---------------------------------------------------------------------------
-
 /// Onboarding flow shown once on first launch.
 /// Calls [onComplete] after saving the completion flag so the router
 /// can navigate to the next screen.
@@ -137,193 +87,61 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Base gradient background
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF1B4F72), Color(0xFF000000)],
-              ),
-            ),
-            child: SizedBox.expand(),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1B4F72), Color(0xFF000000)],
           ),
-          // Subtle geometric overlay — concentric arcs in top-right corner
-          const Positioned.fill(
-            child: CustomPaint(painter: _BackgroundPainter()),
-          ),
-          // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: (index) =>
-                        setState(() => _currentPage = index),
-                    children: _pages
-                        .map(
-                          (data) => _OnboardingPage(
-                            key: ValueKey(data.title),
-                            data: data,
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                _PageIndicator(
-                  pageCount: _pageCount,
-                  currentPage: _currentPage,
-                ),
-                const SizedBox(height: 32),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.15),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                    child: Semantics(
-                      label: _currentPage < _pageCount - 1
-                          ? 'Avanti alla slide successiva'
-                          : 'Inizia a usare l\'app',
-                      button: true,
-                      child: _currentPage < _pageCount - 1
-                          ? _PrimaryButton(
-                              key: const ValueKey('avanti'),
-                              label: 'Avanti',
-                              onPressed: _goToNextPage,
-                            )
-                          : _PrimaryButton(
-                              key: const ValueKey('inizia'),
-                              label: 'Inizia',
-                              onPressed: _isCompleting ? null : _handleComplete,
-                            ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 48),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Animated slide page
-// ---------------------------------------------------------------------------
-
-class _OnboardingPage extends StatefulWidget {
-  final _PageData data;
-
-  const _OnboardingPage({super.key, required this.data});
-
-  @override
-  State<_OnboardingPage> createState() => _OnboardingPageState();
-}
-
-class _OnboardingPageState extends State<_OnboardingPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fade,
-      child: SlideTransition(
-        position: _slide,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+        ),
+        child: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Illustrated icon container — decorative, excluded from screen reader
-              ExcludeSemantics(
-                child: Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.data.color.withAlpha(25),
-                    border: Border.all(
-                      color: widget.data.color.withAlpha(60),
-                      width: 1.5,
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
+                  children: const [
+                    _OnboardingPage(
+                      icon: Icons.camera_alt,
+                      title: 'Punta la camera',
+                      subtitle: 'Inquadra il dispositivo che vuoi analizzare',
                     ),
-                  ),
-                  child: Icon(
-                    widget.data.icon,
-                    size: 64,
-                    color: widget.data.color,
-                  ),
+                    _OnboardingPage(
+                      icon: Icons.auto_awesome,
+                      title: 'L\'AI analizza',
+                      subtitle:
+                          'Il modello AI identifica il problema e trova la soluzione ottimale',
+                    ),
+                    _OnboardingPage(
+                      icon: Icons.checklist_rounded,
+                      title: 'Segui le istruzioni',
+                      subtitle:
+                          'Istruzioni passo-passo guidate dalla voce per risolvere il problema',
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 40),
-              Text(
-                widget.data.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-                textAlign: TextAlign.center,
+              _PageIndicator(
+                pageCount: _pageCount,
+                currentPage: _currentPage,
               ),
-              const SizedBox(height: 16),
-              Text(
-                widget.data.subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 15,
-                  height: 1.6,
-                ),
-                textAlign: TextAlign.center,
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: _currentPage < _pageCount - 1
+                    ? _PrimaryButton(
+                        label: 'Avanti',
+                        onPressed: _goToNextPage,
+                      )
+                    : _PrimaryButton(
+                        label: 'Inizia',
+                        onPressed: _isCompleting ? null : _handleComplete,
+                      ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                widget.data.detail,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.45),
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              const SizedBox(height: 48),
             ],
           ),
         ),
@@ -333,34 +151,54 @@ class _OnboardingPageState extends State<_OnboardingPage>
 }
 
 // ---------------------------------------------------------------------------
-// Background geometric painter
+// Private widgets
 // ---------------------------------------------------------------------------
 
-class _BackgroundPainter extends CustomPainter {
-  const _BackgroundPainter();
+class _OnboardingPage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _OnboardingPage({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF10B981).withAlpha(15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (int i = 1; i <= 4; i++) {
-      canvas.drawCircle(
-        Offset(size.width, 0),
-        i * 80.0,
-        paint,
-      );
-    }
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 80, color: Colors.white),
+          const SizedBox(height: 40),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: Color(0xFFADD8E6),
+              fontSize: 16,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(_BackgroundPainter _) => false;
 }
-
-// ---------------------------------------------------------------------------
-// Page indicator — unchanged
-// ---------------------------------------------------------------------------
 
 class _PageIndicator extends StatelessWidget {
   final int pageCount;
@@ -373,41 +211,31 @@ class _PageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Slide ${currentPage + 1} di $pageCount',
-      child: ExcludeSemantics(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(pageCount, (index) {
-            final isActive = index == currentPage;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: isActive ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: isActive ? Colors.white : const Color(0x66FFFFFF),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            );
-          }),
-        ),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(pageCount, (index) {
+        final isActive = index == currentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : const Color(0x66FFFFFF),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Primary button — unchanged
-// ---------------------------------------------------------------------------
 
 class _PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
 
   const _PrimaryButton({
-    super.key,
     required this.label,
     required this.onPressed,
   });

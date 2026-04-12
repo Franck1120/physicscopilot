@@ -3,15 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../widgets/safe_screen.dart';
-import '../models/session_record.dart';
 import '../providers/equipment_provider.dart';
-import '../providers/session_history_provider.dart';
 import '../providers/websocket_provider.dart';
-import '../services/api_service.dart';
 import '../services/websocket_service.dart';
+import '../services/api_service.dart';
+import '../providers/session_history_provider.dart';
+import '../models/session_record.dart';
 import 'history_screen.dart';
-import 'settings_screen.dart' show showAboutAppDialog;
 
 
 // ---------------------------------------------------------------------------
@@ -42,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _onItemTapped(int index) {
     if (index == 1) {
+      // Camera tab: delegate navigation to the router callback, stay at home.
       widget.onStartCamera();
       return;
     }
@@ -50,14 +49,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      return _buildContent(context);
-    } catch (e) {
-      return screenError(e, context);
-    }
-  }
-
-  Widget _buildContent(BuildContext context) {
     return Scaffold(
       backgroundColor: _scaffoldBackground,
       body: IndexedStack(
@@ -67,6 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onGoToCamera: () => _onItemTapped(1),
             onChangeEquipment: widget.onChangeEquipment,
           ),
+          // Tab 1 — Camera: never rendered; handled by onStartCamera callback.
           const SizedBox.shrink(),
           const HistoryScreen(),
           const _ProfileTab(),
@@ -125,26 +117,33 @@ class _HomeTab extends ConsumerWidget {
     final connectionStatus = ref.watch(connectionStatusProvider);
     final serverHealth = ref.watch(serverHealthProvider);
 
+    final bool isServerOnline = serverHealth.when(
+      data: (healthy) => healthy,
+      loading: () => false,
+      error: (_, __) => false,
+    );
+
     return Scaffold(
       backgroundColor: kBgPrimary,
       appBar: AppBar(
         backgroundColor: const Color(0xFF111111),
         elevation: 0,
-        title: const Text(
-          'PhysicsCopilot',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ApiHealthDot(isOnline: isServerOnline),
+            const SizedBox(width: 8),
+            const Text(
+              'PhysicsCopilot',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Center(
-              child: _ServerHealthDot(health: serverHealth),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: _WsStatusChip(status: connectionStatus),
@@ -171,48 +170,75 @@ class _HomeTab extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Server health dot — small indicator next to WS chip
+// API Health Dot — shown in AppBar title
 // ---------------------------------------------------------------------------
 
-class _ServerHealthDot extends StatelessWidget {
-  const _ServerHealthDot({required this.health});
+class _ApiHealthDot extends StatefulWidget {
+  const _ApiHealthDot({required this.isOnline});
 
-  final AsyncValue<bool> health;
+  final bool isOnline;
+
+  @override
+  State<_ApiHealthDot> createState() => _ApiHealthDotState();
+}
+
+class _ApiHealthDotState extends State<_ApiHealthDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _opacityAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final (color, tooltip) = health.when(
-      data: (ok) => ok
-          ? (kAccent, 'Server raggiungibile')
-          : (Colors.redAccent, 'Server non raggiungibile'),
-      loading: () => (Colors.orangeAccent, 'Verifica server…'),
-      error: (_, __) => (Colors.redAccent, 'Server non raggiungibile'),
-    );
+    final color = widget.isOnline ? kAccent : Colors.redAccent;
 
-    return Semantics(
-      label: tooltip,
-      excludeSemantics: true,
-      child: Tooltip(
-        message: tooltip,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: color.withAlpha(120), blurRadius: 5),
-            ],
+    return AnimatedBuilder(
+      animation: _opacityAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: widget.isOnline ? _opacityAnimation.value : 1.0,
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: widget.isOnline
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// New Session Card — prominent CTA
+// New Session Card
 // ---------------------------------------------------------------------------
 
 class _NewSessionCard extends StatelessWidget {
@@ -222,65 +248,53 @@ class _NewSessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Nuova sessione — avvia analisi AI',
-      button: true,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          onTap();
-        },
-        child: Container(
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF065F46), Color(0xFF064E3B)],
+            colors: [Color(0xFF064E3B), Color(0xFF047857)],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: kAccent.withValues(alpha: 0.22),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: kAccent.withValues(alpha: 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Row(
+        child: const Row(
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: kAccent.withAlpha(40),
-                shape: BoxShape.circle,
-                border: Border.all(color: kAccent.withAlpha(80), width: 1.5),
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-                size: 28,
-              ),
+            Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white,
+              size: 36,
             ),
-            const SizedBox(width: 20),
-            const Expanded(
+            SizedBox(width: 20),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Nuova sessione',
+                    'Inizia sessione',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
                     ),
                   ),
-                  SizedBox(height: 5),
+                  SizedBox(height: 4),
                   Text(
-                    'Punta la camera e avvia l\'analisi AI',
+                    'Nuova sessione di analisi',
                     style: TextStyle(
                       color: Color(0xFF6EE7B7),
                       fontSize: 13,
@@ -289,22 +303,13 @@ class _NewSessionCard extends StatelessWidget {
                 ],
               ),
             ),
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: kAccent.withAlpha(30),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Color(0xFF6EE7B7),
-                size: 18,
-              ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFF6EE7B7),
+              size: 18,
             ),
           ],
         ),
-      ),
       ),
     );
   }
@@ -369,25 +374,21 @@ class _EquipmentSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Semantics(
-                label: 'Cambia dispositivo attivo',
-                button: true,
-                child: GestureDetector(
-                  onTap: onChangeEquipment,
-                  child: Chip(
-                    label: const Text(
-                      'Cambia',
-                      style: TextStyle(
-                        color: kAccent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+              GestureDetector(
+                onTap: onChangeEquipment,
+                child: Chip(
+                  label: const Text(
+                    'Cambia',
+                    style: TextStyle(
+                      color: kAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
-                    backgroundColor: kBgPrimary,
-                    side: const BorderSide(color: kAccent, width: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    visualDensity: VisualDensity.compact,
                   ),
+                  backgroundColor: kBgPrimary,
+                  side: const BorderSide(color: kAccent, width: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
             ],
@@ -399,346 +400,196 @@ class _EquipmentSection extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Recent Sessions Section — shows last 3 real sessions
+// Recent Sessions Section
 // ---------------------------------------------------------------------------
 
-class _RecentSessionsSection extends ConsumerStatefulWidget {
+class _RecentSessionsSection extends ConsumerWidget {
   const _RecentSessionsSection();
 
   @override
-  ConsumerState<_RecentSessionsSection> createState() =>
-      _RecentSessionsSectionState();
-}
-
-class _RecentSessionsSectionState
-    extends ConsumerState<_RecentSessionsSection> {
-  // Show skeleton for 400 ms on first mount to smooth the content reveal.
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) setState(() => _loading = false);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final allSessions = ref.watch(sessionHistoryProvider);
-    final recent = allSessions.take(3).toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessions = ref.watch(sessionHistoryProvider).take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text(
-              'ULTIME SESSIONI',
-              style: TextStyle(
-                color: kTextMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const Spacer(),
-            if (!_loading && allSessions.isNotEmpty)
-              Semantics(
-                label: 'Vedi tutta la cronologia',
-                button: true,
-                child: GestureDetector(
-                  onTap: () => context.push('/history'),
-                  child: const Text(
-                    'Vedi tutte',
-                    style: TextStyle(
-                      color: kAccent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        const Text(
+          'ULTIME SESSIONI',
+          style: TextStyle(
+            color: kTextMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
+          ),
         ),
         const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeOut,
-          child: _loading
-              ? const _SkeletonSessionList(key: ValueKey('skeleton'))
-              : recent.isEmpty
-                  ? const _NoSessionsCard(key: ValueKey('empty'))
-                  : Column(
-                      key: const ValueKey('sessions'),
-                      children: recent
-                          .map((s) => _RecentSessionCard(session: s))
-                          .toList(),
-                    ),
-        ),
+        if (sessions.isEmpty)
+          const _NoSessionsCard()
+        else
+          Column(
+            children: sessions
+                .map((session) => _SessionCard(session: session))
+                .toList(),
+          ),
       ],
     );
   }
 }
 
-// ── Skeleton list ────────────────────────────────────────────────────────────
+class _SessionCard extends StatelessWidget {
+  const _SessionCard({required this.session});
 
-class _SkeletonSessionList extends StatelessWidget {
-  const _SkeletonSessionList({super.key});
+  final SessionRecord session;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(3, (_) => const _SkeletonSessionCard()),
-    );
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final sessionDay = DateTime(date.year, date.month, date.day);
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    if (sessionDay == today) {
+      return 'oggi $hour:$minute';
+    }
+    final yesterday = today.subtract(const Duration(days: 1));
+    if (sessionDay == yesterday) {
+      return 'ieri $hour:$minute';
+    }
+    return '${date.day}/${date.month} $hour:$minute';
   }
-}
 
-class _SkeletonSessionCard extends StatelessWidget {
-  const _SkeletonSessionCard();
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    }
+    return '${seconds}s';
+  }
+
+  String _truncate(String text, int maxLen) {
+    if (text.length <= maxLen) return text;
+    return '${text.substring(0, maxLen)}…';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isResolved = session.status == SessionStatus.resolved;
+    final statusColor = isResolved ? kAccent : Colors.orangeAccent;
+    final statusLabel = isResolved ? 'Risolto' : 'In corso';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: kBgCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: kBgCardBorder, width: 1),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _ShimmerBox(width: 9, height: 9, borderRadius: 5),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                _ShimmerBox(height: 13, borderRadius: 4),
-                SizedBox(height: 6),
-                _ShimmerBox(width: 110, height: 11, borderRadius: 4),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const _ShimmerBox(width: 36, height: 11, borderRadius: 4),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Shimmer box ──────────────────────────────────────────────────────────────
-
-class _ShimmerBox extends StatefulWidget {
-  const _ShimmerBox({
-    this.width = double.infinity,
-    required this.height,
-    this.borderRadius = 8.0,
-  });
-
-  final double width;
-  final double height;
-  final double borderRadius;
-
-  @override
-  State<_ShimmerBox> createState() => _ShimmerBoxState();
-}
-
-class _ShimmerBoxState extends State<_ShimmerBox>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-          ..repeat();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) {
-        final v = _ctrl.value; // 0→1
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            gradient: LinearGradient(
-              begin: Alignment(-1.5 + v * 3.0, 0),
-              end: Alignment(-0.5 + v * 3.0, 0),
-              colors: const [kBgCard, kBgCardBorder, kBgCard],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RecentSessionCard extends StatelessWidget {
-  const _RecentSessionCard({required this.session});
-
-  final SessionRecord session;
-
-  @override
-  Widget build(BuildContext context) {
-    final isResolved = session.status == SessionStatus.resolved;
-    final statusColor = isResolved ? kAccent : Colors.redAccent;
-    final statusLabel = isResolved ? 'Risolto' : 'Non risolto';
-    final name =
-        session.equipmentName.isEmpty ? 'Sessione' : session.equipmentName;
-
-    return Semantics(
-      label: '$name, $statusLabel, ${_formatSessionDate(session.date)}',
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: kBgCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kBgCardBorder, width: 1),
-        ),
-        child: Row(
-          children: [
-            ExcludeSemantics(
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: statusColor.withAlpha(80), blurRadius: 4),
-                  ],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  session.equipmentName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.4),
+                    width: 1,
                   ),
-                  if (session.summary.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      session.summary,
-                      style: const TextStyle(color: kTextMuted, fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _truncate(session.problemDescription, 40),
+            style: const TextStyle(
+              color: kTextMuted,
+              fontSize: 12,
             ),
-            const SizedBox(width: 8),
-            Text(
-              _formatSessionDate(session.date),
-              style: const TextStyle(color: kTextMuted, fontSize: 11),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.access_time, color: kTextMuted, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                _formatDate(session.date),
+                style: const TextStyle(color: kTextMuted, fontSize: 11),
+              ),
+              const SizedBox(width: 12),
+              const Icon(Icons.timer_outlined, color: kTextMuted, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                _formatDuration(session.duration),
+                style: const TextStyle(color: kTextMuted, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
 class _NoSessionsCard extends StatelessWidget {
-  const _NoSessionsCard({super.key});
+  const _NoSessionsCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         color: kBgCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: kBgCardBorder, width: 1),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: const Column(
         children: [
-          // Illustrazione: cerchio con icona science
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: kAccent.withAlpha(16),
-              border: Border.all(color: kAccent.withAlpha(50), width: 1.5),
-            ),
-            child: const Icon(
-              Icons.science_rounded,
-              color: kAccent,
-              size: 44,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Pronto per iniziare?',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Avvia la tua prima sessione\ne lascia che l\'AI ti guidi nella diagnosi.',
+          Icon(Icons.history_outlined, color: kTextMuted, size: 32),
+          SizedBox(height: 10),
+          Text(
+            'Nessuna sessione recente',
             style: TextStyle(
               color: kTextMuted,
               fontSize: 13,
-              height: 1.5,
             ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Le tue sessioni di diagnosi appariranno qui.',
+            style: TextStyle(color: kTextMuted, fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-}
-
-String _formatSessionDate(DateTime date) {
-  const months = [
-    'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
-    'lug', 'ago', 'set', 'ott', 'nov', 'dic',
-  ];
-  final now = DateTime.now();
-  if (date.year == now.year &&
-      date.month == now.month &&
-      date.day == now.day) {
-    return 'oggi';
-  }
-  final yesterday = now.subtract(const Duration(days: 1));
-  if (date.year == yesterday.year &&
-      date.month == yesterday.month &&
-      date.day == yesterday.day) {
-    return 'ieri';
-  }
-  return '${date.day} ${months[date.month - 1]}';
 }
 
 // ---------------------------------------------------------------------------
@@ -856,7 +707,7 @@ class _ProfileTileList extends StatelessWidget {
           context,
           icon: Icons.info_outline,
           label: 'Informazioni app',
-          onTap: () => showAboutAppDialog(context),
+          onTap: null,
         ),
       ],
     );
@@ -890,12 +741,7 @@ class _ProfileTileList extends StatelessWidget {
           size: 16,
         ),
         enabled: onTap != null,
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticFeedback.selectionClick();
-                onTap();
-              },
+        onTap: onTap,
       ),
     );
   }
@@ -914,48 +760,44 @@ class _WsStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label, icon) = status.when(
       data: (s) => switch (s) {
-        ConnectionStatus.connected => (kAccent, 'Connesso', Icons.wifi),
+        ConnectionStatus.connected => (kAccent, 'Online', Icons.wifi),
         ConnectionStatus.connecting => (
           Colors.orangeAccent,
-          'Connessione…',
-          Icons.wifi_find,
+          'Connessione...',
+          Icons.wifi_off,
         ),
         ConnectionStatus.disconnected => (
           Colors.redAccent,
-          'Non connesso',
+          'Offline',
           Icons.wifi_off,
         ),
       },
-      loading: () => (Colors.orangeAccent, 'Connessione…', Icons.wifi_find),
+      loading: () => (Colors.orangeAccent, 'Connessione...', Icons.wifi_off),
       error: (_, __) => (Colors.redAccent, 'Errore', Icons.error_outline),
     );
 
-    return Semantics(
-      label: 'Stato connessione: $label',
-      excludeSemantics: true,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withAlpha(80), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withAlpha(80), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
