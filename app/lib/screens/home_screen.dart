@@ -17,6 +17,10 @@ import 'history_screen.dart';
 // HomeScreen
 // ---------------------------------------------------------------------------
 
+/// Root scaffold for the main navigation shell with a bottom nav bar.
+///
+/// Manages tab state and delegates camera navigation to the [onStartCamera]
+/// callback so the router can handle the transition externally.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
     super.key,
