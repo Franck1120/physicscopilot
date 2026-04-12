@@ -25,6 +25,34 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.18.0] — 2026-04-12
+
+### Added
+- Wave 4: RAG glob-loads all `*.json` files from `KB_DATA_DIR` for zero-config KB ingestion
+- Wave 4: Per-domain `VectorStore` — each device domain maintains an isolated TF-IDF index
+- Wave 4: `QueryKBByDomain` service method for scoped KB retrieval; falls back to global index
+- Wave 4: `GET /api/domains` endpoint listing all loaded KB domains with entry counts
+- Wave 4: 4 new KB domains — `smartphone`, `furniture`, `garden`, `photography`
+- Wave 4: Flutter widgets — `ProgressRing`, `RateLimitCountdown`, `SessionBadge`, `DomainSelectionScreen`, `StatsScreen`
+- Wave 4: `selectedDomain` persisted via `SharedPreferences` across app restarts
+- Wave 4: Web PWA assets — `manifest.json`, `offline.html`, `favicon.svg`, `sw.js`
+- Wave 7: 4 new KB domains — `drone`, `iot`, `musical_instruments`, `power_tools`
+- Wave 7: 14 edge-case test files covering handlers and services
+- Wave 7: Docs — `API_EXAMPLES.md`, `MIGRATION.md`, `SCALING.md`, `BACKUP.md`, `INCIDENT_RESPONSE.md`
+- Wave 7: Community files — `CODE_OF_CONDUCT.md`, `FUNDING.yml`, `SECURITY_CONTACTS.md`
+- Sprint Finale: `commit_hash` field in `GET /health` version response
+- Sprint Finale: Swagger UI dark theme applied to `GET /api/docs`
+- Sprint Finale: `GET /api/domains/:domain` detailed endpoint with entry count and sample titles
+- Sprint Finale: Service benchmarks for RAG query, pHash computation, and session operations
+- Sprint Finale: Flutter — total session duration display, per-domain color badges, share-session button, Expert achievement unlock
+- Sprint Finale: GoDoc improvements across all handler and service packages
+- Sprint Finale: `Makefile` `coverage-report` target generating HTML coverage report
+
+### Changed
+- Sprint Finale: `release` Makefile target injects `commit_hash` via `-X main.commitHash=$(GIT_COMMIT)` alongside existing `version` and `buildDate` ldflags
+
+---
+
 ## [0.17.0] — 2026-04-12
 
 ### Added
