@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -383,5 +384,283 @@ func TestRAGServiceIndexAndSearch(t *testing.T) {
 	// just verify the slice length is capped at the requested K.
 	if len(results) > 3 {
 		t.Errorf("expected at most 3 results, got %d", len(results))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Multi-file glob loading and domain-filtering
+// ---------------------------------------------------------------------------
+
+// writeKBFile writes a raw JSON knowledge-base file into dir with the given
+// domain name and problems, returning the full file path.
+func writeKBFile(t *testing.T, dir, filename, domain string, problems []KBEntry) string {
+	t.Helper()
+
+	kb := kbFile{Domain: domain, Problems: problems}
+	data, err := json.Marshal(kb)
+	if err != nil {
+		t.Fatalf("marshal KB file %s: %v", filename, err)
+	}
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("write KB file %s: %v", path, err)
+	}
+	return path
+}
+
+// TestNewRAGServiceGlobLoadsMultipleFiles verifies that all *.json files in
+// KB_DATA_DIR are loaded and their entries merged into a single service.
+func TestNewRAGServiceGlobLoadsMultipleFiles(t *testing.T) {
+	dir := t.TempDir()
+
+	writeKBFile(t, dir, "alpha.json", "alpha", []KBEntry{
+		{ID: "a1", Name: "Alpha Problem One", Category: "hardware", Severity: "error",
+			Description: "alpha first desc",
+			VisualSymptoms: []string{"symptom1"},
+			ProbableCauses: []KBCause{{Cause: "cause1", Probability: 0.9, Test: "test1"}},
+			Solutions: []KBSolution{{Difficulty: "beginner", Steps: []KBStep{
+				{Instruction: "step1", Verification: "ok", TimeSeconds: 60},
+			}}},
+		},
+		{ID: "a2", Name: "Alpha Problem Two", Category: "hardware", Severity: "warning",
+			Description: "alpha second desc",
+		},
+	})
+
+	writeKBFile(t, dir, "beta.json", "beta", []KBEntry{
+		{ID: "b1", Name: "Beta Problem One", Category: "software", Severity: "error",
+			Description: "beta first desc",
+		},
+		{ID: "b2", Name: "Beta Problem Two", Category: "software", Severity: "warning",
+			Description: "beta second desc",
+		},
+		{ID: "b3", Name: "Beta Problem Three", Category: "software", Severity: "info",
+			Description: "beta third desc",
+		},
+	})
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "") // ensure legacy fallback is not used
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !svc.Loaded() {
+		t.Fatal("expected Loaded()=true after loading two files")
+	}
+
+	if got := len(svc.entries); got != 5 {
+		t.Errorf("expected 5 total entries (2 alpha + 3 beta), got %d", got)
+	}
+
+	domains := svc.KBDomains()
+	if len(domains) != 2 {
+		t.Fatalf("expected 2 domains, got %d: %v", len(domains), domains)
+	}
+	if domains[0] != "alpha" || domains[1] != "beta" {
+		t.Errorf("expected sorted domains [alpha beta], got %v", domains)
+	}
+}
+
+// TestNewRAGServiceStampsDomainOnEntries verifies that the domain field from the
+// JSON file is stamped onto every KBEntry returned by QueryKB, even when the
+// original JSON problem objects have no domain field set.
+func TestNewRAGServiceStampsDomainOnEntries(t *testing.T) {
+	dir := t.TempDir()
+
+	// Problems intentionally have no Domain field in JSON — the service must
+	// derive it from the top-level "domain" key in the file.
+	writeKBFile(t, dir, "gamma.json", "gamma", []KBEntry{
+		{ID: "g1", Name: "Gamma Problem One", Category: "hardware", Severity: "error",
+			Description: "gamma first desc unique keyword",
+		},
+		{ID: "g2", Name: "Gamma Problem Two", Category: "hardware", Severity: "warning",
+			Description: "gamma second desc unique keyword",
+		},
+	})
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "")
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	results := svc.QueryKB("gamma unique keyword", 5)
+	if len(results) == 0 {
+		t.Fatal("expected at least one result for gamma query")
+	}
+
+	for _, e := range results {
+		if e.Domain != "gamma" {
+			t.Errorf("entry %q: expected Domain=%q, got %q", e.ID, "gamma", e.Domain)
+		}
+	}
+}
+
+// TestNewRAGServiceNoFilesIsNoOp verifies that an empty KB_DATA_DIR causes the
+// service to start in no-op mode without returning an error.
+func TestNewRAGServiceNoFilesIsNoOp(t *testing.T) {
+	dir := t.TempDir() // empty — no *.json files
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "") // prevent legacy fallback from loading something
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("empty dir should not error, got: %v", err)
+	}
+
+	if svc.Loaded() {
+		t.Error("expected Loaded()=false when no JSON files are present")
+	}
+
+	if results := svc.QueryKB("any query", 5); results != nil {
+		t.Errorf("expected nil from no-op service, got %v", results)
+	}
+}
+
+// TestQueryKBByDomainFiltersResults verifies that QueryKBByDomain returns only
+// entries belonging to the requested domain.
+func TestQueryKBByDomainFiltersResults(t *testing.T) {
+	dir := t.TempDir()
+
+	writeKBFile(t, dir, "alpha.json", "alpha", []KBEntry{
+		{ID: "a1", Name: "Alpha Extrusion Error", Category: "hardware", Severity: "error",
+			Description: "alpha extrusion nozzle blockage filament",
+		},
+		{ID: "a2", Name: "Alpha Bed Adhesion", Category: "hardware", Severity: "warning",
+			Description: "alpha bed adhesion print lifting corners",
+		},
+	})
+
+	writeKBFile(t, dir, "beta.json", "beta", []KBEntry{
+		{ID: "b1", Name: "Beta Software Crash", Category: "software", Severity: "error",
+			Description: "beta software crash firmware update failure",
+		},
+		{ID: "b2", Name: "Beta Network Timeout", Category: "software", Severity: "warning",
+			Description: "beta network timeout connection refused",
+		},
+	})
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "")
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	results := svc.QueryKBByDomain("alpha", "alpha extrusion nozzle filament", 5)
+	if len(results) == 0 {
+		t.Fatal("expected at least one result for domain alpha query")
+	}
+
+	for _, e := range results {
+		if e.Domain != "alpha" {
+			t.Errorf("entry %q: expected Domain=%q, got %q", e.ID, "alpha", e.Domain)
+		}
+	}
+}
+
+// TestQueryKBByDomainFallsBackToGlobalWhenDomainMissing verifies that
+// QueryKBByDomain falls back to the global search when the requested domain
+// does not match any loaded domain.
+func TestQueryKBByDomainFallsBackToGlobalWhenDomainMissing(t *testing.T) {
+	dir := t.TempDir()
+
+	writeKBFile(t, dir, "alpha.json", "alpha", []KBEntry{
+		{ID: "a1", Name: "Alpha Hardware Error", Category: "hardware", Severity: "error",
+			Description: "alpha hardware device malfunction overheating",
+		},
+		{ID: "a2", Name: "Alpha Power Issue", Category: "hardware", Severity: "warning",
+			Description: "alpha power supply voltage fluctuation",
+		},
+	})
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "")
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	query := "hardware device malfunction"
+	global := svc.QueryKB(query, 5)
+	fallback := svc.QueryKBByDomain("nonexistent", query, 5)
+
+	if len(fallback) != len(global) {
+		t.Errorf("fallback len=%d does not match global len=%d", len(fallback), len(global))
+	}
+
+	for i := range global {
+		if i >= len(fallback) {
+			break
+		}
+		if fallback[i].ID != global[i].ID {
+			t.Errorf("result[%d]: fallback ID=%q != global ID=%q", i, fallback[i].ID, global[i].ID)
+		}
+	}
+}
+
+// TestKBDomainsReturnsEmptySliceWhenNotLoaded verifies that KBDomains returns
+// an empty (non-nil) slice when no KB files are loaded.
+func TestKBDomainsReturnsEmptySliceWhenNotLoaded(t *testing.T) {
+	dir := t.TempDir() // no JSON files
+
+	t.Setenv("KB_DATA_DIR", dir)
+	t.Setenv("KB_PATH", "")
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	domains := svc.KBDomains()
+	if domains == nil {
+		t.Error("expected non-nil empty slice from KBDomains(), got nil")
+	}
+	if len(domains) != 0 {
+		t.Errorf("expected empty slice, got %v", domains)
+	}
+}
+
+// TestNewRAGServiceKBPathLegacyFallback verifies that when KB_DATA_DIR is unset
+// but KB_PATH points to a valid JSON file, the service loads the file via the
+// legacy fallback by deriving the directory from the file path.
+func TestNewRAGServiceKBPathLegacyFallback(t *testing.T) {
+	dir := t.TempDir()
+
+	writeKBFile(t, dir, "legacy.json", "legacy", []KBEntry{
+		{ID: "l1", Name: "Legacy Hardware Problem", Category: "hardware", Severity: "error",
+			Description: "legacy device hardware failure component",
+			VisualSymptoms: []string{"smoke", "sparks"},
+			ProbableCauses: []KBCause{{Cause: "overvoltage", Probability: 0.95, Test: "measure voltage"}},
+			Solutions: []KBSolution{{Difficulty: "expert", Steps: []KBStep{
+				{Instruction: "replace component", Verification: "device boots", TimeSeconds: 300},
+			}}},
+		},
+	})
+
+	legacyPath := filepath.Join(dir, "legacy.json")
+
+	t.Setenv("KB_DATA_DIR", "") // ensure glob path is derived from KB_PATH
+	t.Setenv("KB_PATH", legacyPath)
+
+	svc, err := newRAGServiceWith(func() VectorStore { return NewMemoryVectorStore() })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !svc.Loaded() {
+		t.Fatal("expected Loaded()=true when KB_PATH points to a valid JSON file")
+	}
+
+	if len(svc.entries) != 1 {
+		t.Errorf("expected 1 entry from legacy file, got %d", len(svc.entries))
 	}
 }
