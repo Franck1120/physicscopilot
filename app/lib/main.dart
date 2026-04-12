@@ -281,7 +281,7 @@ class _AppErrorWidget extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Splash screen — animated logo reveal, auto-navigates after 2.2 s
+// Splash screen — staggered animated reveal, auto-navigates after 2.4 s
 // ---------------------------------------------------------------------------
 
 class _SplashScreen extends StatefulWidget {
@@ -294,22 +294,54 @@ class _SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<_SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double> _fade;
-  late final Animation<double> _scale;
+
+  // Logo: scale + fade — leads the sequence
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoFade;
+
+  // Title: slides up + fades after logo
+  late final Animation<Offset> _titleSlide;
+  late final Animation<double> _titleFade;
+
+  // Subtitle + loading dot fade in last
+  late final Animation<double> _subtitleFade;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1600),
     );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _scale = Tween<double>(begin: 0.80, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
+
+    _logoScale = Tween<double>(begin: 0.60, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
+      ),
     );
+    _logoFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.0, 0.45, curve: Curves.easeIn),
+    );
+    _titleSlide = Tween<Offset>(
+      begin: const Offset(0, 0.4),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.35, 0.70, curve: Curves.easeOut),
+    ));
+    _titleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.35, 0.65, curve: Curves.easeIn),
+    );
+    _subtitleFade = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.60, 0.90, curve: Curves.easeIn),
+    );
+
     _ctrl.forward();
-    Future.delayed(const Duration(milliseconds: 2200), () {
+    Future.delayed(const Duration(milliseconds: 2400), () {
       if (mounted) context.go('/home');
     });
   }
@@ -324,58 +356,95 @@ class _SplashScreenState extends State<_SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBgPrimary,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fade,
-          child: ScaleTransition(
-            scale: _scale,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo with emerald glow
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: kAccent.withAlpha(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kAccent.withAlpha(70),
-                        blurRadius: 48,
-                        spreadRadius: 12,
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Centre content
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo
+              ScaleTransition(
+                scale: _logoScale,
+                child: FadeTransition(
+                  opacity: _logoFade,
+                  child: Container(
+                    width: 108,
+                    height: 108,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: kAccent.withAlpha(18),
+                      border: Border.all(
+                        color: kAccent.withAlpha(60),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.science_rounded,
-                    size: 52,
-                    color: kAccent,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'PhysicsCopilot',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.5,
+                      boxShadow: [
+                        BoxShadow(
+                          color: kAccent.withAlpha(80),
+                          blurRadius: 56,
+                          spreadRadius: 16,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.science_rounded,
+                      size: 54,
+                      color: kAccent,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Your AI repair assistant',
+              ),
+              const SizedBox(height: 36),
+
+              // Title
+              SlideTransition(
+                position: _titleSlide,
+                child: FadeTransition(
+                  opacity: _titleFade,
+                  child: const Text(
+                    'PhysicsCopilot',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Subtitle
+              FadeTransition(
+                opacity: _subtitleFade,
+                child: const Text(
+                  'Il tuo assistente AI per le riparazioni',
                   style: TextStyle(
                     fontSize: 14,
                     color: kAccent,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+
+          // Bottom loading indicator
+          Positioned(
+            bottom: 56,
+            child: FadeTransition(
+              opacity: _subtitleFade,
+              child: const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: kAccent,
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
