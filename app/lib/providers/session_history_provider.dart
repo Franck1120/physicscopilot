@@ -49,6 +49,9 @@ class SessionHistoryNotifier extends StateNotifier<List<SessionRecord>> {
   }
 }
 
+/// Provides the [SessionHistoryNotifier] and the persisted list of sessions.
+///
+/// Backed by SharedPreferences; the list is capped at [_kMaxRecords] entries.
 final sessionHistoryProvider =
     StateNotifierProvider<SessionHistoryNotifier, List<SessionRecord>>((ref) {
   final prefs = ref.watch(sharedPrefsProvider);
