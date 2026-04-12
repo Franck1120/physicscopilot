@@ -1,81 +1,66 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 package handlers
 
 import (
-	"io"
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/gofiber/fiber/v2"
 )
 
-// testSwaggerApp builds a minimal Fiber app with the /docs route registered.
-func testSwaggerApp() *fiber.App {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Get("/docs", func(c *fiber.Ctx) error {
-		c.Set("Content-Type", "text/html; charset=utf-8")
-		c.Set("Cache-Control", "public, max-age=3600")
-		return c.SendString(SwaggerUIHTML("/api/docs"))
-	})
-	return app
-}
+func TestSwaggerUIHTMLDarkTheme(t *testing.T) {
+	html := SwaggerUIHTML("/openapi.yaml")
 
-// TestSwaggerUIStatus verifies that GET /docs returns HTTP 200.
-func TestSwaggerUIStatus(t *testing.T) {
-	app := testSwaggerApp()
-
-	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
-	resp, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
+	// Must contain the dark background colour.
+	if !strings.Contains(html, "background: #1a1a2e") {
+		t.Error("SwaggerUIHTML: dark background 'background: #1a1a2e' not found in HTML")
 	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("status: want 200, got %d", resp.StatusCode)
+
+	// Topbar must be hidden.
+	if !strings.Contains(html, "display: none") {
+		t.Error("SwaggerUIHTML: topbar 'display: none' not found in HTML")
+	}
+
+	// Must NOT contain the Swagger default white/light background.
+	if strings.Contains(html, "background: #fff") || strings.Contains(html, "background-color: #fff") ||
+		strings.Contains(html, "background: white") {
+		t.Error("SwaggerUIHTML: Swagger default light background found — dark theme not applied")
 	}
 }
 
-// TestSwaggerUIContentType verifies that the response Content-Type is text/html.
-func TestSwaggerUIContentType(t *testing.T) {
-	app := testSwaggerApp()
-
-	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
-	resp, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	ct := resp.Header.Get("Content-Type")
-	if !strings.HasPrefix(ct, "text/html") {
-		t.Errorf("Content-Type: want text/html prefix, got %q", ct)
-	}
-}
-
-// TestSwaggerUIBodyContainsSwaggerUI verifies that the response body references
-// the swagger-ui element so the browser can mount the widget.
-func TestSwaggerUIBodyContainsSwaggerUI(t *testing.T) {
-	app := testSwaggerApp()
-
-	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
-	resp, err := app.Test(req)
-	if err != nil {
-		t.Fatalf("app.Test: %v", err)
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read body: %v", err)
-	}
-	content := string(body)
-	if !strings.Contains(content, "swagger-ui") {
-		t.Error("expected body to contain \"swagger-ui\"")
-	}
-}
-
-// TestSwaggerUIBodyContainsSpecURL verifies that the generated HTML embeds the
-// specURL passed to SwaggerUIHTML so the client fetches the correct spec.
-func TestSwaggerUIBodyContainsSpecURL(t *testing.T) {
-	const specURL = "/api/docs"
+func TestSwaggerUIHTMLContainsSpecURL(t *testing.T) {
+	const specURL = "/openapi.yaml"
 	html := SwaggerUIHTML(specURL)
+
 	if !strings.Contains(html, specURL) {
-		t.Errorf("expected HTML to contain spec URL %q", specURL)
+		t.Errorf("SwaggerUIHTML: spec URL %q not found in HTML", specURL)
+	}
+}
+
+func TestSwaggerUIHTMLContainsThemeColorMeta(t *testing.T) {
+	html := SwaggerUIHTML("/openapi.yaml")
+
+	if !strings.Contains(html, `name="theme-color"`) {
+		t.Error("SwaggerUIHTML: <meta name=\"theme-color\"> not found in HTML")
+	}
+	if !strings.Contains(html, "#1a1a2e") {
+		t.Error("SwaggerUIHTML: theme-color value '#1a1a2e' not found in HTML")
+	}
+}
+
+func TestSwaggerUIHTMLIsValidHTML(t *testing.T) {
+	html := SwaggerUIHTML("/openapi.yaml")
+
+	if !strings.Contains(html, "<!DOCTYPE html>") {
+		t.Error("SwaggerUIHTML: missing DOCTYPE declaration")
+	}
+	if !strings.Contains(html, "<html") {
+		t.Error("SwaggerUIHTML: missing <html> tag")
+	}
+	if !strings.Contains(html, "</html>") {
+		t.Error("SwaggerUIHTML: missing closing </html> tag")
+	}
+	if !strings.Contains(html, "swagger-ui") {
+		t.Error("SwaggerUIHTML: missing swagger-ui reference")
 	}
 }
