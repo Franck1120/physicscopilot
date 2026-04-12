@@ -224,6 +224,8 @@ func newFiberApp(
 		},
 	})
 
+	app.Use(middleware.RequestIDMiddleware())
+
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {

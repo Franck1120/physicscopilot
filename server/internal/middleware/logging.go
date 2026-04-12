@@ -26,8 +26,14 @@ const requestIDKey = "request_id"
 func StructuredLogger() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
-		reqID := generateRequestID()
-		c.Locals(requestIDKey, reqID)
+		// Reuse the ID injected by RequestIDMiddleware when present; otherwise
+		// generate one here so StructuredLogger remains self-contained when used
+		// without the RequestIDMiddleware in front of it.
+		reqID, _ := c.Locals(requestIDKey).(string)
+		if reqID == "" {
+			reqID = generateRequestID()
+			c.Locals(requestIDKey, reqID)
+		}
 
 		err := c.Next()
 
