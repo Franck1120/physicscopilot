@@ -50,6 +50,7 @@ class AppSettings {
       );
 }
 
+/// Manages [AppSettings] and persists changes to SharedPreferences.
 class SettingsNotifier extends StateNotifier<AppSettings> {
   SettingsNotifier(this._prefs)
       : super(AppSettings(
@@ -63,6 +64,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   final SharedPreferences _prefs;
 
+  /// Persists the server URL override. Pass `null` or empty string to reset.
   Future<void> setServerUrl(String? url) async {
     final trimmed = url?.trim();
     if (trimmed == null || trimmed.isEmpty) {
@@ -74,16 +76,19 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
+  /// Persists the voice-guidance toggle.
   Future<void> setVoiceEnabled(bool enabled) async {
     await _prefs.setBool(_kVoiceEnabledKey, enabled);
     state = state.copyWith(voiceEnabled: enabled);
   }
 
+  /// Persists the BCP-47 [lang] code for AI responses and TTS.
   Future<void> setLanguage(String lang) async {
     await _prefs.setString(_kLanguageKey, lang);
     state = state.copyWith(language: lang);
   }
 
+  /// Persists the app-wide theme mode.
   Future<void> setThemeMode(ThemeMode mode) async {
     await _prefs.setString(
         _kThemeModeKey, mode == ThemeMode.light ? 'light' : 'dark');
