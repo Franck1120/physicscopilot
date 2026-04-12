@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 /// Represents a physical device (e.g. a printer, sensor, or appliance) owned by a user.
 ///
 /// Maps directly to the `devices` table in Supabase.
