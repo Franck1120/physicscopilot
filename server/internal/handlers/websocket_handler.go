@@ -365,6 +365,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 	// ── Session ───────────────────────────────────────────────────────────────
 	lang := c.Query("lang", "it")
+	// domain restricts RAG knowledge-base lookups to a single domain (e.g. "hvac",
+	// "printer"). An empty value falls back to the global search across all domains.
+	domain := c.Query("domain", "")
 	session, err := h.sessions.CreateSession("unknown", "unknown", userID, lang)
 	if err != nil {
 		metrics.TrackError(metrics.CategoryDB, err, "remote_addr", c.RemoteAddr())
@@ -444,9 +447,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(connCtx, sc, sessionID, userID, msg, rateLimiter, sessionStart, &firstResponseSent)
+			h.handleFrame(connCtx, sc, sessionID, userID, domain, msg, rateLimiter, sessionStart, &firstResponseSent)
 		case "text":
-			h.handleText(connCtx, sc, sessionID, userID, msg, sessionStart, &firstResponseSent)
+			h.handleText(connCtx, sc, sessionID, userID, domain, msg, sessionStart, &firstResponseSent)
 		case "ping":
 			h.handlePing(sc)
 		default:
@@ -480,7 +483,8 @@ func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID strin
 
 // handleFrame processes a camera frame through the conversation service.
 // Frames that exceed the per-connection FPS cap or the per-user API budget are dropped.
-func (h *WSHandler) handleFrame(ctx context.Context, sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter, sessionStart time.Time, firstResponseSent *bool) {
+// domain is forwarded to the RAG service to restrict KB lookups to a specific domain.
+func (h *WSHandler) handleFrame(ctx context.Context, sc *safeConn, sessionID, userID, domain string, msg IncomingMessage, rl *frameRateLimiter, sessionStart time.Time, firstResponseSent *bool) {
 	if !rl.allow() {
 		return
 	}
@@ -498,7 +502,7 @@ func (h *WSHandler) handleFrame(ctx context.Context, sc *safeConn, sessionID, us
 	}
 
 	t0 := time.Now()
-	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "")
+	result, err := h.conversations.ProcessFrame(ctx, sessionID, msg.Data, "", domain)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		metrics.TrackError(metrics.CategoryAI, err, "session_id", sessionID, "user_id", userID, "msg_type", "frame")
@@ -521,7 +525,8 @@ func (h *WSHandler) handleFrame(ctx context.Context, sc *safeConn, sessionID, us
 }
 
 // handleText processes a text-only conversation turn.
-func (h *WSHandler) handleText(ctx context.Context, sc *safeConn, sessionID, userID string, msg IncomingMessage, sessionStart time.Time, firstResponseSent *bool) {
+// domain is forwarded to the RAG service to restrict KB lookups to a specific domain.
+func (h *WSHandler) handleText(ctx context.Context, sc *safeConn, sessionID, userID, domain string, msg IncomingMessage, sessionStart time.Time, firstResponseSent *bool) {
 	if !h.userRL.Allow(userID) {
 		writeError(sc, "rate limit exceeded — slow down")
 		return
@@ -542,7 +547,7 @@ func (h *WSHandler) handleText(ctx context.Context, sc *safeConn, sessionID, use
 	}
 
 	t0 := time.Now()
-	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, content)
+	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, content, domain)
 	metrics.AiInferenceDuration.Observe(time.Since(t0).Seconds())
 	if err != nil {
 		metrics.TrackError(metrics.CategoryAI, err, "session_id", sessionID, "user_id", userID, "msg_type", "text")

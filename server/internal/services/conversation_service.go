@@ -74,7 +74,11 @@ func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGServ
 // guidance. Identical consecutive frames (by hash) are silently skipped to
 // avoid redundant API calls. An optional userText is recorded in the
 // conversation history before analysis.
-func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frameBase64, userText string) (*ProcessResult, error) {
+//
+// When domain is non-empty and the RAG service has entries for that domain,
+// knowledge-base context is restricted to that domain (e.g. "hvac", "printer").
+// An empty string falls back to the global search across all domains.
+func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frameBase64, userText, domain string) (*ProcessResult, error) {
 	// Compute perceptual fingerprint (pHash when JPEG, SHA-256 otherwise).
 	sha256Hash, ph, hasPHash := computeFrameFingerprint(frameBase64)
 
@@ -108,7 +112,7 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 				query = snap.ProblemDetected
 			}
 		}
-		if kb := c.rag.QueryKB(query, 3); len(kb) > 0 {
+		if kb := c.rag.QueryKBByDomain(domain, query, 3); len(kb) > 0 {
 			kbCtx := c.rag.FormatForPrompt(kb)
 			if conversationCtx != "" {
 				conversationCtx = kbCtx + "\n" + conversationCtx
@@ -166,7 +170,10 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 // ProcessTextMessage handles a text-only conversation turn (no camera frame).
 // The user message is recorded, sent to Gemini with empty frame data, and
 // the assistant response is stored in history.
-func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID, userText string) (*ProcessResult, error) {
+//
+// domain restricts KB lookups to a specific domain when non-empty; an empty
+// string falls back to the global search across all loaded KB domains.
+func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID, userText, domain string) (*ProcessResult, error) {
 	if err := c.sessions.AddMessage(sessionID, "user", userText, false); err != nil {
 		return nil, fmt.Errorf("add user message: %w", err)
 	}
@@ -178,7 +185,7 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 
 	// Enrich context with KB matches when RAG is available.
 	if c.rag != nil {
-		if kb := c.rag.QueryKB(userText, 3); len(kb) > 0 {
+		if kb := c.rag.QueryKBByDomain(domain, userText, 3); len(kb) > 0 {
 			kbCtx := c.rag.FormatForPrompt(kb)
 			if conversationCtx != "" {
 				conversationCtx = kbCtx + "\n" + conversationCtx

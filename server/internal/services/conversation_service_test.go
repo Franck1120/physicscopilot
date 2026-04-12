@@ -74,7 +74,7 @@ func TestProcessFrameSuccess(t *testing.T) {
 	svc, sessionID, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	result, err := svc.ProcessFrame(context.Background(), sessionID, "base64framedata", "check my bed level")
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "base64framedata", "check my bed level", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestProcessFrameSkipsDuplicateFrame(t *testing.T) {
 	defer cleanup()
 
 	// First call should succeed
-	result1, err := svc.ProcessFrame(context.Background(), sessionID, "sameframe", "")
+	result1, err := svc.ProcessFrame(context.Background(), sessionID, "sameframe", "", "")
 	if err != nil {
 		t.Fatalf("first call error: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestProcessFrameSkipsDuplicateFrame(t *testing.T) {
 	}
 
 	// Second call with same frame should be skipped
-	result2, err := svc.ProcessFrame(context.Background(), sessionID, "sameframe", "")
+	result2, err := svc.ProcessFrame(context.Background(), sessionID, "sameframe", "", "")
 	if err != nil {
 		t.Fatalf("second call error: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestProcessFrameSkipsDuplicateFrame(t *testing.T) {
 	}
 
 	// Third call with different frame should succeed
-	result3, err := svc.ProcessFrame(context.Background(), sessionID, "differentframe", "")
+	result3, err := svc.ProcessFrame(context.Background(), sessionID, "differentframe", "", "")
 	if err != nil {
 		t.Fatalf("third call error: %v", err)
 	}
@@ -144,7 +144,7 @@ func TestProcessFrameWithProblemDetected(t *testing.T) {
 	svc, sessionID, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "")
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -169,7 +169,7 @@ func TestProcessFrameWithoutUserText(t *testing.T) {
 	svc, sessionID, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "")
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -195,7 +195,7 @@ func TestProcessFrameStepInfo(t *testing.T) {
 	// Set step info on the session
 	_ = svc.sessions.UpdateStep(sessionID, 3, 10)
 
-	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "")
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "framedata", "", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -213,7 +213,7 @@ func TestProcessFrameNonexistentSession(t *testing.T) {
 	svc, _, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	_, err := svc.ProcessFrame(context.Background(), "nonexistent-session", "frame", "hello")
+	_, err := svc.ProcessFrame(context.Background(), "nonexistent-session", "frame", "hello", "")
 	if err == nil {
 		t.Fatal("expected error for nonexistent session")
 	}
@@ -227,7 +227,7 @@ func TestProcessTextMessageSuccess(t *testing.T) {
 	svc, sessionID, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	result, err := svc.ProcessTextMessage(context.Background(), sessionID, "my nozzle is clicking")
+	result, err := svc.ProcessTextMessage(context.Background(), sessionID, "my nozzle is clicking", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -258,7 +258,7 @@ func TestProcessTextMessageNonexistentSession(t *testing.T) {
 	svc, _, cleanup := setupConversationTest(t, structured)
 	defer cleanup()
 
-	_, err := svc.ProcessTextMessage(context.Background(), "nonexistent-session", "hello")
+	_, err := svc.ProcessTextMessage(context.Background(), "nonexistent-session", "hello", "")
 	if err == nil {
 		t.Fatal("expected error for nonexistent session")
 	}
@@ -341,7 +341,7 @@ func TestProcessFrameGeminiError(t *testing.T) {
 	gemini := newTestGeminiService(server.URL)
 	svc := NewConversationService(sessions, gemini, nil)
 
-	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "")
+	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "", "")
 	if err == nil {
 		t.Fatal("expected error when Gemini returns error")
 	}
@@ -375,13 +375,13 @@ func TestProcessFrameClearsHashOnGeminiError(t *testing.T) {
 	svc := NewConversationService(sessions, gemini, nil)
 
 	// First call with "frame" fails -- hash should be cleared
-	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "")
+	_, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "", "")
 	if err == nil {
 		t.Fatal("expected error on first call")
 	}
 
 	// Retry with the same frame data should NOT be skipped as duplicate
-	result, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "")
+	result, err := svc.ProcessFrame(context.Background(), session.SessionID, "frame", "", "")
 	if err != nil {
 		t.Fatalf("expected success on retry, got: %v", err)
 	}
@@ -560,13 +560,13 @@ func TestCleanupSessionRemovesFrameHash(t *testing.T) {
 	defer cleanup()
 
 	// Process a frame to populate the hash map.
-	_, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	_, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "", "")
 	if err != nil {
 		t.Fatalf("ProcessFrame: %v", err)
 	}
 
 	// Same frame should now be a duplicate.
-	dup, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	dup, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "", "")
 	if err != nil {
 		t.Fatalf("second ProcessFrame: %v", err)
 	}
@@ -577,7 +577,7 @@ func TestCleanupSessionRemovesFrameHash(t *testing.T) {
 	// After cleanup, the same frame should be processed again.
 	svc.CleanupSession(sessionID)
 
-	result, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "")
+	result, err := svc.ProcessFrame(context.Background(), sessionID, "frame-data", "", "")
 	if err != nil {
 		t.Fatalf("ProcessFrame after cleanup: %v", err)
 	}
