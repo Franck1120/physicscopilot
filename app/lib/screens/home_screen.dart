@@ -664,7 +664,7 @@ class _RecentSessionCard extends StatelessWidget {
 }
 
 class _NoSessionsCard extends StatelessWidget {
-  const _NoSessionsCard();
+  const _NoSessionsCard({super.key});
 
   @override
   Widget build(BuildContext context) {
