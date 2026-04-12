@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/session_record.dart';
+import '../providers/milestone_provider.dart';
 import '../providers/session_history_provider.dart';
 import '../utils/strings.dart';
 import '../widgets/progress_ring_widget.dart';
@@ -20,6 +21,8 @@ class StatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(sessionHistoryProvider);
 
+    final earned = ref.watch(earnedMilestonesProvider);
+
     return Scaffold(
       backgroundColor: kBgPrimary,
       appBar: AppBar(
@@ -28,7 +31,7 @@ class StatsScreen extends ConsumerWidget {
       ),
       body: sessions.isEmpty
           ? _EmptyStats()
-          : _StatsList(sessions: sessions),
+          : _StatsList(sessions: sessions, earnedMilestones: earned),
     );
   }
 }
@@ -69,9 +72,13 @@ class _EmptyStats extends StatelessWidget {
 // ── Stats list ────────────────────────────────────────────────────────────────
 
 class _StatsList extends StatelessWidget {
-  const _StatsList({required this.sessions});
+  const _StatsList({
+    required this.sessions,
+    required this.earnedMilestones,
+  });
 
   final List<SessionRecord> sessions;
+  final List<int> earnedMilestones;
 
   // ── Computed metrics ──────────────────────────────────────────────────────
 
@@ -212,6 +219,19 @@ class _StatsList extends StatelessWidget {
           const SizedBox(height: 12),
         ],
 
+        // ── Milestone badges ────────────────────────────────────────────────
+        if (earnedMilestones.isNotEmpty) ...[
+          _SectionCard(
+            title: 'Traguardi raggiunti',
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: earnedMilestones.map((t) => _MilestoneBadge(threshold: t)).toList(),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
         // ── Recent sessions ─────────────────────────────────────────────────
         _SectionCard(
           title: 'Ultime sessioni',
@@ -338,6 +358,43 @@ class _LegendRow extends StatelessWidget {
               color: color, fontSize: 13, fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+}
+
+// ── Milestone badge chip ──────────────────────────────────────────────────────
+
+/// Trophy chip shown when the user has reached a session-count [threshold].
+class _MilestoneBadge extends StatelessWidget {
+  const _MilestoneBadge({required this.threshold});
+
+  final int threshold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFACC15).withAlpha(26),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFACC15).withAlpha(80)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.emoji_events_rounded,
+              size: 14, color: Color(0xFFFACC15)),
+          const SizedBox(width: 6),
+          Text(
+            '$threshold sessioni',
+            style: const TextStyle(
+              color: Color(0xFFFACC15),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
