@@ -1,9 +1,18 @@
 // Copyright (c) 2026 PhysicsCopilot. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-// Package handlers implements the HTTP and WebSocket handlers for the
-// PhysicsCopilot server. Each handler is a thin layer that validates input,
-// delegates to the service layer, and writes a structured JSON response.
+// Package handlers implements the HTTP request handlers for the PhysicsCopilot
+// REST API and the WebSocket upgrade endpoint.
+//
+// Each handler follows the same pattern:
+//   - Validate and bind the incoming request (path params, query, body).
+//   - Delegate business logic to the service layer (services package).
+//   - Write a structured JSON response or an appropriate HTTP error code.
+//
+// Handlers are stateless and safe for concurrent use; all shared state is
+// managed by the service layer. Integration tests for each handler live in the
+// corresponding _test.go file and use fiber.App.Test for in-process HTTP
+// testing without a network listener.
 package handlers
 
 import (
