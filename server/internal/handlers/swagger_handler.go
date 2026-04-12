@@ -32,9 +32,22 @@ const swaggerUIHTML = `<!DOCTYPE html>
 </body>
 </html>`
 
-// SwaggerUIHandler returns a Fiber handler that serves an HTML page embedding
-// Swagger UI (loaded from the unpkg CDN at version 5). The UI is pre-configured
-// to load the OpenAPI specification from GET /api/docs.
+// SwaggerUIHandler returns a Fiber handler that serves an inline HTML page
+// embedding Swagger UI (loaded from the unpkg CDN at version 5). The UI is
+// pre-configured to point at GET /api/docs for the OpenAPI 3.0 specification.
+//
+// CDN dependency: the response references two assets from
+// https://unpkg.com/swagger-ui-dist@5. Clients require internet access to
+// load the interactive UI; in air-gapped environments bundle the assets
+// locally and update the HTML template accordingly.
+//
+// Cache policy: the page itself is served with Cache-Control: no-cache,
+// no-store so that the browser always fetches the latest route registration.
+// The CDN assets are cached by the browser according to unpkg's own headers.
+//
+// Security: no user-supplied data is rendered in the HTML; the response is
+// safe from injection attacks. The Content-Security-Policy header set by the
+// global middleware must allow https://unpkg.com for the UI to function.
 //
 // Register as:
 //
