@@ -179,6 +179,34 @@ class ApiService {
       return false;
     }
   }
+
+  // ── Feedback ─────────────────────────────────────────────────────────────
+
+  /// POST /api/feedback — submits user rating for an AI response.
+  ///
+  /// Body: {"session_id": "...", "step_number": 0, "rating": "up"|"down"}
+  /// Returns true on HTTP 201/200, false on any error.
+  /// Never throws.
+  Future<bool> submitFeedback({
+    required String sessionId,
+    required int stepNumber,
+    required bool liked,
+  }) async {
+    try {
+      final response = await _dio.post<void>(
+        '/api/feedback',
+        data: {
+          'session_id': sessionId,
+          'step_number': stepNumber,
+          'rating': liked ? 'up' : 'down',
+        },
+        options: _opts,
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

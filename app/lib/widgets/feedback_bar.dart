@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart' show kAccent, kTextMuted;
 import '../providers/prefs_provider.dart';
+import '../services/api_service.dart';
 
 /// Thumbs-up / thumbs-down buttons shown once the typewriter animation ends.
 /// Selection is persisted to SharedPreferences as aggregate counters.
+/// When [sessionId] is provided, feedback is also sent to the server
+/// (fire-and-forget — errors are silently ignored).
 class FeedbackBar extends ConsumerStatefulWidget {
-  const FeedbackBar({super.key, required this.responseText});
+  const FeedbackBar({super.key, required this.responseText, this.sessionId});
   final String responseText;
+  final String? sessionId; // optional — null = skip server call
 
   @override
   ConsumerState<FeedbackBar> createState() => _FeedbackBarState();
@@ -26,11 +30,26 @@ class _FeedbackBarState extends ConsumerState<FeedbackBar> {
     if (_vote != null) return; // already voted
     HapticFeedback.selectionClick();
     setState(() => _vote = liked);
+
+    // Local persistence
     final prefs = ref.read(sharedPrefsProvider);
     if (liked) {
       await prefs.setInt(_keyUp, (prefs.getInt(_keyUp) ?? 0) + 1);
     } else {
       await prefs.setInt(_keyDown, (prefs.getInt(_keyDown) ?? 0) + 1);
+    }
+
+    // Server (fire-and-forget, ignore result)
+    final sid = widget.sessionId;
+    if (sid != null) {
+      ref
+          .read(apiServiceProvider)
+          .submitFeedback(
+            sessionId: sid,
+            stepNumber: 0,
+            liked: liked,
+          )
+          .ignore(); // suppresses unawaited_futures lint
     }
   }
 
