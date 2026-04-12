@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -293,5 +295,319 @@ func TestWSHandlerAcceptsConnection(t *testing.T) {
 	sessions := sessionSvc.ListSessions()
 	if len(sessions) == 0 {
 		t.Error("expected WSHandler to create an in-memory session on connect")
+	}
+}
+
+// ── sanitizeText ─────────────────────────────────────────────────────────────
+
+func TestSanitizeTextStripsHTMLTags(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantOK  bool
+	}{
+		{"plain text unchanged", "hello world", "hello world", true},
+		{"strips bold tag", "<b>bold</b> text", "bold text", true},
+		{"strips script tag", "<script>alert(1)</script>", "alert(1)", true},
+		{"empty string", "", "", false},
+		{"only whitespace", "   ", "", false},
+		{"only HTML tags", "<br/>", "", false},
+		{"trims surrounding whitespace", "  hello  ", "hello", true},
+		{"nested tags", "<div><p>text</p></div>", "text", true},
+		{
+			"truncates to maxTextContentLen",
+			strings.Repeat("a", maxTextContentLen+100),
+			strings.Repeat("a", maxTextContentLen),
+			true,
+		},
+		{
+			"exactly maxTextContentLen passes unchanged",
+			strings.Repeat("b", maxTextContentLen),
+			strings.Repeat("b", maxTextContentLen),
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := sanitizeText(tt.input)
+			if ok != tt.wantOK {
+				t.Errorf("ok: got %v, want %v (input len=%d)", ok, tt.wantOK, len(tt.input))
+			}
+			if got != tt.want {
+				short := tt.want
+				if len(short) > 40 {
+					short = short[:40] + "..."
+				}
+				t.Errorf("text: want %q, got len=%d", short, len(got))
+			}
+		})
+	}
+}
+
+// ── isValidJPEG ──────────────────────────────────────────────────────────────
+
+func TestIsValidJPEG(t *testing.T) {
+	// JPEG magic: FF D8 FF E0 00 10
+	validJPEG := base64.StdEncoding.EncodeToString([]byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10})
+	notJPEG := base64.StdEncoding.EncodeToString([]byte("hello world"))
+
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{"empty string", "", false},
+		{"valid JPEG magic", validJPEG, true},
+		{"non-JPEG data", notJPEG, false},
+		{"corrupt base64", "not!valid!base64!!!!!", false},
+		{"too short base64", base64.StdEncoding.EncodeToString([]byte{0xFF, 0xD8}), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidJPEG(tt.input)
+			if got != tt.want {
+				t.Errorf("isValidJPEG = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// ── wsMaxFPS env overrides ────────────────────────────────────────────────────
+
+func TestWsMaxFPSFromEnvVar(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  int
+	}{
+		{"below min clamped to 1", "0", 1},
+		{"negative clamped to 1", "-5", 1},
+		{"above max clamped to 30", "100", 30},
+		{"valid value 15", "15", 15},
+		{"min boundary 1", "1", 1},
+		{"max boundary 30", "30", 30},
+		{"non-numeric falls back to default", "notanumber", defaultMaxFPS},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("WS_MAX_FPS", tt.value)
+			got := wsMaxFPS()
+			if got != tt.want {
+				t.Errorf("wsMaxFPS(%q) = %d, want %d", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+// ── effectivePingInterval / effectivePongWait ─────────────────────────────────
+
+func TestEffectivePingIntervalUsesOverrideWhenSet(t *testing.T) {
+	h := &WSHandler{}
+	if got := h.effectivePingInterval(); got != pingInterval {
+		t.Errorf("zero PingInterval: want %v, got %v", pingInterval, got)
+	}
+	h.PingInterval = 5 * time.Second
+	if got := h.effectivePingInterval(); got != 5*time.Second {
+		t.Errorf("override PingInterval: want 5s, got %v", got)
+	}
+}
+
+func TestEffectivePongWaitUsesOverrideWhenSet(t *testing.T) {
+	h := &WSHandler{}
+	if got := h.effectivePongWait(); got != pongWait {
+		t.Errorf("zero PongWait: want %v, got %v", pongWait, got)
+	}
+	h.PongWait = 10 * time.Second
+	if got := h.effectivePongWait(); got != 10*time.Second {
+		t.Errorf("override PongWait: want 10s, got %v", got)
+	}
+}
+
+// ── CloseAll ──────────────────────────────────────────────────────────────────
+
+func TestCloseAllWithNoConnectionsDoesNotPanic(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	h := NewWSHandler(convSvc, sessionSvc)
+	// Must not panic even when the connection map is empty.
+	h.CloseAll()
+}
+
+// TestCloseAllSendsCloseFrameToActiveConnections verifies that CloseAll sends a
+// GoingAway close frame, causing the connected client to see a close error.
+func TestCloseAllSendsCloseFrameToActiveConnections(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	// Allow the Handle goroutine to register the connection.
+	time.Sleep(50 * time.Millisecond)
+
+	// CloseAll sends a GoingAway close frame to all registered connections.
+	wsHandler.CloseAll()
+
+	conn.SetReadDeadline(time.Now().Add(time.Second))
+	_, _, readErr := conn.ReadMessage()
+	if readErr == nil {
+		t.Error("expected connection to be closed after CloseAll")
+	}
+}
+
+// ── WebSocket message handling ────────────────────────────────────────────────
+
+// TestWSHandlerHandlesPingMessage verifies that a "ping" JSON message produces
+// a {"type":"pong"} response from the server.
+func TestWSHandlerHandlesPingMessage(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	if err := conn.WriteJSON(IncomingMessage{Type: "ping"}); err != nil {
+		t.Fatalf("write ping: %v", err)
+	}
+
+	var resp OutgoingMessage
+	if err := conn.ReadJSON(&resp); err != nil {
+		t.Fatalf("read pong: %v", err)
+	}
+	if resp.Type != "pong" {
+		t.Errorf("expected pong, got %q", resp.Type)
+	}
+}
+
+// TestWSHandlerRejectsNonJPEGFrame verifies that a "frame" message whose data
+// is not a valid JPEG (wrong magic bytes) returns an error response.
+func TestWSHandlerRejectsNonJPEGFrame(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	notJPEG := base64.StdEncoding.EncodeToString([]byte("not a jpeg image"))
+	if err := conn.WriteJSON(IncomingMessage{Type: "frame", Data: notJPEG}); err != nil {
+		t.Fatalf("write frame: %v", err)
+	}
+
+	var resp OutgoingMessage
+	if err := conn.ReadJSON(&resp); err != nil {
+		t.Fatalf("read response: %v", err)
+	}
+	if resp.Type != "error" {
+		t.Errorf("expected error response, got type=%q", resp.Type)
+	}
+	if !strings.Contains(resp.Error, "JPEG") {
+		t.Errorf("expected JPEG error message, got %q", resp.Error)
+	}
+}
+
+// TestWSHandlerRejectsHTMLOnlyTextMessage verifies that a "text" message whose
+// content is entirely HTML tags (empty after sanitization) returns an error.
+func TestWSHandlerRejectsHTMLOnlyTextMessage(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	// HTML-only content → empty after sanitization → error before AI call.
+	if err := conn.WriteJSON(IncomingMessage{Type: "text", Content: "<br/><script/>"}); err != nil {
+		t.Fatalf("write text: %v", err)
+	}
+
+	var resp OutgoingMessage
+	if err := conn.ReadJSON(&resp); err != nil {
+		t.Fatalf("read response: %v", err)
+	}
+	if resp.Type != "error" {
+		t.Errorf("expected error response, got type=%q", resp.Type)
+	}
+	if !strings.Contains(resp.Error, "empty after sanitization") {
+		t.Errorf("expected sanitization error, got %q", resp.Error)
+	}
+}
+
+// TestWSHandlerIgnoresUnknownMessageType verifies that an unknown message type
+// does not close the connection — the server logs a warning and continues.
+func TestWSHandlerIgnoresUnknownMessageType(t *testing.T) {
+	sessionSvc := services.NewSessionService()
+	convSvc := services.NewConversationService(sessionSvc, nil, nil)
+	wsHandler := NewWSHandler(convSvc, sessionSvc)
+	wsHandler.PingInterval = time.Hour
+	wsHandler.PongWait = time.Hour
+
+	addr, shutdown := startTestWSServer(t, wsHandler.Handle)
+	defer shutdown()
+
+	conn, _, err := gorilla.DefaultDialer.Dial("ws://"+addr+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer conn.Close()
+
+	// Send unknown type — server should ignore it and keep connection alive.
+	if err := conn.WriteJSON(IncomingMessage{Type: "unknown_message_type"}); err != nil {
+		t.Fatalf("write unknown type: %v", err)
+	}
+
+	// Follow up with a ping to confirm the connection is still alive.
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if err := conn.WriteJSON(IncomingMessage{Type: "ping"}); err != nil {
+		t.Fatalf("write ping after unknown: %v", err)
+	}
+
+	var resp OutgoingMessage
+	if err := conn.ReadJSON(&resp); err != nil {
+		t.Fatalf("read after unknown type: %v", err)
+	}
+	if resp.Type != "pong" {
+		t.Errorf("expected pong after unknown type, got %q", resp.Type)
 	}
 }

@@ -210,3 +210,69 @@ func TestDeleteSessionThenGetReturns404(t *testing.T) {
 		t.Errorf("want 404 after delete, got %d", resp.StatusCode)
 	}
 }
+
+// ── validateSessionRequest edge cases ────────────────────────────────────────
+
+func TestCreateSessionHTMLInBrandReturns400(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	body := `{"device_brand":"<script>xss</script>","device_model":"MK4"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("HTML in brand: want 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCreateSessionHTMLInModelReturns400(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	body := `{"device_brand":"Prusa","device_model":"<b>MK4</b>"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("HTML in model: want 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCreateSessionBrandTooLongReturns400(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	body := `{"device_brand":"` + strings.Repeat("x", maxDeviceFieldLen+1) + `","device_model":"MK4"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("brand too long: want 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestCreateSessionModelTooLongReturns400(t *testing.T) {
+	app, _ := newSessionTestApp(t)
+
+	body := `{"device_brand":"Prusa","device_model":"` + strings.Repeat("y", maxDeviceFieldLen+1) + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("model too long: want 400, got %d", resp.StatusCode)
+	}
+}
