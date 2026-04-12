@@ -39,3 +39,21 @@ Technical terms and acronyms used throughout the codebase and documentation.
 | **WebSocket** | Full-duplex TCP connection used for real-time frame streaming and AI response delivery. Endpoint: `wss://server/ws?token=<jwt>&lang=it` |
 | **WS frame** | Binary/text message sent over a WebSocket connection. Not to be confused with a camera frame |
 | **WSS** | WebSocket Secure — WebSocket over TLS (same as `https://` but for WebSocket protocol) |
+| **TF-IDF** | Term Frequency–Inverse Document Frequency — statistical measure used by the RAG service (`rag_service.go`) to rank KB documents by keyword relevance to a user query |
+| **Knowledge Base (KB)** | Collection of domain-specific Markdown documents in `kb/` that the RAG service indexes and retrieves to enrich AI prompts with device-specific context |
+| **Domain** | A category of physical equipment in the knowledge base (e.g., Printer, HVAC, Automotive). Each domain has its own `*_problems.json` file in `kb/` |
+| **Session** | One repair interaction from start to end. Contains: equipment selection, start time, Q&A messages, AI responses, steps, and an optional summary |
+| **pHash (perceptual hash)** | A content-based image hash that produces similar digests for visually similar images. Used in `phash.go` to deduplicate camera frames and avoid redundant Gemini API calls |
+| **Frame deduplication** | Process of comparing incoming camera frames by perceptual hash to skip sending near-identical images to the AI. Saves 30–60% of API calls for static scenes |
+| **DBBackend** | Go interface in `services/db_service.go` that abstracts database operations (`SaveSession`, `SaveFeedback`, etc.). Implemented by `DBService` (Postgres) and can be stubbed in tests |
+| **AIService** | Go interface that abstracts the AI inference backend. Implemented by `GeminiService` and `OpenAIBackend`, allowing the server to swap AI providers via `AI_BACKEND` env var |
+| **Fiber** | Go web framework used for the HTTP/WebSocket server. Chosen for its low-overhead routing and built-in WebSocket support. See ADR-001 |
+| **Riverpod** | Flutter state management library used throughout the app. Providers are defined at module level and consumed via `WidgetRef.watch()` / `WidgetRef.read()` |
+| **HPA** | Horizontal Pod Autoscaler — Kubernetes resource in `infra/k8s/` that scales server pods based on CPU/memory utilization |
+| **RLS** | Row-Level Security — Supabase/Postgres feature that restricts data access so users can only query their own rows. Enabled on every PhysicsCopilot table |
+| **Render.com** | Cloud PaaS where the Go server is deployed. Auto-deploys from `main` branch via `render.yaml`. Free tier has cold starts after 15 min of inactivity |
+| **Air** | Go live-reload tool used in `Dockerfile.dev` for hot-reloading the server during development. Watches `.go` files and rebuilds on change |
+| **k6** | Open-source load testing tool used to benchmark the server. See `docs/PERFORMANCE.md` for ready-to-use k6 scripts |
+| **gosec** | Go security linter that scans for common vulnerabilities (SQL injection, hardcoded credentials, weak crypto). Run in CI on every PR |
+| **govulncheck** | Go tool that checks dependencies against the Go vulnerability database. Run weekly in CI to detect known CVEs |
+| **Supabase** | Open-source Firebase alternative providing Postgres database, authentication, and real-time subscriptions. PhysicsCopilot uses it for auth (JWT) and optional session persistence |
