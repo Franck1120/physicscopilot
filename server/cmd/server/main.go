@@ -34,7 +34,7 @@ import (
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 )
 
-const version = "0.1.0"
+const version = "0.18.0"
 
 var startTime = time.Now()
 
