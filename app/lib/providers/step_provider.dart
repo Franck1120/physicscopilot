@@ -4,8 +4,11 @@ import '../widgets/step_progress.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+/// Immutable state for the multi-step guided procedure.
 class ProcedureState {
   final List<StepInfo> steps;
+
+  /// Zero-based index of the step currently being executed.
   final int currentIndex;
 
   const ProcedureState({
@@ -13,6 +16,7 @@ class ProcedureState {
     this.currentIndex = 0,
   });
 
+  /// Returns a copy with the given fields replaced.
   ProcedureState copyWith({
     List<StepInfo>? steps,
     int? currentIndex,
@@ -22,26 +26,36 @@ class ProcedureState {
         currentIndex: currentIndex ?? this.currentIndex,
       );
 
+  /// Total number of steps in the current procedure.
   int get totalSteps => steps.length;
+
+  /// True when [currentIndex] has reached the last step.
   bool get isCompleted =>
       steps.isNotEmpty && currentIndex >= steps.length - 1;
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────────────
 
+/// Drives step-by-step procedure navigation.
+///
+/// Steps are populated from server `response` payloads via [updateFromResponse]
+/// or set directly via [loadSteps]. Navigation is done with [advance] / [goTo].
 class StepNotifier extends StateNotifier<ProcedureState> {
   StepNotifier() : super(const ProcedureState());
 
+  /// Replaces the current procedure with [steps] and resets to step 0.
   void loadSteps(List<StepInfo> steps) {
     state = ProcedureState(steps: steps, currentIndex: 0);
   }
 
+  /// Moves to the next step. No-op when already on the last step.
   void advance() {
     if (state.currentIndex < state.steps.length - 1) {
       state = state.copyWith(currentIndex: state.currentIndex + 1);
     }
   }
 
+  /// Jumps to [index]. No-op when out of bounds.
   void goTo(int index) {
     if (index >= 0 && index < state.steps.length) {
       state = state.copyWith(currentIndex: index);
@@ -76,10 +90,14 @@ class StepNotifier extends StateNotifier<ProcedureState> {
     if (currentStep != null) goTo(currentStep);
   }
 
+  /// Resets to an empty procedure state.
   void reset() => state = const ProcedureState();
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
+/// Provides the [StepNotifier] and current [ProcedureState].
+///
+/// Updated by the session screen when the server returns a multi-step response.
 final stepProvider =
     StateNotifierProvider<StepNotifier, ProcedureState>((_) => StepNotifier());
