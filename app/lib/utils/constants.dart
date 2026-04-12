@@ -1,3 +1,6 @@
+// Copyright (c) 2026 PhysicsCopilot. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 // App-wide constants (API URLs, timeouts, etc.)
 // Public tunnel via Cloudflare (no port, HTTPS/WSS).
 // Update this URL whenever the tunnel is restarted.
