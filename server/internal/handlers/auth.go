@@ -45,6 +45,14 @@ func WSAuthMiddleware() fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
 		}
 
+		// Store the subject claim (user ID) so downstream handlers can apply
+		// per-user rate limits without re-parsing the token.
+		if claims, ok := parsed.Claims.(jwt.MapClaims); ok {
+			if sub, ok := claims["sub"].(string); ok && sub != "" {
+				c.Locals("user_id", sub)
+			}
+		}
+
 		return c.Next()
 	}
 }

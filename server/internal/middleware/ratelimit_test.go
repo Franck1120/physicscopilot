@@ -170,3 +170,67 @@ func TestRateLimiterMiddlewareBlocksAfterBurst(t *testing.T) {
 		t.Errorf("4th request: want 429 after burst exhausted, got %d", resp.StatusCode)
 	}
 }
+
+// ── UserRateLimiter tests ─────────────────────────────────────────────────────
+
+func TestUserRateLimiterAllowsWithinBurst(t *testing.T) {
+	ul := newUserRateLimiterWith(60, 5) // burst=5
+	userID := "user-abc"
+
+	for i := 0; i < 5; i++ {
+		if !ul.Allow(userID) {
+			t.Fatalf("expected Allow() to return true for request %d within burst", i+1)
+		}
+	}
+}
+
+func TestUserRateLimiterBlocksAfterBurst(t *testing.T) {
+	ul := newUserRateLimiterWith(60, 2) // burst=2
+
+	ul.Allow("user-xyz") // consume token 1
+	ul.Allow("user-xyz") // consume token 2
+
+	if ul.Allow("user-xyz") {
+		t.Error("expected Allow() to return false after burst exhausted")
+	}
+}
+
+func TestUserRateLimiterEmptyUserIDAlwaysAllows(t *testing.T) {
+	ul := newUserRateLimiterWith(1, 1) // very restrictive
+	// Exhaust with a real ID to prove the limiter works
+	ul.Allow("real-user")
+	ul.Allow("real-user")
+
+	// Empty user ID (unauthenticated / dev mode) must always pass
+	for i := 0; i < 10; i++ {
+		if !ul.Allow("") {
+			t.Error("expected Allow('') to always return true for unauthenticated requests")
+		}
+	}
+}
+
+func TestUserRateLimiterPerUserIsolation(t *testing.T) {
+	ul := newUserRateLimiterWith(60, 1) // burst=1
+
+	// Exhaust userA's token
+	if !ul.Allow("userA") {
+		t.Fatal("first Allow for userA should succeed")
+	}
+	if ul.Allow("userA") {
+		t.Error("second Allow for userA should be blocked")
+	}
+
+	// userB's token must be unaffected
+	if !ul.Allow("userB") {
+		t.Error("Allow for userB should succeed independently of userA's limit")
+	}
+}
+
+func TestNewUserRateLimiterUsesProductionDefaults(t *testing.T) {
+	if userMessagesPerMinute != 30 {
+		t.Errorf("userMessagesPerMinute: want 30, got %d", userMessagesPerMinute)
+	}
+	if userLimiterBurst != 5 {
+		t.Errorf("userLimiterBurst: want 5, got %d", userLimiterBurst)
+	}
+}

@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
 import 'providers/prefs_provider.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/notification_service.dart';
 import 'utils/strings.dart';
 import 'screens/equipment_selection_screen.dart';
 import 'screens/home_screen.dart';
@@ -15,6 +17,7 @@ import 'screens/session_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'providers/equipment_provider.dart';
+import 'providers/settings_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -65,6 +68,8 @@ void main() async {
   ErrorWidget.builder = (FlutterErrorDetails details) =>
       _AppErrorWidget(message: details.exceptionAsString());
 
+  await NotificationService.initialize();
+
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
@@ -100,6 +105,7 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   late final GoRouter _router;
   late final ProviderSubscription<bool> _onboardingSub;
   late final ProviderSubscription<EquipmentProfile?> _equipmentSub;
+  StreamSubscription<Uri>? _deepLinkSub;
 
   @override
   void initState() {
@@ -192,10 +198,28 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
         if (prev?.id != next?.id) _router.refresh();
       },
     );
+
+    // Handle deep links: physicscopilot://session/new → navigate to /session
+    _deepLinkSub = AppLinks().uriLinkStream.listen(_handleDeepLink);
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme != 'physicscopilot') return;
+    final path = uri.pathSegments;
+    if (path.isEmpty) return;
+    switch (path.first) {
+      case 'session':
+        _router.go('/session');
+      case 'history':
+        _router.go('/history');
+      default:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    _deepLinkSub?.cancel();
     _onboardingSub.close();
     _equipmentSub.close();
     _router.dispose();
@@ -204,10 +228,15 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(
+      settingsProvider.select((s) => s.themeMode),
+    );
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
-      theme: _buildDarkTheme(),
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      themeMode: themeMode,
       routerConfig: _router,
     );
   }
@@ -257,6 +286,101 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
       },
     );
   }
+
+  ThemeData _buildLightTheme() => ThemeData(
+        colorScheme: ColorScheme.light(
+          primary: kAccent,
+          secondary: kAccentDark,
+          surface: const Color(0xFFF9FAFB),
+          onSurface: const Color(0xFF111827),
+          onPrimary: Colors.white,
+          error: Colors.redAccent,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF111827),
+          elevation: 0,
+          centerTitle: false,
+          iconTheme: IconThemeData(color: Color(0xFF111827)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.4,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          ),
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.white,
+          selectedItemColor: kAccent,
+          unselectedItemColor: Color(0xFF9CA3AF),
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF1F2937),
+          contentTextStyle:
+              const TextStyle(color: Colors.white, fontSize: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          behavior: SnackBarBehavior.floating,
+          actionTextColor: kAccent,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccent,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kAccent,
+            side: const BorderSide(color: Color(0xFFD1D5DB)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.contains(WidgetState.selected) ? kAccent : null,
+          ),
+          trackColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? kAccent.withAlpha(80)
+                : null,
+          ),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          ),
+          titleTextStyle: const TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+          contentTextStyle: const TextStyle(
+              color: Color(0xFF374151), fontSize: 14, height: 1.5),
+        ),
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
+        useMaterial3: true,
+      );
 
   ThemeData _buildDarkTheme() => ThemeData(
         colorScheme: ColorScheme.dark(

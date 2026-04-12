@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Franck1120/physicscopilot/server/internal/metrics"
+	"github.com/Franck1120/physicscopilot/server/internal/middleware"
 	"github.com/Franck1120/physicscopilot/server/internal/services"
 	"github.com/gofiber/websocket/v2"
 )
@@ -134,6 +135,7 @@ type WSHandler struct {
 	sessions      *services.SessionService
 	activeConns   atomic.Int32
 	ipConns       *ipConnTracker
+	userRL        *middleware.UserRateLimiter // per-authenticated-user message rate limiter
 	maxFPS        int // per-connection frame rate cap (from WS_MAX_FPS or defaultMaxFPS)
 
 	connsMu sync.Mutex
@@ -153,6 +155,7 @@ func NewWSHandler(conversations *services.ConversationService, sessions *service
 		conversations: conversations,
 		sessions:      sessions,
 		ipConns:       newIPConnTracker(),
+		userRL:        middleware.NewUserRateLimiter(),
 		conns:         make(map[*safeConn]struct{}),
 		maxFPS:        wsMaxFPS(),
 	}
@@ -287,6 +290,10 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 		return
 	}
 
+	// Extract the authenticated user ID stored by WSAuthMiddleware.
+	// Empty string in dev mode (no JWT secret configured).
+	userID, _ := c.Locals("user_id").(string)
+
 	sc := &safeConn{c: c}
 	h.activeConns.Add(1)
 	metrics.WsActiveConnections.Inc()
@@ -298,7 +305,6 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 	)
 
 	// ── Session ───────────────────────────────────────────────────────────────
-	// Read client language preference (BCP-47 code, e.g. "it", "en").
 	lang := c.Query("lang", "it")
 	session, err := h.sessions.CreateSession("unknown", "unknown", lang)
 	if err != nil {
@@ -357,9 +363,9 @@ func (h *WSHandler) Handle(c *websocket.Conn) {
 
 		switch msg.Type {
 		case "frame":
-			h.handleFrame(sc, sessionID, msg, rateLimiter)
+			h.handleFrame(sc, sessionID, userID, msg, rateLimiter)
 		case "text":
-			h.handleText(sc, sessionID, msg)
+			h.handleText(sc, sessionID, userID, msg)
 		case "ping":
 			h.handlePing(sc)
 		default:
@@ -392,9 +398,13 @@ func (h *WSHandler) pingLoop(sc *safeConn, done <-chan struct{}, sessionID strin
 }
 
 // handleFrame processes a camera frame through the conversation service.
-// Frames that exceed the rate limit are silently dropped.
-func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMessage, rl *frameRateLimiter) {
+// Frames that exceed the per-connection FPS cap or the per-user API budget are dropped.
+func (h *WSHandler) handleFrame(sc *safeConn, sessionID, userID string, msg IncomingMessage, rl *frameRateLimiter) {
 	if !rl.allow() {
+		return
+	}
+	if !h.userRL.Allow(userID) {
+		writeError(sc, "rate limit exceeded — slow down")
 		return
 	}
 
@@ -419,7 +429,12 @@ func (h *WSHandler) handleFrame(sc *safeConn, sessionID string, msg IncomingMess
 }
 
 // handleText processes a text-only conversation turn.
-func (h *WSHandler) handleText(sc *safeConn, sessionID string, msg IncomingMessage) {
+func (h *WSHandler) handleText(sc *safeConn, sessionID, userID string, msg IncomingMessage) {
+	if !h.userRL.Allow(userID) {
+		writeError(sc, "rate limit exceeded — slow down")
+		return
+	}
+
 	ctx := context.Background()
 	t0 := time.Now()
 	result, err := h.conversations.ProcessTextMessage(ctx, sessionID, msg.Content)

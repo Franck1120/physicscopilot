@@ -109,14 +109,17 @@ func TestQueryKBLimitsResultCount(t *testing.T) {
 }
 
 func TestQueryKBEmptyQueryReturnsNil(t *testing.T) {
-	svc := &RAGService{entries: []KBEntry{{ID: "x", Name: "X"}}}
+	svc := &RAGService{
+		entries: []KBEntry{{ID: "x", Name: "X"}},
+		store:   NewMemoryVectorStore(),
+	}
 	if results := svc.QueryKB("", 5); results != nil {
 		t.Errorf("expected nil for empty query, got %v", results)
 	}
 }
 
 func TestQueryKBNoOpServiceReturnsNil(t *testing.T) {
-	svc := &RAGService{} // no entries
+	svc := &RAGService{store: NewMemoryVectorStore()} // no entries
 	if results := svc.QueryKB("clog", 5); results != nil {
 		t.Errorf("expected nil from no-op service, got %v", results)
 	}
@@ -141,30 +144,5 @@ func TestFormatForPromptNilReturnsEmpty(t *testing.T) {
 	svc := &RAGService{}
 	if out := svc.FormatForPrompt(nil); out != "" {
 		t.Errorf("expected empty string for nil entries, got %q", out)
-	}
-}
-
-func TestTokenizeFiltersShortWords(t *testing.T) {
-	tokens := tokenize("a bb ccc dddd")
-	for _, tok := range tokens {
-		if len(tok) < 3 {
-			t.Errorf("expected all tokens >= 3 chars, got %q", tok)
-		}
-	}
-	if len(tokens) != 2 { // "ccc" and "dddd"
-		t.Errorf("expected 2 tokens, got %d: %v", len(tokens), tokens)
-	}
-}
-
-func TestScoreEntryWeightsNameHigher(t *testing.T) {
-	nameEntry := KBEntry{ID: "warp", Name: "warping problem", Description: "generic"}
-	descEntry := KBEntry{ID: "other", Name: "other", Description: "warping problem here"}
-
-	terms := tokenize("warping problem")
-	nameScore := scoreEntry(nameEntry, terms)
-	descScore := scoreEntry(descEntry, terms)
-
-	if nameScore <= descScore {
-		t.Errorf("expected name match to score higher (%d) than desc match (%d)", nameScore, descScore)
 	}
 }

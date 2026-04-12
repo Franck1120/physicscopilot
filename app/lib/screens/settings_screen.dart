@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../widgets/safe_screen.dart';
 import '../providers/settings_provider.dart';
 import '../providers/voice_provider.dart';
 import '../utils/constants.dart';
+
+// ThemeMode is imported via flutter/material.dart above.
 
 /// App settings screen.
 ///
@@ -72,6 +75,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final settings = ref.watch(settingsProvider);
 
     return Scaffold(
@@ -195,40 +206,90 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          // ── Voice ─────────────────────────────────────────────────────────
+          // ── Voice + Theme ─────────────────────────────────────────────────
           _SectionHeader(label: 'FUNZIONALITÀ'),
           const SizedBox(height: 10),
           _Card(
-            child: Row(
+            child: Column(
               children: [
-                const Icon(Icons.volume_up_outlined,
-                    color: kAccent, size: 22),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Guida vocale',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600)),
-                      SizedBox(height: 2),
-                      Text('Legge le istruzioni AI ad alta voce.',
-                          style:
-                              TextStyle(color: kTextMuted, fontSize: 12)),
-                    ],
-                  ),
+                // Voice toggle
+                Row(
+                  children: [
+                    const Icon(Icons.volume_up_outlined,
+                        color: kAccent, size: 22),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Guida vocale',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600)),
+                          SizedBox(height: 2),
+                          Text('Legge le istruzioni AI ad alta voce.',
+                              style:
+                                  TextStyle(color: kTextMuted, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    Semantics(
+                      label:
+                          'Guida vocale ${settings.voiceEnabled ? "attiva" : "disattiva"}',
+                      toggled: settings.voiceEnabled,
+                      child: Switch(
+                        value: settings.voiceEnabled,
+                        onChanged: (v) => ref
+                            .read(settingsProvider.notifier)
+                            .setVoiceEnabled(v),
+                        activeThumbColor: kAccent,
+                      ),
+                    ),
+                  ],
                 ),
-                Semantics(
-                  label: 'Guida vocale ${settings.voiceEnabled ? "attiva" : "disattiva"}',
-                  toggled: settings.voiceEnabled,
-                  child: Switch(
-                    value: settings.voiceEnabled,
-                    onChanged: (v) =>
-                        ref.read(settingsProvider.notifier).setVoiceEnabled(v),
-                    activeThumbColor: kAccent,
-                  ),
+                const Divider(color: kBgCardBorder, height: 20),
+                // Theme toggle
+                Row(
+                  children: [
+                    Icon(
+                      settings.themeMode == ThemeMode.dark
+                          ? Icons.dark_mode_outlined
+                          : Icons.light_mode_outlined,
+                      color: kAccent,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Tema scuro',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600)),
+                          SizedBox(height: 2),
+                          Text('Passa tra tema chiaro e scuro.',
+                              style:
+                                  TextStyle(color: kTextMuted, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    Semantics(
+                      label:
+                          'Tema ${settings.themeMode == ThemeMode.dark ? "scuro attivo" : "chiaro attivo"}',
+                      toggled: settings.themeMode == ThemeMode.dark,
+                      child: Switch(
+                        value: settings.themeMode == ThemeMode.dark,
+                        onChanged: (v) => ref
+                            .read(settingsProvider.notifier)
+                            .setThemeMode(
+                                v ? ThemeMode.dark : ThemeMode.light),
+                        activeThumbColor: kAccent,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

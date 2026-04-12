@@ -93,3 +93,82 @@ func (rl *IPRateLimiter) Middleware() fiber.Handler {
 		return c.Next()
 	}
 }
+
+// ── UserRateLimiter ───────────────────────────────────────────────────────────
+
+const (
+	// userMessagesPerMinute is the maximum WebSocket API messages (frame/text)
+	// a single authenticated user may trigger per minute.
+	userMessagesPerMinute = 30
+	// userLimiterBurst allows short bursts for each user.
+	userLimiterBurst = 5
+	// userLimiterExpiry removes idle per-user limiters to prevent memory growth.
+	userLimiterExpiry = 10 * time.Minute
+)
+
+// UserRateLimiter enforces per-user rate limits keyed by the JWT subject claim
+// (user ID). It is applied inside WebSocket handlers to cap expensive AI calls
+// on a per-user basis, independently of the per-IP connection limit.
+//
+// When no user ID is available (unauthenticated / dev mode) Allow returns true
+// to preserve the no-auth development experience.
+type UserRateLimiter struct {
+	mu       sync.Mutex
+	limiters map[string]*ipEntry // reuse ipEntry (limiter + lastSeen)
+	perMin   int
+	burst    int
+}
+
+// NewUserRateLimiter creates a UserRateLimiter with production defaults
+// (30 messages/min, burst 5) and starts a background cleanup goroutine.
+func NewUserRateLimiter() *UserRateLimiter {
+	return newUserRateLimiterWith(userMessagesPerMinute, userLimiterBurst)
+}
+
+// newUserRateLimiterWith creates a UserRateLimiter with custom values.
+// Intended for tests.
+func newUserRateLimiterWith(perMin, burst int) *UserRateLimiter {
+	ul := &UserRateLimiter{
+		limiters: make(map[string]*ipEntry),
+		perMin:   perMin,
+		burst:    burst,
+	}
+	go ul.cleanupLoop()
+	return ul
+}
+
+// Allow returns true if the user identified by userID is within their rate
+// limit. When userID is empty (unauthenticated request), it always returns true.
+func (ul *UserRateLimiter) Allow(userID string) bool {
+	if userID == "" {
+		return true
+	}
+	ul.mu.Lock()
+	defer ul.mu.Unlock()
+	e, ok := ul.limiters[userID]
+	if !ok {
+		e = &ipEntry{
+			limiter: rate.NewLimiter(
+				rate.Every(time.Minute/time.Duration(ul.perMin)),
+				ul.burst,
+			),
+		}
+		ul.limiters[userID] = e
+	}
+	e.lastSeen = time.Now()
+	return e.limiter.Allow()
+}
+
+func (ul *UserRateLimiter) cleanupLoop() {
+	ticker := time.NewTicker(userLimiterExpiry)
+	defer ticker.Stop()
+	for range ticker.C {
+		ul.mu.Lock()
+		for uid, e := range ul.limiters {
+			if time.Since(e.lastSeen) > userLimiterExpiry {
+				delete(ul.limiters, uid)
+			}
+		}
+		ul.mu.Unlock()
+	}
+}

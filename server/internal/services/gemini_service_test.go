@@ -405,7 +405,7 @@ func TestBuildRequestBodyWithConversationContext(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	req := svc.buildRequestBody("imgdata", "user: help me", "")
+	req := svc.buildRequestBody("imgdata", "user: help me", "it")
 
 	if len(req.Contents) != 1 {
 		t.Fatalf("expected 1 content, got %d", len(req.Contents))
@@ -442,15 +442,15 @@ func TestBuildRequestBodyWithoutContext(t *testing.T) {
 		httpClient: &http.Client{},
 	}
 
-	req := svc.buildRequestBody("", "", "")
+	req := svc.buildRequestBody("", "", "it")
 
 	if len(req.Contents[0].Parts) != 1 {
 		t.Fatalf("expected 1 part (text only), got %d", len(req.Contents[0].Parts))
 	}
 
 	textPart := req.Contents[0].Parts[0]
-	if !strings.Contains(textPart.Text, systemPromptBase) {
-		t.Error("expected system prompt base in text when no context")
+	if textPart.Text != systemPromptForLanguage("it") {
+		t.Error("expected only system prompt when no context")
 	}
 	if textPart.InlineData != nil {
 		t.Error("expected no inline_data when no image")

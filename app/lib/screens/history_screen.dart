@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/session_record.dart';
 import '../providers/session_history_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/safe_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Server sessions provider — fetches from REST API and converts to SessionRecord.
@@ -29,6 +31,14 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    try {
+      return _buildContent(context, ref);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref) {
     final localSessions = ref.watch(sessionHistoryProvider);
     final serverAsync = ref.watch(_serverSessionsProvider);
 
@@ -333,6 +343,50 @@ class _SessionDetailSheet extends StatelessWidget {
 
   final SessionRecord session;
 
+  String _buildReport() {
+    final buf = StringBuffer();
+    final deviceName =
+        session.equipmentName.isEmpty ? 'N/D' : session.equipmentName;
+    final status =
+        session.status == SessionStatus.resolved ? 'Risolto' : 'Non risolto';
+
+    buf.writeln('PhysicsCopilot — Report Sessione');
+    buf.writeln('=================================');
+    buf.writeln('Data:       ${_formatDate(session.date)}');
+    buf.writeln('Durata:     ${_formatDuration(session.duration)}');
+    buf.writeln('Dispositivo: $deviceName');
+    buf.writeln('Stato:      $status');
+
+    if (session.problemDescription.isNotEmpty) {
+      buf.writeln();
+      buf.writeln('PROBLEMA RILEVATO');
+      buf.writeln('-----------------');
+      buf.writeln(session.problemDescription);
+    }
+
+    if (session.summary.isNotEmpty) {
+      buf.writeln();
+      buf.writeln('ANALISI AI');
+      buf.writeln('----------');
+      buf.writeln(session.summary);
+    }
+
+    buf.writeln();
+    buf.writeln('--- Generato da PhysicsCopilot ---');
+    return buf.toString();
+  }
+
+  Future<void> _export(BuildContext context) async {
+    final report = _buildReport();
+    final box = context.findRenderObject() as RenderBox?;
+    await Share.share(
+      report,
+      subject: 'Report Sessione — ${session.equipmentName}',
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -402,6 +456,20 @@ class _SessionDetailSheet extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _export(context),
+              icon: const Icon(Icons.ios_share_outlined, size: 18),
+              label: const Text('Esporta sessione'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF10B981),
+                side: const BorderSide(color: Color(0xFF10B981)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
         ],
       ),
     );

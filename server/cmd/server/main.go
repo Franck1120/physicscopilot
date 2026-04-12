@@ -36,9 +36,9 @@ func main() {
 	// ── Services ────────────────────────────────────────────────────────────
 	sessionSvc := services.NewSessionService()
 
-	geminiSvc, err := services.NewGeminiService()
+	aiBackend, err := services.NewAIBackend()
 	if err != nil {
-		slog.Error("Gemini service init failed", "err", err)
+		slog.Error("AI backend init failed", "err", err)
 		os.Exit(1)
 	}
 	ragSvc, err := services.NewRAGService()
@@ -65,7 +65,7 @@ func main() {
 		}
 	}
 
-	convSvc := services.NewConversationService(sessionSvc, geminiSvc, ragSvc)
+	convSvc := services.NewConversationService(sessionSvc, aiBackend, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
 

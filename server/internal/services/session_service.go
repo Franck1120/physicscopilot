@@ -35,7 +35,7 @@ type ConversationMessage struct {
 type SessionState struct {
 	SessionID           string                `json:"session_id"`
 	DeviceInfo          DeviceInfo            `json:"device_info"`
-	Language            string                `json:"language,omitempty"` // BCP-47 code e.g. "it", "en"
+	Language            string                `json:"language,omitempty"` // BCP-47 code; defaults to "it"
 	ConversationHistory []ConversationMessage `json:"conversation_history"`
 	CurrentStep         int                   `json:"current_step"`
 	TotalSteps          int                   `json:"total_steps"`
@@ -105,8 +105,9 @@ func (s *SessionService) ListSessions() []SessionState {
 	return result
 }
 
-// CreateSession initializes a new repair session for the given device and language.
-// language is a BCP-47 code (e.g. "it", "en"). When empty it defaults to "it".
+// CreateSession initializes a new repair session for the given device.
+// language is a BCP-47 code (e.g. "it", "en") controlling the AI response language;
+// defaults to "it" when empty.
 // If a DB backend is attached, the session is also persisted to Postgres
 // (best-effort: a DB error is logged but does not fail the in-memory create).
 func (s *SessionService) CreateSession(deviceBrand, deviceModel, language string) (*SessionState, error) {

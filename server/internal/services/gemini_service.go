@@ -8,7 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 // defaultGeminiURL is the production endpoint for Gemini 2.5 Flash.
@@ -34,7 +37,6 @@ const systemPromptBase = `You are PhysicsCopilot, an expert field technician ass
 
 // systemPromptForLanguage returns the system prompt with an explicit language
 // instruction appended. lang is a BCP-47 code (e.g. "it", "en", "fr").
-// The analysis and instruction fields must be in the requested language.
 func systemPromptForLanguage(lang string) string {
 	if lang == "" {
 		lang = "it"
@@ -73,6 +75,11 @@ type Arrow struct {
 	Y2 float64 `json:"y2"`
 }
 
+// defaultGeminiRPM is the outbound rate limit to the Gemini API (requests/min).
+// Google's free tier allows 15 RPM; paid tier allows up to 1 000 RPM.
+// Override with the GEMINI_RPM environment variable.
+const defaultGeminiRPM = 15
+
 // GeminiService communicates with the Google Gemini Vision API or a local
 // CLIProxyAPI Docker container to analyze camera frames and return
 // structured repair or maintenance instructions.
@@ -80,12 +87,34 @@ type Arrow struct {
 // When GEMINI_API_KEY is set, the service calls the Gemini REST API directly.
 // When it is absent, the service falls back to the CLIProxyAPI container
 // (OpenAI-compatible endpoint) at CLIPROXY_URL (default: http://localhost:8085).
+//
+// apiLimiter is a token-bucket rate limiter that caps outbound calls to the
+// Gemini API to respect Google's rate limits. It is shared across all
+// concurrent WebSocket sessions so the total call rate stays bounded.
+// Configure with GEMINI_RPM (default: 15 req/min).
 type GeminiService struct {
 	apiKey     string
 	baseURL    string
 	useProxy   bool
 	proxyURL   string
 	httpClient *http.Client
+	apiLimiter *rate.Limiter
+}
+
+// geminiRPM reads GEMINI_RPM from the environment, falling back to defaultGeminiRPM.
+func geminiRPM() int {
+	if raw := os.Getenv("GEMINI_RPM"); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil && v > 0 {
+			return v
+		}
+	}
+	return defaultGeminiRPM
+}
+
+// newAPILimiter builds a token-bucket rate limiter for Gemini API outbound calls.
+func newAPILimiter() *rate.Limiter {
+	rpm := geminiRPM()
+	return rate.NewLimiter(rate.Every(time.Minute/time.Duration(rpm)), rpm)
 }
 
 // NewGeminiService creates a GeminiService from environment variables.
@@ -106,6 +135,7 @@ func NewGeminiService() (*GeminiService, error) {
 			httpClient: &http.Client{
 				Timeout: httpTimeout,
 			},
+			apiLimiter: newAPILimiter(),
 		}, nil
 	}
 
@@ -121,15 +151,25 @@ func NewGeminiService() (*GeminiService, error) {
 		httpClient: &http.Client{
 			Timeout: httpTimeout,
 		},
+		apiLimiter: newAPILimiter(),
 	}, nil
 }
 
 // AnalyzeFrame sends a camera frame (base64-encoded JPEG) and conversation
 // context for analysis, then returns the structured result.
-// language is a BCP-47 code (e.g. "it", "en") that controls the language of
-// the "analysis" and "instruction" fields in the response.
+// language is a BCP-47 code (e.g. "it", "en") injected into the system prompt
+// so that the "analysis" and "instruction" fields are in the requested language.
 // Routes to Gemini REST API or CLIProxyAPI depending on configuration.
+//
+// The call blocks until the shared token-bucket rate limiter grants a token,
+// respecting Google's GEMINI_RPM limit across all concurrent sessions.
+// If the context is cancelled while waiting, an error is returned immediately.
 func (g *GeminiService) AnalyzeFrame(ctx context.Context, frameBase64, conversationContext, language string) (*GeminiResponse, error) {
+	if g.apiLimiter != nil {
+		if err := g.apiLimiter.Wait(ctx); err != nil {
+			return nil, fmt.Errorf("gemini rate limiter: %w", err)
+		}
+	}
 	if g.useProxy {
 		return g.analyzeFrameViaProxy(ctx, frameBase64, conversationContext, language)
 	}

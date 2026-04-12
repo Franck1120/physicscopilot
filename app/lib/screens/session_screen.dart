@@ -1,12 +1,20 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/scheduler.dart';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'package:share_plus/share_plus.dart';
+
 import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import '../services/camera_service.dart' show FrameQuality;
 import '../models/session_record.dart';
 import '../providers/camera_provider.dart';
 import '../providers/equipment_provider.dart';
@@ -18,7 +26,9 @@ import '../providers/voice_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
+import '../services/notification_service.dart';
 import '../utils/strings.dart';
+import '../widgets/safe_screen.dart';
 
 /// Active repair session screen.
 ///
@@ -33,10 +43,12 @@ class SessionScreen extends ConsumerStatefulWidget {
   ConsumerState<SessionScreen> createState() => _SessionScreenState();
 }
 
-class _SessionScreenState extends ConsumerState<SessionScreen> {
+class _SessionScreenState extends ConsumerState<SessionScreen>
+    with WidgetsBindingObserver {
   StreamSubscription<Uint8List>? _frameSubscription;
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   final TextEditingController _textController = TextEditingController();
+  Uint8List? _lastFrame;
 
   static const _kCachedResponseKey = 'offline_last_ai_response';
 
@@ -53,6 +65,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startListening();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -75,11 +88,28 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    NotificationService.cancelSessionNotification();
     _ticker?.cancel();
     _frameSubscription?.cancel();
     _messageSubscription?.cancel();
     _textController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final session = ref.read(sessionProvider);
+    final isActive = session.responseText != null || session.isProcessing;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        if (isActive) NotificationService.showSessionRunning();
+      case AppLifecycleState.resumed:
+        NotificationService.cancelSessionNotification();
+      default:
+        break;
+    }
   }
 
   void _startListening() {
@@ -91,7 +121,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _onServerMessage(Map<String, dynamic> msg) {
     final type = msg['type'] as String?;
-    if (type == 'response') {
+    if (type == 'chunk') {
+      // Streaming: accumulate partial text without restarting typewriter.
+      final chunk = msg['text'] as String?;
+      if (chunk != null && chunk.isNotEmpty) {
+        ref.read(sessionProvider.notifier).appendChunk(chunk);
+      }
+    } else if (type == 'response') {
       ref.read(sessionProvider.notifier).updateFromResponse(msg);
       // Cache response for offline mode.
       final responseText = msg['text'] as String?;
@@ -133,7 +169,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     ref.read(sessionProvider.notifier).setProcessing();
     try {
       final frame = await cameraService.captureFrame();
-      if (frame != null) wsService.sendFrame(frame);
+      if (frame != null) {
+        setState(() => _lastFrame = frame);
+        wsService.sendFrame(frame);
+      }
     } catch (_) {
       ref
           .read(sessionProvider.notifier)
@@ -218,6 +257,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildContent(context);
+    } catch (e) {
+      return screenError(e, context);
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
     final wsStatus = ref.watch(connectionStatusProvider);
 
     return Scaffold(
@@ -271,6 +318,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               );
             },
           ),
+          if (_lastFrame != null)
+            IconButton(
+              icon: const Icon(Icons.draw_outlined,
+                  color: Colors.white54, size: 20),
+              tooltip: 'Annota immagine',
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) =>
+                    _ImageAnnotationDialog(frame: _lastFrame!),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded,
                 color: Colors.white54, size: 20),
@@ -375,36 +433,127 @@ class _ConnectionBanner extends StatelessWidget {
   }
 }
 
-// ── Camera section ──────────────────────────────────────────────────────────
+// ── Camera section — flash, zoom, tap-focus, quality badge ──────────────────
 
-class _CameraSection extends ConsumerWidget {
+class _CameraSection extends ConsumerStatefulWidget {
   const _CameraSection({required this.onCapture});
   final VoidCallback onCapture;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CameraSection> createState() => _CameraSectionState();
+}
+
+class _CameraSectionState extends ConsumerState<_CameraSection> {
+  bool _torchOn = false;
+  double _currentZoom = 1.0;
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _baseZoom = 1.0;
+  Offset? _focusPoint; // screen-space position for the focus ring
+  FrameQuality _quality = FrameQuality.ok;
+  StreamSubscription<FrameQuality>? _qualitySub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setup());
+  }
+
+  Future<void> _setup() async {
+    final service = ref.read(cameraServiceProvider);
+    _qualitySub = service.quality.listen((q) {
+      if (mounted) setState(() => _quality = q);
+    });
+    final controller = service.controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    try {
+      final min = await controller.getMinZoomLevel();
+      final max = await controller.getMaxZoomLevel();
+      if (mounted) setState(() { _minZoom = min; _maxZoom = max; });
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _qualitySub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _toggleTorch() async {
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    try {
+      await controller.setFlashMode(
+        _torchOn ? FlashMode.off : FlashMode.torch,
+      );
+      if (mounted) setState(() => _torchOn = !_torchOn);
+      HapticFeedback.selectionClick();
+    } catch (_) {}
+  }
+
+  void _onScaleStart(ScaleStartDetails _) => _baseZoom = _currentZoom;
+
+  Future<void> _onScaleUpdate(ScaleUpdateDetails details) async {
+    if (details.pointerCount < 2) return; // only pinch, not single-finger pan
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    final target = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
+    try {
+      await controller.setZoomLevel(target);
+      if (mounted) setState(() => _currentZoom = target);
+    } catch (_) {}
+  }
+
+  Future<void> _onTapUp(TapUpDetails details, BoxConstraints box) async {
+    final controller = ref.read(cameraServiceProvider).controller;
+    if (controller == null) return;
+    final norm = Offset(
+      details.localPosition.dx / box.maxWidth,
+      details.localPosition.dy / box.maxHeight,
+    );
+    try {
+      await controller.setFocusPoint(norm);
+      await controller.setExposurePoint(norm);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _focusPoint = details.localPosition);
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _focusPoint = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cameraInit = ref.watch(cameraInitProvider);
     final cameraService = ref.watch(cameraServiceProvider);
 
     return Stack(
       fit: StackFit.expand,
       children: [
+        // ── Camera preview with gestures ──────────────────────────────────
         cameraInit.when(
           data: (_) {
             final controller = cameraService.controller;
             if (controller == null || !controller.value.isInitialized) {
               return const _CameraPlaceholder();
             }
-            return ClipRect(
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: controller.value.previewSize?.height ?? 1,
-                    height: controller.value.previewSize?.width ?? 1,
-                    child: CameraPreview(controller),
+            return LayoutBuilder(
+              builder: (context, constraints) => GestureDetector(
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onTapUp: (d) => _onTapUp(d, constraints),
+                child: ClipRect(
+                  child: OverflowBox(
+                    maxWidth: double.infinity,
+                    maxHeight: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: controller.value.previewSize?.height ?? 1,
+                        height: controller.value.previewSize?.width ?? 1,
+                        child: CameraPreview(controller),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -413,6 +562,66 @@ class _CameraSection extends ConsumerWidget {
           loading: () => const _CameraPlaceholder(),
           error: (_, __) => const _CameraError(),
         ),
+
+        // ── Focus ring ────────────────────────────────────────────────────
+        if (_focusPoint != null)
+          Positioned(
+            left: _focusPoint!.dx - 28,
+            top: _focusPoint!.dy - 28,
+            child: const _FocusRing(),
+          ),
+
+        // ── Flash toggle ──────────────────────────────────────────────────
+        Positioned(
+          top: 12,
+          left: 12,
+          child: _TorchButton(isOn: _torchOn, onTap: _toggleTorch),
+        ),
+
+        // ── FPS counter (debug builds only) ───────────────────────────────
+        if (kDebugMode)
+          const Positioned(
+            top: 12,
+            right: 12,
+            child: _FpsOverlay(),
+          ),
+
+        // ── Frame quality badge ───────────────────────────────────────────
+        if (_quality != FrameQuality.ok)
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Center(child: _QualityBadge(quality: _quality)),
+          ),
+
+        // ── Zoom level indicator ──────────────────────────────────────────
+        if (_currentZoom > 1.05)
+          Positioned(
+            bottom: 70,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentZoom.toStringAsFixed(1)}×',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // ── Capture FAB ───────────────────────────────────────────────────
         Positioned(
           bottom: 16,
           right: 16,
@@ -421,11 +630,198 @@ class _CameraSection extends ConsumerWidget {
             backgroundColor: kAccent,
             foregroundColor: Colors.white,
             tooltip: 'Cattura frame e invia all\'AI',
-            onPressed: onCapture,
+            onPressed: widget.onCapture,
             child: const Icon(Icons.camera_alt),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Focus ring ────────────────────────────────────────────────────────────────
+
+class _FocusRing extends StatefulWidget {
+  const _FocusRing();
+  @override
+  State<_FocusRing> createState() => _FocusRingState();
+}
+
+class _FocusRingState extends State<_FocusRing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+    _scale = Tween<double>(begin: 1.4, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOut),
+    );
+    _opacity = Tween<double>(begin: 1.0, end: 0.3).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Opacity(
+        opacity: _opacity.value,
+        child: Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: kAccent, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Torch button ──────────────────────────────────────────────────────────────
+
+class _TorchButton extends StatelessWidget {
+  const _TorchButton({required this.isOn, required this.onTap});
+  final bool isOn;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: isOn ? kAccent : Colors.black54,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isOn ? Icons.flash_on : Icons.flash_off,
+          color: Colors.white,
+          size: 18,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Frame quality badge ───────────────────────────────────────────────────────
+
+class _QualityBadge extends StatelessWidget {
+  const _QualityBadge({required this.quality});
+  final FrameQuality quality;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, color) = switch (quality) {
+      FrameQuality.tooDark => (Icons.brightness_2_outlined, 'Troppo scuro', Colors.orangeAccent),
+      FrameQuality.tooBright => (Icons.brightness_7, 'Troppo luminoso', Colors.amberAccent),
+      FrameQuality.ok => (Icons.check_circle_outline, '', Colors.greenAccent),
+    };
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(180),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── FPS overlay (debug mode only) ────────────────────────────────────────────
+
+/// Displays the current UI frame rate in the top-right corner of the camera
+/// preview.  Only compiled into debug builds (guarded by [kDebugMode]).
+class _FpsOverlay extends StatefulWidget {
+  const _FpsOverlay();
+  @override
+  State<_FpsOverlay> createState() => _FpsOverlayState();
+}
+
+class _FpsOverlayState extends State<_FpsOverlay> {
+  double _fps = 0;
+  final _timestamps = <int>[];
+
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance.addTimingsCallback(_onTimings);
+  }
+
+  @override
+  void dispose() {
+    SchedulerBinding.instance.removeTimingsCallback(_onTimings);
+    super.dispose();
+  }
+
+  void _onTimings(List<FrameTiming> timings) {
+    if (!mounted) return;
+    final now = DateTime.now().microsecondsSinceEpoch;
+    // Add one entry per frame timing batch.
+    for (final _ in timings) {
+      _timestamps.add(now);
+    }
+    // Keep only timestamps within the last second.
+    _timestamps.removeWhere((t) => now - t > 1000000);
+    setState(() => _fps = _timestamps.length.toDouble());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _fps >= 55
+        ? Colors.greenAccent
+        : _fps >= 30
+            ? Colors.orangeAccent
+            : Colors.redAccent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(160),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '${_fps.toStringAsFixed(0)} fps',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
     );
   }
 }
@@ -524,6 +920,12 @@ class _ResponseArea extends StatelessWidget {
 
     if (session.isProcessing) {
       child = const _ThinkingIndicator();
+    } else if (session.isStreaming && session.streamingText != null) {
+      // True streaming: show accumulated chunks with a blinking cursor.
+      child = _StreamingText(
+        key: const ValueKey('streaming'),
+        text: session.streamingText!,
+      );
     } else if (session.errorText != null) {
       child = Padding(
         key: const ValueKey('error'),
@@ -584,6 +986,20 @@ class _ResponseArea extends StatelessWidget {
           ),
         ],
       );
+      final steps = _parseSteps(session.responseText!);
+      if (steps != null) {
+        // Multi-step response: render interactive step cards.
+        child = _MultiStepView(
+          key: ValueKey('steps_${session.responseText.hashCode}'),
+          steps: steps,
+        );
+      } else {
+        // Plain text: animate char-by-char with typewriter effect.
+        child = _TypewriterResponse(
+          key: ValueKey(session.responseText),
+          text: session.responseText!,
+        );
+      }
     } else {
       child = const Center(
         key: ValueKey('idle'),
@@ -604,6 +1020,357 @@ class _ResponseArea extends StatelessWidget {
         child: child,
       ),
       child: child,
+    );
+  }
+}
+
+// ── Feedback bar — thumbs up / down after AI response ────────────────────────
+
+/// Thumbs-up / thumbs-down buttons shown once the typewriter animation ends.
+/// Selection is persisted to SharedPreferences as aggregate counters.
+class _FeedbackBar extends ConsumerStatefulWidget {
+  const _FeedbackBar({required this.responseText});
+  final String responseText;
+
+  @override
+  ConsumerState<_FeedbackBar> createState() => _FeedbackBarState();
+}
+
+class _FeedbackBarState extends ConsumerState<_FeedbackBar> {
+  // null = not voted, true = liked, false = disliked
+  bool? _vote;
+
+  static const _keyUp = 'feedback_thumbsUp';
+  static const _keyDown = 'feedback_thumbsDown';
+
+  Future<void> _setVote(bool liked) async {
+    if (_vote != null) return; // already voted
+    HapticFeedback.selectionClick();
+    setState(() => _vote = liked);
+    final prefs = ref.read(sharedPrefsProvider);
+    if (liked) {
+      await prefs.setInt(_keyUp, (prefs.getInt(_keyUp) ?? 0) + 1);
+    } else {
+      await prefs.setInt(_keyDown, (prefs.getInt(_keyDown) ?? 0) + 1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: 'Risposta utile',
+          button: true,
+          child: IconButton(
+            icon: Icon(
+              _vote == true
+                  ? Icons.thumb_up_rounded
+                  : Icons.thumb_up_outlined,
+              size: 15,
+              color: _vote == true ? kAccent : kTextMuted,
+            ),
+            tooltip: 'Utile',
+            onPressed: _vote == null ? () => _setVote(true) : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+        Semantics(
+          label: 'Risposta non utile',
+          button: true,
+          child: IconButton(
+            icon: Icon(
+              _vote == false
+                  ? Icons.thumb_down_rounded
+                  : Icons.thumb_down_outlined,
+              size: 15,
+              color: _vote == false ? Colors.redAccent : kTextMuted,
+            ),
+            tooltip: 'Non utile',
+            onPressed: _vote == null ? () => _setVote(false) : null,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Streaming text — shows accumulated chunks with a blinking cursor ─────────
+
+class _StreamingText extends StatelessWidget {
+  const _StreamingText({super.key, required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.smart_toy_outlined, color: kAccent, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Elaborazione…',
+                style: TextStyle(
+                  color: kAccent.withAlpha(180),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    height: 1.55,
+                  ),
+                ),
+                const WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: _BlinkingCursor(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlinkingCursor extends StatefulWidget {
+  const _BlinkingCursor();
+
+  @override
+  State<_BlinkingCursor> createState() => _BlinkingCursorState();
+}
+
+class _BlinkingCursorState extends State<_BlinkingCursor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 530),
+    )..repeat(reverse: true);
+    _opacity = _ctrl;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 2,
+        height: 16,
+        margin: const EdgeInsets.only(left: 2),
+        decoration: BoxDecoration(
+          color: kAccent,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Multi-step guidance ────────────────────────────────────────────────────────
+
+/// Returns a list of step strings if [text] contains 2+ numbered items
+/// (e.g. "1. Do this\n2. Do that"), otherwise null.
+List<String>? _parseSteps(String text) {
+  final lines = text.split('\n');
+  final steps = <String>[];
+  final stepRe = RegExp(r'^\s*(\d+)[.)]\s+(.+)$');
+  for (final line in lines) {
+    final m = stepRe.firstMatch(line);
+    if (m != null) steps.add(m.group(2)!.trim());
+  }
+  return steps.length >= 2 ? steps : null;
+}
+
+class _MultiStepView extends StatefulWidget {
+  const _MultiStepView({super.key, required this.steps});
+  final List<String> steps;
+
+  @override
+  State<_MultiStepView> createState() => _MultiStepViewState();
+}
+
+class _MultiStepViewState extends State<_MultiStepView> {
+  final Set<int> _checked = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.steps.length;
+    final done = _checked.length;
+    final progress = total == 0 ? 0.0 : done / total;
+    final allDone = done == total;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header + progress
+          Row(
+            children: [
+              const Icon(Icons.format_list_numbered,
+                  color: kAccent, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                '$done / $total completati',
+                style: const TextStyle(
+                  color: kAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: kBgCardBorder,
+              valueColor: const AlwaysStoppedAnimation<Color>(kAccent),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Step cards
+          ...List.generate(total, (i) {
+            final isDone = _checked.contains(i);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  if (isDone) {
+                    _checked.remove(i);
+                  } else {
+                    _checked.add(i);
+                  }
+                }),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDone
+                        ? kAccent.withAlpha(30)
+                        : kBgCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDone ? kAccent.withAlpha(120) : kBgCardBorder,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDone ? kAccent : Colors.transparent,
+                          border: Border.all(
+                            color: isDone ? kAccent : kTextMuted,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isDone
+                            ? const Icon(Icons.check,
+                                color: Colors.white, size: 13)
+                            : Center(
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                      color: kTextMuted,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.steps[i],
+                          style: TextStyle(
+                            color: isDone
+                                ? Colors.white.withAlpha(140)
+                                : Colors.white,
+                            fontSize: 13,
+                            height: 1.5,
+                            decoration: isDone
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                            decorationColor: Colors.white38,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          if (allDone) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: kAccent.withAlpha(40),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: kAccent.withAlpha(100)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      color: kAccent, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Tutti i passi completati!',
+                    style: TextStyle(
+                        color: kAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -672,35 +1439,40 @@ class _TypewriterResponseState extends State<_TypewriterResponse> {
             ),
           ),
         ),
-        // Copy button appears once typing is complete.
+        // Copy + feedback row — visible once typing is complete.
         AnimatedOpacity(
           opacity: done ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 300),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 4),
-              child: Semantics(
-                label: 'Copia risposta AI',
-                button: true,
-                child: IconButton(
-                  icon: const Icon(Icons.copy_outlined,
-                      size: 16, color: kTextMuted),
-                  tooltip: 'Copia risposta',
-                  onPressed: done
-                      ? () {
-                          HapticFeedback.selectionClick();
-                          Clipboard.setData(
-                              ClipboardData(text: widget.text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(AppStrings.sessionResponseCopied),
-                            ),
-                          );
-                        }
-                      : null,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+            child: Row(
+              children: [
+                // Feedback (thumbs up/down)
+                _FeedbackBar(responseText: widget.text),
+                const Spacer(),
+                // Copy button
+                Semantics(
+                  label: 'Copia risposta AI',
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.copy_outlined,
+                        size: 16, color: kTextMuted),
+                    tooltip: 'Copia risposta',
+                    onPressed: done
+                        ? () {
+                            HapticFeedback.selectionClick();
+                            Clipboard.setData(
+                                ClipboardData(text: widget.text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(AppStrings.sessionResponseCopied),
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -866,6 +1638,214 @@ class _TextInputRow extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Tutorial overlay ──────────────────────────────────────────────────────────
+
+// ── Image annotation dialog ───────────────────────────────────────────────────
+
+class _ImageAnnotationDialog extends StatefulWidget {
+  const _ImageAnnotationDialog({required this.frame});
+  final Uint8List frame;
+
+  @override
+  State<_ImageAnnotationDialog> createState() => _ImageAnnotationDialogState();
+}
+
+class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
+  final _repaintKey = GlobalKey();
+  final List<Offset> _pins = [];
+  bool _sharing = false;
+
+  Future<void> _share() async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final boundary = _repaintKey.currentContext!.findRenderObject()
+          as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final bytes =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) return;
+      final pngBytes = bytes.buffer.asUint8List();
+      await Share.shareXFiles(
+        [XFile.fromData(pngBytes,
+            name: 'annotazione.png', mimeType: 'image/png')],
+        subject: 'Annotazione PhysicsCopilot',
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: kBgCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: kBgCardBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.draw_outlined, color: kAccent, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'Annota immagine',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close,
+                      color: Colors.white54, size: 18),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Annotatable image area
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: GestureDetector(
+                onTapUp: (d) =>
+                    setState(() => _pins.add(d.localPosition)),
+                child: RepaintBoundary(
+                  key: _repaintKey,
+                  child: Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 4 / 3,
+                        child: Image.memory(
+                          widget.frame,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _PinPainter(pins: _pins),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tocca sull\'immagine per aggiungere un pin',
+              style: TextStyle(color: kTextMuted, fontSize: 11),
+            ),
+            const SizedBox(height: 12),
+            // Actions
+            Row(
+              children: [
+                if (_pins.isNotEmpty) ...[
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => _pins.clear()),
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Cancella'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _sharing ? null : _share,
+                    icon: _sharing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.ios_share_outlined, size: 16),
+                    label:
+                        Text(_sharing ? 'Preparazione…' : 'Condividi'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kAccent,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: kAccent.withAlpha(60),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PinPainter extends CustomPainter {
+  const _PinPainter({required this.pins});
+  final List<Offset> pins;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var i = 0; i < pins.length; i++) {
+      final p = pins[i];
+      // Drop shadow
+      canvas.drawCircle(
+        p + const Offset(1, 2),
+        14,
+        Paint()..color = Colors.black.withAlpha(80),
+      );
+      // Filled circle
+      canvas.drawCircle(
+        p,
+        13,
+        Paint()..color = kAccent,
+      );
+      // Border
+      canvas.drawCircle(
+        p,
+        13,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+      // Number
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '${i + 1}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        p - Offset(tp.width / 2, tp.height / 2),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PinPainter old) => old.pins != pins;
 }
 
 // ── Tutorial overlay ──────────────────────────────────────────────────────────

@@ -49,6 +49,12 @@ dependencies:
   # Navigation & preferences
   shared_preferences: ^2.3.0
   go_router: ^14.6.3
+  # Sharing / export
+  share_plus: ^10.0.0
+  # Local notifications
+  flutter_local_notifications: ^18.0.0
+  # Deep links
+  app_links: ^6.3.0
   # Fonts
   google_fonts: ^6.2.1
 

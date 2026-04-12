@@ -29,23 +29,23 @@ type StepInfo struct {
 }
 
 // ConversationService orchestrates frame analysis and text conversations
-// by coordinating SessionService (state), GeminiService (AI), and an
+// by coordinating SessionService (state), an AIBackend (AI inference), and an
 // optional RAGService (knowledge-base context enrichment).
 type ConversationService struct {
 	sessions    *SessionService
-	gemini      *GeminiService
+	ai          AIBackend
 	rag         *RAGService
 	frameHashes map[string]string // sessionID -> hash of last processed frame
 	mu          sync.Mutex
 }
 
 // NewConversationService creates a ConversationService wired to the given
-// session store, Gemini client, and optional knowledge-base service.
+// session store, AI backend, and optional knowledge-base service.
 // rag may be nil, in which case KB enrichment is skipped.
-func NewConversationService(sessions *SessionService, gemini *GeminiService, rag *RAGService) *ConversationService {
+func NewConversationService(sessions *SessionService, ai AIBackend, rag *RAGService) *ConversationService {
 	return &ConversationService{
 		sessions:    sessions,
-		gemini:      gemini,
+		ai:          ai,
 		rag:         rag,
 		frameHashes: make(map[string]string),
 	}
@@ -100,15 +100,14 @@ func (c *ConversationService) ProcessFrame(ctx context.Context, sessionID, frame
 		}
 	}
 
-	// Read session language for the Gemini prompt
-	langSnap, langErr := c.sessions.GetSessionSnapshot(sessionID)
+	// Read session language for the Gemini prompt.
 	language := "it"
-	if langErr == nil {
-		language = langSnap.Language
+	if snap, snapErr := c.sessions.GetSessionSnapshot(sessionID); snapErr == nil && snap.Language != "" {
+		language = snap.Language
 	}
 
-	// Call Gemini Vision API
-	response, err := c.gemini.AnalyzeFrame(ctx, frameBase64, conversationCtx, language)
+	// Call AI backend.
+	response, err := c.ai.AnalyzeFrame(ctx, frameBase64, conversationCtx, language)
 	if err != nil {
 		c.clearFrameHash(sessionID)
 		return nil, fmt.Errorf("analyze frame: %w", err)
@@ -171,13 +170,13 @@ func (c *ConversationService) ProcessTextMessage(ctx context.Context, sessionID,
 		}
 	}
 
-	langSnap, langErr := c.sessions.GetSessionSnapshot(sessionID)
+	// Read session language for the Gemini prompt.
 	language := "it"
-	if langErr == nil {
-		language = langSnap.Language
+	if snap, snapErr := c.sessions.GetSessionSnapshot(sessionID); snapErr == nil && snap.Language != "" {
+		language = snap.Language
 	}
 
-	response, err := c.gemini.AnalyzeFrame(ctx, "", conversationCtx, language)
+	response, err := c.ai.AnalyzeFrame(ctx, "", conversationCtx, language)
 	if err != nil {
 		return nil, fmt.Errorf("analyze text message: %w", err)
 	}
@@ -254,20 +253,12 @@ func (c *ConversationService) clearFrameHash(sessionID string) {
 }
 
 // toVoiceText converts an instruction string into a TTS-friendly version by
-// stripping Markdown syntax (bold, italic, code, headers, underscores) and
-// collapsing excess whitespace. The result is suitable for passing directly
-// to a text-to-speech engine without audible artefacts from markup symbols.
+// stripping Markdown syntax and collapsing excess whitespace.
 func toVoiceText(text string) string {
 	r := strings.NewReplacer(
-		"**", "",
-		"*", "",
-		"__", "",
-		"_", "",
-		"```", "",
-		"`", "",
-		"###", "",
-		"##", "",
-		"#", "",
+		"**", "", "*", "", "__", "", "_", "",
+		"```", "", "`", "",
+		"###", "", "##", "", "#", "",
 	)
 	v := r.Replace(text)
 	v = strings.Join(strings.Fields(v), " ")
