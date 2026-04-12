@@ -12,6 +12,7 @@ import '../services/api_service.dart' show serverOnlineProvider;
 import '../services/websocket_service.dart';
 import '../utils/extensions.dart';
 import 'history_screen.dart';
+import 'stats_screen.dart';
 
 
 // ---------------------------------------------------------------------------
@@ -63,6 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Tab 1 — Camera: never rendered; handled by onStartCamera callback.
           const SizedBox.shrink(),
           const HistoryScreen(),
+          const StatsScreen(),
           const _ProfileTab(),
         ],
       ),
@@ -88,6 +90,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'Cronologia',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart_rounded),
+            label: 'Statistiche',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
