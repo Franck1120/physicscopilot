@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// TODO: Device model — 3D printer or other repairable device
+// Device represents any repairable or maintainable physical device owned by a user.
 
 type Device struct {
 	ID        string    `json:"id"`
