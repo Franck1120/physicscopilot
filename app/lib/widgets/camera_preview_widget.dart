@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,44 +7,72 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main.dart' show kBgPrimary, kTextMuted;
 import '../providers/camera_provider.dart';
 
+/// Full-screen camera feed with optional overlay and frame capture callback.
+///
+/// Watches [cameraInitProvider] to drive loading / error / live-preview states.
+/// The underlying [CameraController] is accessed via [cameraServiceProvider]
+/// (read-only — no rebuild on controller changes) to avoid unnecessary redraws.
 class CameraPreviewWidget extends ConsumerWidget {
+  /// Optional widget rendered on top of the camera feed (AR overlays, controls).
+  final Widget? child;
+
+  /// How the camera preview is fitted inside its parent.
+  ///
+  /// Defaults to [BoxFit.cover] so the feed fills the available space.
+  final BoxFit fit;
+
+  /// Called with the latest compressed frame bytes whenever the camera is ready.
+  ///
+  /// The callback fires only once per build when the controller is initialised.
+  /// Use a [StreamSubscription] on [CameraService.frames] for continuous frames.
+  final void Function(Uint8List bytes)? onFrameCaptured;
+
   const CameraPreviewWidget({
     super.key,
-    this.overlay,
+    this.child,
     this.fit = BoxFit.cover,
+    this.onFrameCaptured,
   });
-
-  final Widget? overlay;
-  final BoxFit fit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cameraInit = ref.watch(cameraInitProvider);
+    final initAsync = ref.watch(cameraInitProvider);
 
-    return cameraInit.when(
-      loading: () => _buildLoading(),
-      error: (error, _) => _buildError(error),
-      data: (_) {
-        final service = ref.watch(cameraServiceProvider);
-        if (!service.isInitialized || service.controller == null) {
-          return _buildLoading();
-        }
-        return _buildPreview(service);
-      },
+    return initAsync.when(
+      loading: _buildLoading,
+      error: (_, __) => _buildError(),
+      data: (_) => _buildPreview(ref),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Loading state — spinner centred on dark background
+  // ---------------------------------------------------------------------------
+
   Widget _buildLoading() {
-    return ColoredBox(
+    return const ColoredBox(
       color: kBgPrimary,
-      child: const Center(
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error state — camera icon + message on dark background
+  // ---------------------------------------------------------------------------
+
+  Widget _buildError() {
+    return const ColoredBox(
+      color: kBgPrimary,
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(strokeWidth: 2),
-            SizedBox(height: 16),
+            Icon(Icons.camera_alt, color: kTextMuted, size: 48),
+            SizedBox(height: 12),
             Text(
-              'Inizializzazione camera...',
+              'Camera non disponibile',
               style: TextStyle(color: kTextMuted, fontSize: 14),
             ),
           ],
@@ -51,62 +81,43 @@ class CameraPreviewWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildError(Object error) {
-    final message = error.toString();
-    final truncated =
-        message.length > 80 ? '${message.substring(0, 80)}…' : message;
+  // ---------------------------------------------------------------------------
+  // Live preview — AspectRatio + ClipRect + optional overlay Stack
+  // ---------------------------------------------------------------------------
 
-    return ColoredBox(
-      color: kBgPrimary,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.camera_outlined, color: kTextMuted, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                truncated,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: kTextMuted, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildPreview(WidgetRef ref) {
+    // Read (not watch) to avoid rebuilding whenever internal controller state
+    // changes (e.g. focus, exposure) — the init state is already tracked above.
+    final controller = ref.read(cameraServiceProvider).controller;
+
+    // Guard: controller should always be non-null after a successful init, but
+    // fall back gracefully to avoid a null-dereference crash.
+    if (controller == null || !controller.value.isInitialized) {
+      return _buildError();
+    }
+
+    final preview = ClipRect(
+      child: AspectRatio(
+        aspectRatio: controller.value.aspectRatio,
+        child: CameraPreview(controller),
       ),
     );
-  }
 
-  Widget _buildPreview(dynamic service) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final preview = SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: FittedBox(
-            fit: fit,
-            clipBehavior: Clip.hardEdge,
-            child: SizedBox(
-              width: service.controller!.value.previewSize?.height ?? constraints.maxWidth,
-              height: service.controller!.value.previewSize?.width ?? constraints.maxHeight,
-              child: CameraPreview(service.controller!),
-            ),
-          ),
-        );
+    // Wrap in a Stack only when an overlay child is provided to keep the
+    // widget tree shallow for the common no-overlay case.
+    if (child == null) return preview;
 
-        if (overlay == null) {
-          return preview;
-        }
-
-        return Stack(
+    return ClipRect(
+      child: AspectRatio(
+        aspectRatio: controller.value.aspectRatio,
+        child: Stack(
           fit: StackFit.expand,
           children: [
-            preview,
-            overlay!,
+            CameraPreview(controller),
+            child!,
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }

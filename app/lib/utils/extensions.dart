@@ -1,112 +1,94 @@
-extension DurationFormatting on Duration {
-  String formatShort() {
-    final totalSeconds = inSeconds;
+// Dart extension methods for common types.
+// Pure Dart utilities (no Flutter dependencies).
 
-    if (totalSeconds == 0) return '< 1m';
+// ── Duration extension ──────────────────────────────────────────────────────
 
-    if (totalSeconds < 60) return '${totalSeconds}s';
+/// Extension methods on [Duration].
+extension DurationX on Duration {
+  /// Formats duration in Italian.
+  ///
+  /// Examples:
+  /// - `5 minutes` → `"5 min"`
+  /// - `90 minutes` → `"1h 30min"`
+  /// - `120 minutes` → `"2h"`
+  String get formatted {
+    final minutes = inMinutes;
+    if (minutes < 60) return '$minutes min';
 
-    if (totalSeconds < 3600) {
-      final minutes = totalSeconds ~/ 60;
-      final seconds = totalSeconds % 60;
-      if (seconds == 0) return '${minutes}m';
-      return '${minutes}m ${seconds}s';
-    }
-
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    if (minutes == 0) return '${hours}h';
-    return '${hours}h ${minutes}m';
+    final hours = inHours;
+    final remaining = minutes % 60;
+    return remaining == 0 ? '${hours}h' : '${hours}h ${remaining}min';
   }
 }
 
-extension DateTimeFormatting on DateTime {
-  static const List<String> _weekdays = [
-    'lun',
-    'mar',
-    'mer',
-    'gio',
-    'ven',
-    'sab',
-    'dom',
-  ];
+// ── DateTime extension ──────────────────────────────────────────────────────
 
-  static const List<String> _months = [
-    'gen',
-    'feb',
-    'mar',
-    'apr',
-    'mag',
-    'giu',
-    'lug',
-    'ago',
-    'set',
-    'ott',
-    'nov',
-    'dic',
-  ];
-
-  String _paddedHHmm() {
-    final hh = hour.toString().padLeft(2, '0');
-    final mm = minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
+/// Extension methods on [DateTime].
+extension DateTimeX on DateTime {
+  /// Formats date in short Italian format.
+  ///
+  /// Example: `"12 apr 2026"`
+  String get shortDate {
+    const months = [
+      'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
+      'lug', 'ago', 'set', 'ott', 'nov', 'dic',
+    ];
+    return '$day ${months[month - 1]} $year';
   }
 
-  String formatRelative() {
+  /// Returns relative label in Italian based on how many days ago.
+  ///
+  /// Examples:
+  /// - Today → `"Oggi"`
+  /// - Yesterday → `"Ieri"`
+  /// - 3 days ago → `"3 giorni fa"`
+  /// - Before last 7 days → formatted date like `"12 apr 2026"`
+  String get relativeLabel {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final thisDate = DateTime(year, month, day);
-    final difference = today.difference(thisDate).inDays;
 
-    if (difference == 0) return 'oggi ${_paddedHHmm()}';
-    if (difference == 1) return 'ieri ${_paddedHHmm()}';
-    if (difference < 7) {
-      // weekday: 1=Monday … 7=Sunday; array is 0-indexed lun=0 … dom=6
-      final dayName = _weekdays[weekday - 1];
-      return '$dayName ${_paddedHHmm()}';
+    // Compare by date only (ignore time)
+    final isToday = year == now.year &&
+        month == now.month &&
+        day == now.day;
+
+    if (isToday) return 'Oggi';
+
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final isYesterday = year == yesterday.year &&
+        month == yesterday.month &&
+        day == yesterday.day;
+
+    if (isYesterday) return 'Ieri';
+
+    // Calculate days between (from this date to now)
+    final daysDiff = now.difference(this).inDays;
+    if (daysDiff > 0 && daysDiff < 7) {
+      return '$daysDiff giorni fa';
     }
 
-    final monthName = _months[month - 1];
-    if (year != now.year) return '$day $monthName $year';
-    return '$day $monthName';
-  }
-
-  String formatTimestamp() {
-    final monthName = _months[month - 1];
-    return '$day $monthName $year, ${_paddedHHmm()}';
+    // Fallback: return short date format
+    return shortDate;
   }
 }
 
-extension StringUtils on String {
-  String capitalize() {
-    if (isEmpty) return this;
-    return '${this[0].toUpperCase()}${substring(1)}';
-  }
+// ── String extension ────────────────────────────────────────────────────────
 
-  String truncate(int maxLength, {String ellipsis = '…'}) {
-    if (length <= maxLength) return this;
-    return '${substring(0, maxLength)}$ellipsis';
-  }
+/// Extension methods on [String].
+extension StringX on String {
+  /// Extracts first letter(s) from each word, max 2 characters.
+  ///
+  /// Examples:
+  /// - `"John Doe"` → `"JD"`
+  /// - `"Franck"` → `"F"`
+  /// - `"Alice Bob Charlie"` → `"AB"`
+  /// - `""` → `"?"`
+  String get initials {
+    if (isEmpty) return '?';
 
-  bool isBlank() => trim().isEmpty;
-}
-
-extension IntDuration on int {
-  Duration get asDuration => Duration(seconds: this);
-
-  String formatAsTimer() {
-    final totalSeconds = this < 0 ? 0 : this;
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
-
-    final mm = minutes.toString().padLeft(2, '0');
-    final ss = seconds.toString().padLeft(2, '0');
-
-    if (hours > 0) {
-      final hh = hours.toString().padLeft(2, '0');
-      return '$hh:$mm:$ss';
-    }
-    return '$mm:$ss';
+    return split(' ')
+        .where((word) => word.isNotEmpty)
+        .take(2)
+        .map((word) => word[0].toUpperCase())
+        .join();
   }
 }

@@ -96,52 +96,77 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) =>
-                      setState(() => _currentPage = index),
-                  children: const [
-                    _OnboardingPage(
-                      icon: Icons.camera_alt,
-                      title: 'Punta la camera',
-                      subtitle: 'Inquadra il dispositivo che vuoi analizzare',
+              Column(
+                children: [
+                  // Reserve space at the top so PageView doesn't overlap
+                  // the skip button area.
+                  const SizedBox(height: 48),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) =>
+                          setState(() => _currentPage = index),
+                      children: const [
+                        _OnboardingPage(
+                          icon: Icons.camera_alt,
+                          title: 'Punta la camera',
+                          subtitle: 'PhysicsCopilot vede cosa stai facendo',
+                        ),
+                        _OnboardingPage(
+                          icon: Icons.volume_up,
+                          title: 'Segui la voce',
+                          subtitle: 'Ti guida passo-passo a voce',
+                        ),
+                        _OnboardingPage(
+                          icon: Icons.check_circle_outline,
+                          title: 'Risolvi il problema',
+                          subtitle: 'Diagnostica e fix in tempo reale',
+                        ),
+                      ],
                     ),
-                    _OnboardingPage(
-                      icon: Icons.auto_awesome,
-                      title: 'L\'AI analizza',
-                      subtitle:
-                          'Il modello AI identifica il problema e trova la soluzione ottimale',
-                    ),
-                    _OnboardingPage(
-                      icon: Icons.checklist_rounded,
-                      title: 'Segui le istruzioni',
-                      subtitle:
-                          'Istruzioni passo-passo guidate dalla voce per risolvere il problema',
-                    ),
-                  ],
-                ),
+                  ),
+                  _PageIndicator(
+                    pageCount: _pageCount,
+                    currentPage: _currentPage,
+                  ),
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: _currentPage < _pageCount - 1
+                        ? _PrimaryButton(
+                            label: 'Avanti',
+                            onPressed: _goToNextPage,
+                          )
+                        : _PrimaryButton(
+                            label: 'Inizia',
+                            onPressed: _isCompleting ? null : _handleComplete,
+                          ),
+                  ),
+                  const SizedBox(height: 48),
+                ],
               ),
-              _PageIndicator(
-                pageCount: _pageCount,
-                currentPage: _currentPage,
-              ),
-              const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: _currentPage < _pageCount - 1
-                    ? _PrimaryButton(
-                        label: 'Avanti',
-                        onPressed: _goToNextPage,
-                      )
-                    : _PrimaryButton(
-                        label: 'Inizia',
-                        onPressed: _isCompleting ? null : _handleComplete,
+
+              // Skip button — only visible on the first two slides.
+              if (_currentPage < 2)
+                Positioned(
+                  top: 8,
+                  right: 16,
+                  child: GestureDetector(
+                    onTap: _handleComplete,
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        'Salta',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14,
+                        ),
                       ),
-              ),
-              const SizedBox(height: 48),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -172,7 +197,20 @@ class _OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: Colors.white),
+          // Icon in a decorated circle for visual depth.
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF1B4F72).withAlpha(120),
+              border: Border.all(
+                color: Colors.white.withAlpha(60),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(icon, size: 56, color: Colors.white),
+          ),
           const SizedBox(height: 40),
           Text(
             title,
@@ -184,7 +222,18 @@ class _OnboardingPage extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+
+          // Decorative separator between title and subtitle.
+          Container(
+            width: 40,
+            height: 2,
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(80),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+
           Text(
             subtitle,
             style: const TextStyle(
@@ -218,12 +267,12 @@ class _PageIndicator extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 24 : 8,
-          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          width: isActive ? 20 : 8,
+          height: 6,
           decoration: BoxDecoration(
             color: isActive ? Colors.white : const Color(0x66FFFFFF),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
           ),
         );
       }),
@@ -242,26 +291,41 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Gradient CTA — wraps an InkWell in a decorated container so the
+    // green gradient is visible while still providing ink ripple feedback.
     return SizedBox(
       width: double.infinity,
       height: 52,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF1B4F72),
-          disabledBackgroundColor: const Color(0x66FFFFFF),
-          shape: RoundedRectangleBorder(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: onPressed != null
+              ? const LinearGradient(
+                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                )
+              : const LinearGradient(
+                  colors: [Color(0x66FFFFFF), Color(0x66FFFFFF)],
+                ),
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(26),
+          child: InkWell(
+            onTap: onPressed,
             borderRadius: BorderRadius.circular(26),
-          ),
-          elevation: 0,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
           ),
         ),
-        child: Text(label),
       ),
     );
   }
