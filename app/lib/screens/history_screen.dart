@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import '../utils/strings.dart';
 import '../utils/transitions.dart';
 import '../widgets/safe_screen.dart';
+import '../widgets/session_skeleton.dart';
 
 // ---------------------------------------------------------------------------
 // Server sessions provider — fetches from REST API and converts to SessionRecord.
@@ -224,7 +225,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           ref.invalidate(_serverSessionsProvider);
           await ref.read(_serverSessionsProvider.future).catchError((_) {});
         },
-        child: sessions.isEmpty
+        child: isSyncing && localSessions.isEmpty
+            // Show skeleton while loading and no cached data.
+            ? const SessionSkeleton(itemCount: 5)
+            : sessions.isEmpty
             ? const SingleChildScrollView(
                 physics: AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
