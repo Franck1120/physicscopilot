@@ -30,12 +30,16 @@ class RateLimitCountdown extends StatefulWidget {
 
 class _RateLimitCountdownState extends State<RateLimitCountdown> {
   late Duration _remaining;
+  late final int _initialSeconds;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _remaining = widget.remaining;
+    // Capture the total duration once so the progress bar has a fixed
+    // denominator throughout the lifetime of this widget.
+    _initialSeconds = widget.remaining.inSeconds;
     _startTimer();
   }
 
@@ -84,6 +88,10 @@ class _RateLimitCountdownState extends State<RateLimitCountdown> {
   Widget build(BuildContext context) {
     if (_remaining <= Duration.zero) return const SizedBox.shrink();
 
+    final progress = _initialSeconds > 0
+        ? (_remaining.inSeconds / _initialSeconds).clamp(0.0, 1.0)
+        : 0.0;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -91,17 +99,33 @@ class _RateLimitCountdownState extends State<RateLimitCountdown> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: kBgCardBorder),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.timer_outlined, size: 16, color: kAccent),
-          const SizedBox(width: 8),
-          Text(
-            _label,
-            style: const TextStyle(
-              color: kTextMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timer_outlined, size: 16, color: kAccent),
+              const SizedBox(width: 8),
+              Text(
+                _label,
+                style: const TextStyle(
+                  color: kTextMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: kBgCard,
+              valueColor: const AlwaysStoppedAnimation<Color>(kAccent),
             ),
           ),
         ],
