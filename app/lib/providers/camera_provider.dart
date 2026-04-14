@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/camera_service.dart' show CameraService, FrameQuality;
+import 'package:physicscopilot/services/camera_service.dart' show CameraService, FrameQuality;
 
 /// Singleton [CameraService]; disposed with the provider scope.
 final cameraServiceProvider = Provider<CameraService>((ref) {

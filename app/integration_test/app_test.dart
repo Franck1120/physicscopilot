@@ -23,7 +23,7 @@ void main() {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  final _testEquipment = EquipmentProfile(
+  final testEquipment = const EquipmentProfile(
     id: 'test-printer',
     name: 'Test Printer X1',
     manufacturer: 'TestBrand',
@@ -125,7 +125,7 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
 
-      await pumpApp(tester, prefs, equipment: _testEquipment);
+      await pumpApp(tester, prefs, equipment: testEquipment);
       await tester.pump(const Duration(milliseconds: 2500));
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -142,7 +142,7 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
 
-      await pumpApp(tester, prefs, equipment: _testEquipment);
+      await pumpApp(tester, prefs, equipment: testEquipment);
       await tester.pump(const Duration(milliseconds: 2500));
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -157,7 +157,7 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
 
-      await pumpApp(tester, prefs, equipment: _testEquipment);
+      await pumpApp(tester, prefs, equipment: testEquipment);
       await tester.pump(const Duration(milliseconds: 2500));
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -188,7 +188,7 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
 
-      await pumpApp(tester, prefs, equipment: _testEquipment);
+      await pumpApp(tester, prefs, equipment: testEquipment);
       await tester.pump(const Duration(milliseconds: 2500));
       await tester.pump(const Duration(milliseconds: 200));
 

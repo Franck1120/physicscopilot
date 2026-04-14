@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/session_record.dart';
-import 'prefs_provider.dart';
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 const _kHistoryKey = 'session_history';
 const _kMaxRecords = 50;

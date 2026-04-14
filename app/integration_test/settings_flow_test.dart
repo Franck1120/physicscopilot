@@ -17,7 +17,7 @@ import 'package:physicscopilot/providers/prefs_provider.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final _testEquipment = EquipmentProfile(
+  final testEquipment = const EquipmentProfile(
     id: 'test-printer',
     name: 'Test Printer X1',
     manufacturer: 'TestBrand',
@@ -50,7 +50,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding_completed': true});
     final prefs = await SharedPreferences.getInstance();
 
-    await pumpApp(tester, prefs, equipment: _testEquipment);
+    await pumpApp(tester, prefs, equipment: testEquipment);
     await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -62,7 +62,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding_completed': true});
     final prefs = await SharedPreferences.getInstance();
 
-    await pumpApp(tester, prefs, equipment: _testEquipment);
+    await pumpApp(tester, prefs, equipment: testEquipment);
     await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -83,7 +83,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding_completed': true});
     final prefs = await SharedPreferences.getInstance();
 
-    await pumpApp(tester, prefs, equipment: _testEquipment);
+    await pumpApp(tester, prefs, equipment: testEquipment);
     await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -105,7 +105,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding_completed': true});
     final prefs = await SharedPreferences.getInstance();
 
-    await pumpApp(tester, prefs, equipment: _testEquipment);
+    await pumpApp(tester, prefs, equipment: testEquipment);
     await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump(const Duration(milliseconds: 200));
 

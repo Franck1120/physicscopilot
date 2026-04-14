@@ -9,21 +9,21 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
-import 'providers/prefs_provider.dart';
-import 'screens/onboarding_screen.dart';
-import 'services/notification_service.dart';
-import 'utils/strings.dart';
-import 'screens/equipment_selection_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/camera_screen.dart';
-import 'screens/session_screen.dart';
-import 'screens/history_screen.dart';
-import 'screens/settings_screen.dart';
-import 'providers/equipment_provider.dart';
-import 'providers/settings_provider.dart';
+import 'package:physicscopilot/providers/equipment_provider.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/screens/camera_screen.dart';
+import 'package:physicscopilot/screens/equipment_selection_screen.dart';
+import 'package:physicscopilot/screens/history_screen.dart';
+import 'package:physicscopilot/screens/home_screen.dart';
+import 'package:physicscopilot/screens/login_screen.dart';
+import 'package:physicscopilot/screens/onboarding_screen.dart';
+import 'package:physicscopilot/screens/session_screen.dart';
+import 'package:physicscopilot/screens/settings_screen.dart';
+import 'package:physicscopilot/services/auth_service.dart';
+import 'package:physicscopilot/services/notification_service.dart';
+import 'package:physicscopilot/utils/strings.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
-import 'screens/login_screen.dart';
-import 'services/auth_service.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens

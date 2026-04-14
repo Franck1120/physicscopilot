@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/session_provider.dart';
-import '../widgets/ar_overlay.dart';
+import 'package:physicscopilot/providers/session_provider.dart';
+import 'package:physicscopilot/widgets/ar_overlay.dart';
 
 /// Derives the current [OverlayData] from the session's raw overlay map.
 /// Returns `null` when no overlay is active.
