@@ -106,7 +106,17 @@ func run(ctx context.Context) error {
 	convSvc := services.NewConversationService(sessionSvc, aiBackend, ragSvc)
 	wsHandler := handlers.NewWSHandler(convSvc, sessionSvc)
 	sessionHandler := handlers.NewSessionHandler(sessionSvc)
-	feedbackHandler := handlers.NewFeedbackHandler(dbSvc)
+	// Guard against Go's "typed nil" trap: a nil *services.DBService passed to an
+	// interface parameter is NOT a nil interface — it carries type information and
+	// bypasses nil checks inside the handlers, causing a nil pointer dereference.
+	// Pass the untyped nil literal so the interface value is truly nil when no DB
+	// is configured.
+	var feedbackHandler *handlers.FeedbackHandler
+	if dbSvc != nil {
+		feedbackHandler = handlers.NewFeedbackHandler(dbSvc)
+	} else {
+		feedbackHandler = handlers.NewFeedbackHandler(nil)
+	}
 
 	// Background memory metrics collection every 30 seconds.
 	// Warns at slog.Warn level when heap usage exceeds 80 % of GOMEMLIMIT.
@@ -141,7 +151,12 @@ func run(ctx context.Context) error {
 	}()
 
 	// ── HTTP app ─────────────────────────────────────────────────────────────
-	app := newFiberApp(version, buildTime, commitHash, sessionHandler, feedbackHandler, wsHandler, ragSvc, dbSvc)
+	// Same typed-nil guard for the DBPinger interface passed to newFiberApp.
+	var dbPinger handlers.DBPinger
+	if dbSvc != nil {
+		dbPinger = dbSvc
+	}
+	app := newFiberApp(version, buildTime, commitHash, sessionHandler, feedbackHandler, wsHandler, ragSvc, dbPinger)
 
 	port := resolvePort()
 
