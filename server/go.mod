@@ -1,8 +1,9 @@
 module github.com/Franck1120/physicscopilot/server
 
-go 1.25.0
+go 1.26
 
 require (
+	github.com/getsentry/sentry-go v0.45.0
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/gofiber/websocket/v2 v2.2.1
@@ -19,7 +20,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/fasthttp/websocket v1.5.3 // indirect
-	github.com/getsentry/sentry-go v0.45.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
