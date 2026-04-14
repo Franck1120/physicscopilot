@@ -56,8 +56,9 @@ class EquipmentProfile {
 /// Manages the currently selected [EquipmentProfile].
 ///
 /// State is `null` when no device has been selected yet.
-class EquipmentNotifier extends StateNotifier<EquipmentProfile?> {
-  EquipmentNotifier() : super(null);
+class EquipmentNotifier extends Notifier<EquipmentProfile?> {
+  @override
+  EquipmentProfile? build() => null;
 
   /// Sets [profile] as the active equipment profile.
   void select(EquipmentProfile profile) => state = profile;
@@ -79,6 +80,4 @@ class EquipmentNotifier extends StateNotifier<EquipmentProfile?> {
 ///
 /// State is `null` until the user selects a device.
 final equipmentProvider =
-    StateNotifierProvider<EquipmentNotifier, EquipmentProfile?>(
-  (ref) => EquipmentNotifier(),
-);
+    NotifierProvider<EquipmentNotifier, EquipmentProfile?>(EquipmentNotifier.new);

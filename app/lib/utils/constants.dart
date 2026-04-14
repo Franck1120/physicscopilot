@@ -8,7 +8,7 @@
 /// Update [_tunnelHost] whenever the tunnel is restarted, or override at
 /// runtime via [AppSettings.serverUrlOverride].
 class AppConstants {
-  static const String _tunnelHost = 'tension-assume-portrait-pride.trycloudflare.com';
+  static const String _tunnelHost = 'physicscopilot.onrender.com';
 
   /// Base WebSocket URL used when no runtime override is set.
   static const String wsBaseUrl = 'wss://$_tunnelHost';

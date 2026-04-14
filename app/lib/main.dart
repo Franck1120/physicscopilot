@@ -45,14 +45,23 @@ const Color kTextMuted = Color(0xFF9CA3AF);
 
 /// True if the user has already completed onboarding.
 ///
-/// [StateProvider] so that [OnboardingScreen] can update it directly via
-/// `ref.read(onboardingCompletedProvider.notifier).state = true` without
-/// needing to invalidate the cache manually — Riverpod propagates the change
-/// to all listeners (including the GoRouter redirect guard) immediately.
-final onboardingCompletedProvider = StateProvider<bool>((ref) {
-  final prefs = ref.watch(sharedPrefsProvider);
-  return prefs.getBool('onboarding_completed') ?? false;
-});
+/// Uses [NotifierProvider] (Riverpod 3.x — [StateProvider] was removed).
+/// [OnboardingScreen] calls `ref.read(onboardingCompletedProvider.notifier).complete()`
+/// to mark onboarding done; Riverpod propagates the change to all listeners
+/// (including the GoRouter redirect guard) immediately.
+class _OnboardingCompletedNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(sharedPrefsProvider);
+    return prefs.getBool('onboarding_completed') ?? false;
+  }
+
+  void complete() => state = true;
+}
+
+final onboardingCompletedProvider =
+    NotifierProvider<_OnboardingCompletedNotifier, bool>(
+        _OnboardingCompletedNotifier.new);
 
 // ---------------------------------------------------------------------------
 // Entry point

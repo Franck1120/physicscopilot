@@ -115,7 +115,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
       // Cache response for offline mode.
       final responseText = msg['text'] as String?;
       if (responseText != null && responseText.isNotEmpty) {
-        ref.read(cachedResponseProvider.notifier).state = responseText;
+        ref.read(cachedResponseProvider.notifier).set(responseText);
         ref.read(sharedPrefsProvider).setString('offline_last_ai_response', responseText);
       }
       // Auto-read voice_text if voice guidance is enabled.
@@ -153,7 +153,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
     try {
       final frame = await cameraService.captureFrame();
       if (frame != null) {
-        ref.read(lastFrameProvider.notifier).state = frame;
+        ref.read(lastFrameProvider.notifier).set(frame);
         wsService.sendFrame(frame);
       }
     } catch (_) {
@@ -221,7 +221,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
   }
 
   void _dismissTutorial() {
-    ref.read(showTutorialProvider.notifier).state = false;
+    ref.read(showTutorialProvider.notifier).dismiss();
     // Fire-and-forget; we don't need to await the write.
     ref.read(sharedPrefsProvider).setBool('session_tutorial_shown', true);
   }
@@ -467,7 +467,7 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
     final cameraInit = ref.watch(cameraInitProvider);
     final cameraService = ref.watch(cameraServiceProvider);
     final qualityAsync = ref.watch(frameQualityProvider);
-    final quality = qualityAsync.valueOrNull ?? FrameQuality.ok;
+    final quality = qualityAsync.value ?? FrameQuality.ok;
 
     return Stack(
       fit: StackFit.expand,

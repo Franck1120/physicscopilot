@@ -63,19 +63,22 @@ class AppSettings {
 }
 
 /// Manages [AppSettings] and persists changes to SharedPreferences.
-class SettingsNotifier extends StateNotifier<AppSettings> {
-  SettingsNotifier(this._prefs)
-      : super(AppSettings(
-          serverUrlOverride: _prefs.getString(_kServerUrlKey),
-          voiceEnabled: _prefs.getBool(_kVoiceEnabledKey) ?? true,
-          language: _prefs.getString(_kLanguageKey) ?? 'it',
-          themeMode: _prefs.getString(_kThemeModeKey) == 'light'
-              ? ThemeMode.light
-              : ThemeMode.dark,
-          selectedDomain: _prefs.getString(_kSelectedDomainKey),
-        ));
+class SettingsNotifier extends Notifier<AppSettings> {
+  late SharedPreferences _prefs;
 
-  final SharedPreferences _prefs;
+  @override
+  AppSettings build() {
+    _prefs = ref.watch(sharedPrefsProvider);
+    return AppSettings(
+      serverUrlOverride: _prefs.getString(_kServerUrlKey),
+      voiceEnabled: _prefs.getBool(_kVoiceEnabledKey) ?? true,
+      language: _prefs.getString(_kLanguageKey) ?? 'it',
+      themeMode: _prefs.getString(_kThemeModeKey) == 'light'
+          ? ThemeMode.light
+          : ThemeMode.dark,
+      selectedDomain: _prefs.getString(_kSelectedDomainKey),
+    );
+  }
 
   /// Persists the server URL override. Pass `null` or empty string to reset.
   Future<void> setServerUrl(String? url) async {
@@ -121,7 +124,4 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 }
 
 final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
-  final prefs = ref.watch(sharedPrefsProvider);
-  return SettingsNotifier(prefs);
-});
+    NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);

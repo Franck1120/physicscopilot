@@ -40,8 +40,9 @@ class ProcedureState {
 ///
 /// Steps are populated from server `response` payloads via [updateFromResponse]
 /// or set directly via [loadSteps]. Navigation is done with [advance] / [goTo].
-class StepNotifier extends StateNotifier<ProcedureState> {
-  StepNotifier() : super(const ProcedureState());
+class StepNotifier extends Notifier<ProcedureState> {
+  @override
+  ProcedureState build() => const ProcedureState();
 
   /// Replaces the current procedure with [steps] and resets to step 0.
   void loadSteps(List<StepInfo> steps) {
@@ -100,4 +101,4 @@ class StepNotifier extends StateNotifier<ProcedureState> {
 ///
 /// Updated by the session screen when the server returns a multi-step response.
 final stepProvider =
-    StateNotifierProvider<StepNotifier, ProcedureState>((_) => StepNotifier());
+    NotifierProvider<StepNotifier, ProcedureState>(StepNotifier.new);

@@ -10,10 +10,8 @@ const _kMaxRecords = 50;
 /// Persists and exposes the list of completed sessions (newest-first).
 ///
 /// Backed by SharedPreferences as a JSON array.
-class SessionHistoryNotifier extends StateNotifier<List<SessionRecord>> {
-  SessionHistoryNotifier(this._prefs) : super(_load(_prefs));
-
-  final SharedPreferences _prefs;
+class SessionHistoryNotifier extends Notifier<List<SessionRecord>> {
+  late SharedPreferences _prefs;
 
   static List<SessionRecord> _load(SharedPreferences prefs) {
     final raw = prefs.getString(_kHistoryKey);
@@ -23,6 +21,12 @@ class SessionHistoryNotifier extends StateNotifier<List<SessionRecord>> {
     } catch (_) {
       return [];
     }
+  }
+
+  @override
+  List<SessionRecord> build() {
+    _prefs = ref.watch(sharedPrefsProvider);
+    return _load(_prefs);
   }
 
   /// Prepends [record] to the list and persists.
@@ -53,7 +57,5 @@ class SessionHistoryNotifier extends StateNotifier<List<SessionRecord>> {
 ///
 /// Backed by SharedPreferences; the list is capped at [_kMaxRecords] entries.
 final sessionHistoryProvider =
-    StateNotifierProvider<SessionHistoryNotifier, List<SessionRecord>>((ref) {
-  final prefs = ref.watch(sharedPrefsProvider);
-  return SessionHistoryNotifier(prefs);
-});
+    NotifierProvider<SessionHistoryNotifier, List<SessionRecord>>(
+        SessionHistoryNotifier.new);

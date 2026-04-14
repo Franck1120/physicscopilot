@@ -61,8 +61,9 @@ class SessionState {
 }
 
 /// Manages session state driven by server messages.
-class SessionNotifier extends StateNotifier<SessionState> {
-  SessionNotifier() : super(const SessionState());
+class SessionNotifier extends Notifier<SessionState> {
+  @override
+  SessionState build() => const SessionState();
 
   /// Applies a decoded `{"type":"response", ...}` payload from the backend.
   ///
@@ -122,9 +123,7 @@ class SessionNotifier extends StateNotifier<SessionState> {
 }
 
 final sessionProvider =
-    StateNotifierProvider<SessionNotifier, SessionState>(
-  (ref) => SessionNotifier(),
-);
+    NotifierProvider<SessionNotifier, SessionState>(SessionNotifier.new);
 
 // ── Cached response (offline fallback) ───────────────────────────────────────
 
@@ -132,21 +131,43 @@ const _kCachedResponseKey = 'offline_last_ai_response';
 
 /// Last AI response persisted to SharedPreferences for offline fallback.
 /// Initialised from storage; updated whenever a new response arrives.
-final cachedResponseProvider = StateProvider<String?>((ref) {
-  return ref.read(sharedPrefsProvider).getString(_kCachedResponseKey);
-});
+class _CachedResponseNotifier extends Notifier<String?> {
+  @override
+  String? build() =>
+      ref.read(sharedPrefsProvider).getString(_kCachedResponseKey);
+
+  void set(String? value) => state = value;
+}
+
+final cachedResponseProvider =
+    NotifierProvider<_CachedResponseNotifier, String?>(_CachedResponseNotifier.new);
 
 // ── Tutorial visibility ───────────────────────────────────────────────────────
 
 const _kTutorialKey = 'session_tutorial_shown';
 
 /// True when the session tutorial overlay should be displayed.
-final showTutorialProvider = StateProvider<bool>((ref) {
-  return !(ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false);
-});
+class _ShowTutorialNotifier extends Notifier<bool> {
+  @override
+  bool build() =>
+      !(ref.read(sharedPrefsProvider).getBool(_kTutorialKey) ?? false);
+
+  void dismiss() => state = false;
+}
+
+final showTutorialProvider =
+    NotifierProvider<_ShowTutorialNotifier, bool>(_ShowTutorialNotifier.new);
 
 // ── Last captured frame ───────────────────────────────────────────────────────
 
 /// The most-recently captured camera frame; non-null once the user has
 /// tapped the capture button at least once.
-final lastFrameProvider = StateProvider<Uint8List?>((ref) => null);
+class _LastFrameNotifier extends Notifier<Uint8List?> {
+  @override
+  Uint8List? build() => null;
+
+  void set(Uint8List? frame) => state = frame;
+}
+
+final lastFrameProvider =
+    NotifierProvider<_LastFrameNotifier, Uint8List?>(_LastFrameNotifier.new);

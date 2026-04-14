@@ -81,7 +81,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _saveOnboardingCompleted() async {
     final prefs = ref.read(sharedPrefsProvider);
     await prefs.setBool(_prefKey, true);
-    ref.read(onboardingCompletedProvider.notifier).state = true;
+    ref.read(onboardingCompletedProvider.notifier).complete();
   }
 
   @override

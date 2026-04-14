@@ -122,7 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Default: ${AppConstants.wsBaseUrl}\nLascia vuoto per usare il valore compilato.',
+                  'Default: ${AppConstants.apiBaseUrl}\nInserisci solo il dominio o l\'URL completo. Lascia vuoto per il default.',
                   style: const TextStyle(color: kTextMuted, fontSize: 12, height: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -136,7 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     autocorrect: false,
                     onChanged: (_) => setState(() => _urlEdited = true),
                     decoration: InputDecoration(
-                      hintText: 'es. wss://your-tunnel.trycloudflare.com',
+                      hintText: 'es. physicscopilot.onrender.com',
                       hintStyle:
                           const TextStyle(color: kTextMuted, fontSize: 12),
                       filled: true,
@@ -352,7 +352,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 _InfoRow(
                   label: 'URL compilato',
-                  value: AppConstants.wsBaseUrl,
+                  value: AppConstants.apiBaseUrl,
                 ),
                 if (settings.serverUrlOverride != null) ...[
                   const Divider(color: kBgCardBorder, height: 20),

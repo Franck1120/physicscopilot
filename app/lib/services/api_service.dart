@@ -200,11 +200,23 @@ class ApiService {
 // Providers
 // ---------------------------------------------------------------------------
 
+/// Converts any server URL override to a valid `https://` base URL.
+///
+/// Accepts bare host (`physicscopilot.onrender.com`), `wss://host`, or
+/// `https://host` — so the user can type any sensible format in Settings.
+String _toHttpsBaseUrl(String raw) {
+  if (raw.startsWith('wss://')) return 'https://${raw.substring(6)}';
+  if (raw.startsWith('ws://')) return 'http://${raw.substring(5)}';
+  if (raw.startsWith('https://') || raw.startsWith('http://')) return raw;
+  return 'https://$raw'; // bare host
+}
+
 /// Provides an [ApiService] wired to the user's runtime server-URL override,
 /// falling back to the compile-time [AppConstants.apiBaseUrl].
 final apiServiceProvider = Provider<ApiService>((ref) {
   final settings = ref.watch(settingsProvider);
-  final baseUrl = settings.serverUrlOverride ?? AppConstants.apiBaseUrl;
+  final raw = settings.serverUrlOverride;
+  final baseUrl = raw != null ? _toHttpsBaseUrl(raw) : AppConstants.apiBaseUrl;
   return ApiService(baseUrl: baseUrl);
 });
 
@@ -226,5 +238,5 @@ final serverHealthProvider = StreamProvider<ServerHealth>((ref) async* {
 /// Convenience wrapper around [serverHealthProvider] for UI widgets that
 /// only need to know whether the server is online.
 final serverOnlineProvider = Provider<bool>((ref) {
-  return ref.watch(serverHealthProvider).valueOrNull?.isOnline ?? false;
+  return ref.watch(serverHealthProvider).value?.isOnline ?? false;
 });

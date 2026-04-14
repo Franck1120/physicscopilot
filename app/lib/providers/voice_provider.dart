@@ -57,25 +57,22 @@ class VoiceState {
 ///
 /// Subscribes to [VoiceService.speakingStream] so [VoiceState.isSpeaking]
 /// stays in sync with TTS completion/error callbacks.
-class VoiceNotifier extends StateNotifier<VoiceState> {
-  final VoiceService _service;
-  late final StreamSubscription<bool> _speakingSub;
+class VoiceNotifier extends Notifier<VoiceState> {
+  late final VoiceService _service;
 
-  VoiceNotifier(this._service) : super(const VoiceState()) {
+  @override
+  VoiceState build() {
+    _service = ref.watch(voiceServiceProvider);
     // Keep isSpeaking in sync with TTS completion/error callbacks from the
     // service layer. Without this subscription, speak() sets isSpeaking=true
     // but the state is never reset when TTS finishes naturally.
-    _speakingSub = _service.speakingStream.listen((speaking) {
+    final sub = _service.speakingStream.listen((speaking) {
       if (state.isSpeaking != speaking) {
         state = state.copyWith(isSpeaking: speaking);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _speakingSub.cancel();
-    super.dispose();
+    ref.onDispose(sub.cancel);
+    return const VoiceState();
   }
 
   /// Starts listening if idle, or stops if already listening.
@@ -114,7 +111,4 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
 ///
 /// Depends on [voiceServiceProvider]; rebuilds when the service instance changes.
 final voiceProvider =
-    StateNotifierProvider<VoiceNotifier, VoiceState>((ref) {
-  final service = ref.watch(voiceServiceProvider);
-  return VoiceNotifier(service);
-});
+    NotifierProvider<VoiceNotifier, VoiceState>(VoiceNotifier.new);
