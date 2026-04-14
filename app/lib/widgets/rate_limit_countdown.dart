@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
+import 'package:physicscopilot/main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
 
 // ── RateLimitCountdown ────────────────────────────────────────────────────────
 

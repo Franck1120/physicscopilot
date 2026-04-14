@@ -100,7 +100,7 @@ void main() {
           'recently freed ports (TIME_WAIT). Same disconnection path is '
           'exercised by "emits disconnected when server closes the connection".',
         ),
-      });
+      },);
 
     test('emits connected when handshake with real server succeeds', () async {
       final server = _FakeServer();
@@ -333,7 +333,7 @@ void main() {
       'windows': const Skip(
         'Timing-sensitive test: skipped on Windows due to socket TIME_WAIT variability.',
       ),
-    });
+    },);
   });
 
   group('WebSocketService — message decoding', () {
@@ -353,6 +353,7 @@ void main() {
 
       // Push a message from the server side.
       final serverSocket = await server._socketCompleter.future;
+      addTearDown(serverSocket.close);
       serverSocket.add(jsonEncode({'type': 'response', 'text': 'Risposta AI'}));
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
@@ -376,6 +377,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       final serverSocket = await server._socketCompleter.future;
+      addTearDown(serverSocket.close);
       serverSocket.add('not valid json {{{{');
       await Future<void>.delayed(const Duration(milliseconds: 50));
 

@@ -21,7 +21,7 @@ import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/providers/websocket_provider.dart';
 import 'package:physicscopilot/screens/home_screen.dart';
 import 'package:physicscopilot/screens/onboarding_screen.dart';
-import 'package:physicscopilot/services/api_service.dart' show serverHealthProvider;
+import 'package:physicscopilot/services/api_service.dart' show serverHealthProvider, ServerHealth;
 import 'package:physicscopilot/services/websocket_service.dart';
 
 // Fixed viewport mimicking an iPhone 14 logical pixel footprint.
@@ -89,10 +89,10 @@ void main() {
             // Override serverHealthProvider to avoid the 15-second polling
             // loop that would leave a pending timer after the test.
             serverHealthProvider.overrideWith(
-              (ref) => Stream.value(false),
+              (ref) => Stream.value(ServerHealth.offline()),
             ),
           ],
-          child: MaterialApp(
+          child: const MaterialApp(
             debugShowCheckedModeBanner: false,
             home: HomeScreen(
               onChangeEquipment: _noop,

@@ -9,30 +9,30 @@ import 'package:physicscopilot/widgets/progress_ring_widget.dart';
 
 void main() {
   group('ProgressRing', () {
-    Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+    Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
     testWidgets('renders without child and does not throw', (tester) async {
-      await tester.pumpWidget(_wrap(const ProgressRing(value: 0.5)));
+      await tester.pumpWidget(wrap(const ProgressRing(value: 0.5)));
       await tester.pump();
       expect(find.byType(ProgressRing), findsOneWidget);
     });
 
     testWidgets('renders with a Text child inside the ring', (tester) async {
       await tester.pumpWidget(
-        _wrap(const ProgressRing(value: 0.5, child: Text('50%'))),
+        wrap(const ProgressRing(value: 0.5, child: Text('50%'))),
       );
       await tester.pump();
       expect(find.text('50%'), findsOneWidget);
     });
 
     testWidgets('value=0.0 does not throw', (tester) async {
-      await tester.pumpWidget(_wrap(const ProgressRing(value: 0.0)));
+      await tester.pumpWidget(wrap(const ProgressRing(value: 0.0)));
       await tester.pump();
       expect(find.byType(ProgressRing), findsOneWidget);
     });
 
     testWidgets('value=1.0 does not throw', (tester) async {
-      await tester.pumpWidget(_wrap(const ProgressRing(value: 1.0)));
+      await tester.pumpWidget(wrap(const ProgressRing(value: 1.0)));
       await tester.pump();
       expect(find.byType(ProgressRing), findsOneWidget);
     });
@@ -41,7 +41,7 @@ void main() {
         (tester) async {
       const double customSize = 120;
       await tester.pumpWidget(
-        _wrap(const ProgressRing(value: 0.4, size: customSize)),
+        wrap(const ProgressRing(value: 0.4, size: customSize)),
       );
       await tester.pump();
 
@@ -52,7 +52,7 @@ void main() {
         (box) => box.width == customSize && box.height == customSize,
       );
       expect(match, isTrue,
-          reason: 'Expected a SizedBox with width=$customSize and height=$customSize');
+          reason: 'Expected a SizedBox with width=$customSize and height=$customSize',);
     });
   });
 }

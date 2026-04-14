@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/settings_provider.dart';
-import '../services/auth_service.dart';
-import '../services/websocket_service.dart';
-import '../utils/constants.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/services/auth_service.dart';
+import 'package:physicscopilot/services/websocket_service.dart';
+import 'package:physicscopilot/utils/constants.dart';
 
 /// Singleton [WebSocketService]; connects on creation and disconnects on dispose.
 /// Reads settings (server URL override, language) and the Supabase JWT once at

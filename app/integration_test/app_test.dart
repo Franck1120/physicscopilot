@@ -23,7 +23,7 @@ void main() {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  final testEquipment = const EquipmentProfile(
+  const testEquipment = EquipmentProfile(
     id: 'test-printer',
     name: 'Test Printer X1',
     manufacturer: 'TestBrand',

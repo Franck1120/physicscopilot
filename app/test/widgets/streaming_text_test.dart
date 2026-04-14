@@ -7,13 +7,13 @@ import 'package:physicscopilot/widgets/streaming_text.dart';
 import 'package:physicscopilot/main.dart' show kAccent;
 
 void main() {
-  Widget _wrap(Widget child) =>
+  Widget wrap(Widget child) =>
       MaterialApp(home: Scaffold(body: child));
 
   group('StreamingText', () {
     testWidgets('renders with empty text without throwing',
         (WidgetTester tester) async {
-      await tester.pumpWidget(_wrap(const StreamingText(text: '')));
+      await tester.pumpWidget(wrap(const StreamingText(text: '')));
       await tester.pumpAndSettle();
 
       expect(find.byType(StreamingText), findsOneWidget);
@@ -22,7 +22,7 @@ void main() {
     testWidgets('renders non-empty text visible in widget tree',
         (WidgetTester tester) async {
       const testText = 'Hello world';
-      await tester.pumpWidget(_wrap(const StreamingText(text: testText)));
+      await tester.pumpWidget(wrap(const StreamingText(text: testText)));
       await tester.pumpAndSettle();
 
       expect(find.textContaining(testText), findsOneWidget);
@@ -31,7 +31,7 @@ void main() {
     testWidgets('shows Elaborazione… indicator',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const StreamingText(text: 'some text')),
+        wrap(const StreamingText(text: 'some text')),
       );
       await tester.pumpAndSettle();
 
@@ -41,7 +41,7 @@ void main() {
     testWidgets('find.textContaining locates the provided text',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(const StreamingText(text: 'Hello world')),
+        wrap(const StreamingText(text: 'Hello world')),
       );
       await tester.pumpAndSettle();
 

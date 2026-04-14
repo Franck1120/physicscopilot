@@ -10,7 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider, onboardingCompletedProvider;
+import 'package:physicscopilot/main.dart' show onboardingCompletedProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/screens/onboarding_screen.dart';
 
 const _kViewSize = Size(390.0, 844.0);

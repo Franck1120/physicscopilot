@@ -36,7 +36,7 @@ void main() {
 
     testWidgets('shows the error message text', (tester) async {
       await tester.pumpWidget(
-          _buildErrorScreen(Exception('something broke badly')));
+          _buildErrorScreen(Exception('something broke badly')),);
       await tester.pump();
       expect(find.textContaining('something broke badly'), findsOneWidget);
     });

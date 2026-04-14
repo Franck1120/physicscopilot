@@ -17,7 +17,7 @@ import 'package:physicscopilot/providers/prefs_provider.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  final testEquipment = const EquipmentProfile(
+  const testEquipment = EquipmentProfile(
     id: 'test-printer',
     name: 'Test Printer X1',
     manufacturer: 'TestBrand',

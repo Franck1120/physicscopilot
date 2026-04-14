@@ -41,18 +41,18 @@ class _FakeAssetBundle extends CachingAssetBundle {
 }''';
       final bytes = utf8.encode(json);
       return ByteData.view(
-          bytes.buffer, bytes.offsetInBytes, bytes.lengthInBytes);
+          bytes.buffer, bytes.offsetInBytes, bytes.lengthInBytes,);
     }
-    return super.load(key);
+    throw TestFailure('Unexpected asset key in test: $key');
   }
 }
 
 void main() {
   group('EquipmentSelectionScreen', () {
-    bool _completed = false;
+    bool completed = false;
 
     Widget buildTestWidget() {
-      _completed = false;
+      completed = false;
       return ProviderScope(
         overrides: [
           equipmentProvider.overrideWith((ref) => EquipmentNotifier()),
@@ -61,7 +61,7 @@ void main() {
           bundle: _FakeAssetBundle(),
           child: MaterialApp(
             home: EquipmentSelectionScreen(
-              onComplete: () => _completed = true,
+              onComplete: () => completed = true,
             ),
           ),
         ),
@@ -119,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Ender 3'));
       await tester.pump();
-      expect(_completed, isTrue);
+      expect(completed, isTrue);
     });
 
     testWidgets('search field filters equipment list', (tester) async {

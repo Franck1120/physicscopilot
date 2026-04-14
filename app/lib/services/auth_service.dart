@@ -53,7 +53,7 @@ class AuthService {
   /// Signs in with email + password.
   /// Throws [AuthException] on failure.
   static Future<AuthResponse> signInWithEmail(
-      String email, String password) async {
+      String email, String password,) async {
     final client = _client;
     if (client == null) throw const AuthException('Supabase not initialised');
     return client.auth.signInWithPassword(email: email, password: password);
@@ -62,7 +62,7 @@ class AuthService {
   /// Creates a new account with email + password.
   /// Throws [AuthException] on failure.
   static Future<AuthResponse> signUpWithEmail(
-      String email, String password) async {
+      String email, String password,) async {
     final client = _client;
     if (client == null) throw const AuthException('Supabase not initialised');
     return client.auth.signUp(email: email, password: password);

@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'prefs_provider.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 /// Immutable snapshot of the current AI session output.
 class SessionState {

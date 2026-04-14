@@ -39,7 +39,7 @@ void main() {
   group('MultiStepView widget', () {
     const steps = ['Open the panel', 'Unscrew the bolts', 'Replace the part'];
 
-    Widget _buildSubject() => MaterialApp(
+    Widget buildSubject() => const MaterialApp(
           home: Scaffold(
             body: MultiStepView(steps: steps),
           ),
@@ -47,7 +47,7 @@ void main() {
 
     testWidgets('renders with 3 steps and shows "0 / 3 completati"',
         (tester) async {
-      await tester.pumpWidget(_buildSubject());
+      await tester.pumpWidget(buildSubject());
 
       expect(find.text('0 / 3 completati'), findsOneWidget);
       for (final step in steps) {
@@ -57,7 +57,7 @@ void main() {
 
     testWidgets('tap first step card → shows as checked, progress updates to "1 / 3 completati"',
         (tester) async {
-      await tester.pumpWidget(_buildSubject());
+      await tester.pumpWidget(buildSubject());
 
       // Tap the first step text (inside GestureDetector)
       await tester.tap(find.text(steps[0]));
@@ -70,7 +70,7 @@ void main() {
 
     testWidgets('tap same step again → unchecks, progress goes back to "0 / 3 completati"',
         (tester) async {
-      await tester.pumpWidget(_buildSubject());
+      await tester.pumpWidget(buildSubject());
 
       await tester.tap(find.text(steps[0]));
       await tester.pump();
@@ -82,7 +82,7 @@ void main() {
     });
 
     testWidgets('checking all steps shows completion banner', (tester) async {
-      await tester.pumpWidget(_buildSubject());
+      await tester.pumpWidget(buildSubject());
 
       for (final step in steps) {
         await tester.tap(find.text(step));

@@ -4,8 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../main.dart' show kBgPrimary, kTextMuted;
-import '../providers/camera_provider.dart';
+import 'package:physicscopilot/main.dart' show kBgPrimary, kTextMuted;
+import 'package:physicscopilot/providers/camera_provider.dart';
 
 /// Full-screen camera feed with optional overlay and frame capture callback.
 ///

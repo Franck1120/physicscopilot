@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/providers/settings_provider.dart';
 import 'package:physicscopilot/providers/voice_provider.dart';
 import 'package:physicscopilot/services/voice_service.dart';

@@ -20,7 +20,7 @@ void main() {
     test('cancelSessionNotification() before initialize() does not throw',
         () async {
       await expectLater(
-          NotificationService.cancelSessionNotification(), completes);
+          NotificationService.cancelSessionNotification(), completes,);
     });
 
     test('showSessionRunning() is callable as a static method', () {
@@ -47,7 +47,7 @@ void main() {
         () async {
       await NotificationService.cancelSessionNotification();
       await expectLater(
-          NotificationService.cancelSessionNotification(), completes);
+          NotificationService.cancelSessionNotification(), completes,);
     });
   });
 }

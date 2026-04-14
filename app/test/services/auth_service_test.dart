@@ -55,7 +55,7 @@ void main() {
           (e) => e.message,
           'message',
           contains('not initialised'),
-        )),
+        ),),
       );
     });
 
@@ -70,7 +70,7 @@ void main() {
           (e) => e.message,
           'message',
           contains('not initialised'),
-        )),
+        ),),
       );
     });
 

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'prefs_provider.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 const _kServerUrlKey = 'server_url_override';
 const _kVoiceEnabledKey = 'voice_enabled';
@@ -73,7 +73,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
               ? ThemeMode.light
               : ThemeMode.dark,
           selectedDomain: _prefs.getString(_kSelectedDomainKey),
-        ));
+        ),);
 
   final SharedPreferences _prefs;
 
@@ -104,7 +104,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Persists the app-wide theme mode.
   Future<void> setThemeMode(ThemeMode mode) async {
     await _prefs.setString(
-        _kThemeModeKey, mode == ThemeMode.light ? 'light' : 'dark');
+        _kThemeModeKey, mode == ThemeMode.light ? 'light' : 'dark',);
     state = state.copyWith(themeMode: mode);
   }
 

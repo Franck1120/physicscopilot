@@ -4,13 +4,13 @@ import 'package:physicscopilot/widgets/tutorial_overlay.dart';
 import 'package:physicscopilot/utils/strings.dart';
 
 void main() {
-  Widget _wrap(Widget child) =>
+  Widget wrap(Widget child) =>
       MaterialApp(home: Scaffold(body: child));
 
   group('TutorialOverlay', () {
     testWidgets('renders without crashing', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(TutorialOverlay(onDismiss: () {})),
+        wrap(TutorialOverlay(onDismiss: () {})),
       );
       await tester.pumpAndSettle();
 
@@ -19,7 +19,7 @@ void main() {
 
     testWidgets('shows tutorialHint text', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(TutorialOverlay(onDismiss: () {})),
+        wrap(TutorialOverlay(onDismiss: () {})),
       );
       await tester.pumpAndSettle();
 
@@ -28,7 +28,7 @@ void main() {
 
     testWidgets('shows tutorialDismiss text', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _wrap(TutorialOverlay(onDismiss: () {})),
+        wrap(TutorialOverlay(onDismiss: () {})),
       );
       await tester.pumpAndSettle();
 
@@ -40,7 +40,7 @@ void main() {
       var dismissed = false;
 
       await tester.pumpWidget(
-        _wrap(TutorialOverlay(onDismiss: () => dismissed = true)),
+        wrap(TutorialOverlay(onDismiss: () => dismissed = true)),
       );
       await tester.pumpAndSettle();
 

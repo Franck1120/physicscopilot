@@ -25,7 +25,7 @@ class NotificationService {
     if (_ready) return;
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
-    await _plugin.initialize(settings);
+    await _plugin.initialize(settings: settings);
     _ready = true;
   }
 
@@ -49,10 +49,10 @@ class NotificationService {
         showWhen: false,
       );
       await _plugin.show(
-        _notifId,
-        'PhysicsCopilot',
-        'Sessione in corso — tocca per tornare all\'analisi',
-        const NotificationDetails(android: androidDetails),
+        id: _notifId,
+        title: 'PhysicsCopilot',
+        body: 'Sessione in corso — tocca per tornare all\'analisi',
+        notificationDetails: const NotificationDetails(android: androidDetails),
       );
     } catch (_) {}
   }
@@ -61,7 +61,7 @@ class NotificationService {
   static Future<void> cancelSessionNotification() async {
     if (!_ready) return;
     try {
-      await _plugin.cancel(_notifId);
+      await _plugin.cancel(id: _notifId);
     } catch (_) {}
   }
 }

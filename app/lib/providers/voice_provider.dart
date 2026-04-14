@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/voice_service.dart';
+import 'package:physicscopilot/services/voice_service.dart';
 
 // ── Service provider ──────────────────────────────────────────────────────────
 

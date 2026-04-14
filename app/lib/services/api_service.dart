@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/settings_provider.dart';
-import '../utils/constants.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/utils/constants.dart';
 
 // ---------------------------------------------------------------------------
 // RemoteSession model — maps GET /api/sessions list response

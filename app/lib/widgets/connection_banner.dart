@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/websocket_service.dart' show ConnectionStatus;
+import 'package:physicscopilot/services/websocket_service.dart' show ConnectionStatus;
 
 /// Thin banner shown at the top of the screen when the WebSocket is not connected.
 ///
@@ -35,7 +35,7 @@ class ConnectionBanner extends StatelessWidget {
               Expanded(
                 child: Text(message,
                     style: TextStyle(
-                        color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+                        color: color, fontSize: 12, fontWeight: FontWeight.w500,),),
               ),
             ],
           ),

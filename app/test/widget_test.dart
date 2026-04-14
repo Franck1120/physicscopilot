@@ -20,7 +20,7 @@ void main() {
         overrides: [
           sharedPrefsProvider.overrideWithValue(prefs),
           // Prevent healthCheck from leaving a pending 1.5 s retry timer.
-          serverHealthProvider.overrideWith((_) => Stream.value(false)),
+          serverHealthProvider.overrideWith((_) => Stream.value(ServerHealth.offline())),
         ],
         child: PhysicsCopilotApp(prefs: prefs),
       ),
@@ -90,7 +90,7 @@ void main() {
         overrides: [
           sharedPrefsProvider.overrideWithValue(prefs),
           // Prevent healthCheck from leaving a pending 1.5 s retry timer.
-          serverHealthProvider.overrideWith((_) => Stream.value(false)),
+          serverHealthProvider.overrideWith((_) => Stream.value(ServerHealth.offline())),
         ],
         child: MaterialApp(
           home: HomeScreen(

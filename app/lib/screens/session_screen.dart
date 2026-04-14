@@ -12,25 +12,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:share_plus/share_plus.dart';
 
-import '../main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../services/camera_service.dart' show FrameQuality;
-import '../models/session_record.dart';
-import '../providers/camera_provider.dart';
-import '../providers/equipment_provider.dart';
-import '../providers/prefs_provider.dart';
-import '../providers/session_history_provider.dart';
-import '../providers/session_provider.dart';
-import '../providers/settings_provider.dart';
-import '../providers/voice_provider.dart';
-import '../providers/websocket_provider.dart';
-import '../services/api_service.dart';
-import '../services/websocket_service.dart';
-import '../services/notification_service.dart';
-import '../utils/strings.dart';
-import '../widgets/connection_banner.dart';
-import '../widgets/guidance_panel.dart';
-import '../widgets/safe_screen.dart';
-import '../widgets/tutorial_overlay.dart';
+import 'package:physicscopilot/main.dart' show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import 'package:physicscopilot/services/camera_service.dart' show FrameQuality;
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/camera_provider.dart';
+import 'package:physicscopilot/providers/equipment_provider.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
+import 'package:physicscopilot/providers/session_history_provider.dart';
+import 'package:physicscopilot/providers/session_provider.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/providers/voice_provider.dart';
+import 'package:physicscopilot/providers/websocket_provider.dart';
+import 'package:physicscopilot/services/api_service.dart';
+import 'package:physicscopilot/services/websocket_service.dart';
+import 'package:physicscopilot/services/notification_service.dart';
+import 'package:physicscopilot/utils/strings.dart';
+import 'package:physicscopilot/widgets/connection_banner.dart';
+import 'package:physicscopilot/widgets/guidance_panel.dart';
+import 'package:physicscopilot/widgets/safe_screen.dart';
+import 'package:physicscopilot/widgets/tutorial_overlay.dart';
 
 /// Active repair session screen.
 ///
@@ -146,7 +146,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
       );
       return;
     }
-    HapticFeedback.mediumImpact();
+    await HapticFeedback.mediumImpact();
     final cameraService = ref.read(cameraServiceProvider);
     final wsService = ref.read(webSocketServiceProvider);
     ref.read(sessionProvider.notifier).setProcessing();
@@ -268,7 +268,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
-              color: Colors.white, size: 20),
+              color: Colors.white, size: 20,),
           tooltip: AppStrings.sessionEndSession,
           onPressed: () {
             _saveSessionIfNeeded();
@@ -307,7 +307,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
           if (lastFrame != null)
             IconButton(
               icon: const Icon(Icons.draw_outlined,
-                  color: Colors.white54, size: 20),
+                  color: Colors.white54, size: 20,),
               tooltip: 'Annota immagine',
               onPressed: () => showDialog<void>(
                 context: context,
@@ -317,7 +317,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
             ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded,
-                color: Colors.white54, size: 20),
+                color: Colors.white54, size: 20,),
             tooltip: AppStrings.sessionNewAnalysis,
             onPressed: _resetSession,
           ),
@@ -352,9 +352,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen>
                     ? ConnectionBanner(status: s)
                     : const SizedBox.shrink(),
                 loading: () => const ConnectionBanner(
-                    status: ConnectionStatus.connecting),
+                    status: ConnectionStatus.connecting,),
                 error: (_, __) => const ConnectionBanner(
-                    status: ConnectionStatus.disconnected),
+                    status: ConnectionStatus.disconnected,),
               ),
               Expanded(
                 flex: 6,
@@ -427,7 +427,7 @@ class _CameraSectionState extends ConsumerState<_CameraSection> {
         _torchOn ? FlashMode.off : FlashMode.torch,
       );
       if (mounted) setState(() => _torchOn = !_torchOn);
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     } catch (_) {}
   }
 
@@ -701,7 +701,7 @@ class _QualityBadge extends StatelessWidget {
           const SizedBox(width: 6),
           Text(label,
               style: TextStyle(
-                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+                  color: color, fontSize: 12, fontWeight: FontWeight.w600,),),
         ],
       ),
     );
@@ -784,7 +784,7 @@ class _CameraPlaceholder extends StatelessWidget {
               CircularProgressIndicator(color: kAccent),
               SizedBox(height: 16),
               Text(AppStrings.sessionCameraInit,
-                  style: TextStyle(color: kTextMuted, fontSize: 13)),
+                  style: TextStyle(color: kTextMuted, fontSize: 13),),
             ],
           ),
         ),
@@ -803,7 +803,7 @@ class _CameraError extends StatelessWidget {
               Icon(Icons.camera_alt_outlined, color: kTextMuted, size: 48),
               SizedBox(height: 12),
               Text(AppStrings.sessionCameraUnavailable,
-                  style: TextStyle(color: kTextMuted, fontSize: 13)),
+                  style: TextStyle(color: kTextMuted, fontSize: 13),),
             ],
           ),
         ),
@@ -840,7 +840,7 @@ class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
       final pngBytes = bytes.buffer.asUint8List();
       await Share.shareXFiles(
         [XFile.fromData(pngBytes,
-            name: 'annotazione.png', mimeType: 'image/png')],
+            name: 'annotazione.png', mimeType: 'image/png',),],
         subject: 'Annotazione PhysicsCopilot',
       );
     } finally {
@@ -878,7 +878,7 @@ class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close,
-                      color: Colors.white54, size: 18),
+                      color: Colors.white54, size: 18,),
                   onPressed: () => Navigator.of(context).pop(),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -931,7 +931,7 @@ class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
                       foregroundColor: Colors.redAccent,
                       side: const BorderSide(color: Colors.redAccent),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 12, vertical: 8,),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -944,7 +944,7 @@ class _ImageAnnotationDialogState extends State<_ImageAnnotationDialog> {
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                                strokeWidth: 2, color: Colors.white,),
                           )
                         : const Icon(Icons.ios_share_outlined, size: 16),
                     label:

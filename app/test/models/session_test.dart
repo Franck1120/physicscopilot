@@ -6,9 +6,9 @@ void main() {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  final _createdAt = DateTime(2026, 3, 10, 9, 0, 0);
+  final createdAt0 = DateTime(2026, 3, 10, 9, 0, 0);
 
-  Session _makeSession({
+  Session makeSession({
     String id = 'sess-001',
     String userId = 'user-abc',
     String? deviceId = 'device-xyz',
@@ -31,7 +31,7 @@ void main() {
         createdAt: createdAt ?? DateTime(2026, 3, 10, 9, 0, 0),
       );
 
-  SessionStep _makeStep({
+  SessionStep makeStep({
     String id = 'step-001',
     String sessionId = 'sess-001',
     int stepNumber = 1,
@@ -192,12 +192,12 @@ void main() {
 
   group('Session.toJson', () {
     test('serializes all fields', () {
-      final session = _makeSession(
+      final session = makeSession(
         durationSeconds: 180,
         problemDetected: 'Jam',
         solutionApplied: 'Fixed',
         success: false,
-        createdAt: _createdAt,
+        createdAt: createdAt0,
       );
       final json = session.toJson();
 
@@ -209,11 +209,11 @@ void main() {
       expect(json['solution_applied'], 'Fixed');
       expect(json['success'], isFalse);
       expect(json['duration_seconds'], 180);
-      expect(json['created_at'], _createdAt.toIso8601String());
+      expect(json['created_at'], createdAt0.toIso8601String());
     });
 
     test('serializes null optional fields as null', () {
-      final session = _makeSession(deviceId: null);
+      final session = makeSession(deviceId: null);
       final json = session.toJson();
       expect(json['device_id'], isNull);
       expect(json['problem_detected'], isNull);
@@ -222,7 +222,7 @@ void main() {
     });
 
     test('round-trips through fromJson → toJson', () {
-      final session = _makeSession(
+      final session = makeSession(
         status: SessionStatus.completed,
         durationSeconds: 60,
         success: true,
@@ -238,37 +238,37 @@ void main() {
 
   group('Session.copyWith', () {
     test('returns identical session when no overrides provided', () {
-      final session = _makeSession();
+      final session = makeSession();
       expect(session.copyWith(), session);
     });
 
     test('overrides status', () {
-      final session = _makeSession();
+      final session = makeSession();
       final copy = session.copyWith(status: SessionStatus.completed);
       expect(copy.status, SessionStatus.completed);
       expect(copy.id, session.id);
     });
 
     test('overrides deviceId', () {
-      final session = _makeSession();
+      final session = makeSession();
       final copy = session.copyWith(deviceId: 'new-device');
       expect(copy.deviceId, 'new-device');
     });
 
     test('overrides durationSeconds', () {
-      final session = _makeSession();
+      final session = makeSession();
       final copy = session.copyWith(durationSeconds: 120);
       expect(copy.durationSeconds, 120);
     });
 
     test('overrides success', () {
-      final session = _makeSession();
+      final session = makeSession();
       final copy = session.copyWith(success: true);
       expect(copy.success, isTrue);
     });
 
     test('preserves all unchanged fields', () {
-      final session = _makeSession(
+      final session = makeSession(
         problemDetected: 'Jam',
         solutionApplied: 'Cleared',
       );
@@ -286,31 +286,31 @@ void main() {
 
   group('Session equality', () {
     test('two sessions with identical fields are equal', () {
-      final a = _makeSession();
-      final b = _makeSession();
+      final a = makeSession();
+      final b = makeSession();
       expect(a, equals(b));
     });
 
     test('sessions with different id are not equal', () {
-      final a = _makeSession(id: 'id-1');
-      final b = _makeSession(id: 'id-2');
+      final a = makeSession(id: 'id-1');
+      final b = makeSession(id: 'id-2');
       expect(a, isNot(equals(b)));
     });
 
     test('sessions with different status are not equal', () {
-      final a = _makeSession(status: SessionStatus.active);
-      final b = _makeSession(status: SessionStatus.completed);
+      final a = makeSession(status: SessionStatus.active);
+      final b = makeSession(status: SessionStatus.completed);
       expect(a, isNot(equals(b)));
     });
 
     test('equal sessions have equal hash codes', () {
-      final a = _makeSession();
-      final b = _makeSession();
+      final a = makeSession();
+      final b = makeSession();
       expect(a.hashCode, b.hashCode);
     });
 
     test('session is equal to itself', () {
-      final session = _makeSession();
+      final session = makeSession();
       expect(session, equals(session));
     });
   });
@@ -321,17 +321,17 @@ void main() {
 
   group('Session.isActive', () {
     test('returns true when status is active', () {
-      final session = _makeSession(status: SessionStatus.active);
+      final session = makeSession(status: SessionStatus.active);
       expect(session.isActive, isTrue);
     });
 
     test('returns false when status is completed', () {
-      final session = _makeSession(status: SessionStatus.completed);
+      final session = makeSession(status: SessionStatus.completed);
       expect(session.isActive, isFalse);
     });
 
     test('returns false when status is abandoned', () {
-      final session = _makeSession(status: SessionStatus.abandoned);
+      final session = makeSession(status: SessionStatus.abandoned);
       expect(session.isActive, isFalse);
     });
   });
@@ -342,17 +342,17 @@ void main() {
 
   group('Session.duration', () {
     test('returns Duration from durationSeconds', () {
-      final session = _makeSession(durationSeconds: 300);
+      final session = makeSession(durationSeconds: 300);
       expect(session.duration, const Duration(seconds: 300));
     });
 
     test('returns Duration.zero when durationSeconds is null', () {
-      final session = _makeSession(durationSeconds: null);
+      final session = makeSession(durationSeconds: null);
       expect(session.duration, Duration.zero);
     });
 
     test('returns correct minutes for large values', () {
-      final session = _makeSession(durationSeconds: 3600);
+      final session = makeSession(durationSeconds: 3600);
       expect(session.duration.inMinutes, 60);
     });
   });
@@ -421,7 +421,7 @@ void main() {
     });
 
     test('round-trips through fromJson → toJson', () {
-      final step = _makeStep(verified: true);
+      final step = makeStep(verified: true);
       final roundTripped = SessionStep.fromJson(step.toJson());
       expect(roundTripped, step);
     });
@@ -433,31 +433,31 @@ void main() {
 
   group('SessionStep.copyWith', () {
     test('returns identical step when no overrides provided', () {
-      final step = _makeStep();
+      final step = makeStep();
       expect(step.copyWith(), step);
     });
 
     test('overrides instruction', () {
-      final step = _makeStep();
+      final step = makeStep();
       final copy = step.copyWith(instruction: 'New instruction');
       expect(copy.instruction, 'New instruction');
       expect(copy.id, step.id);
     });
 
     test('overrides verified', () {
-      final step = _makeStep(verified: false);
+      final step = makeStep(verified: false);
       final copy = step.copyWith(verified: true);
       expect(copy.verified, isTrue);
     });
 
     test('overrides stepNumber', () {
-      final step = _makeStep(stepNumber: 1);
+      final step = makeStep(stepNumber: 1);
       final copy = step.copyWith(stepNumber: 5);
       expect(copy.stepNumber, 5);
     });
 
     test('preserves unchanged fields', () {
-      final step = _makeStep();
+      final step = makeStep();
       final copy = step.copyWith(verified: true);
       expect(copy.sessionId, step.sessionId);
       expect(copy.createdAt, step.createdAt);
@@ -470,37 +470,37 @@ void main() {
 
   group('SessionStep equality', () {
     test('two steps with identical fields are equal', () {
-      final a = _makeStep();
-      final b = _makeStep();
+      final a = makeStep();
+      final b = makeStep();
       expect(a, equals(b));
     });
 
     test('steps with different id are not equal', () {
-      final a = _makeStep(id: 'step-001');
-      final b = _makeStep(id: 'step-002');
+      final a = makeStep(id: 'step-001');
+      final b = makeStep(id: 'step-002');
       expect(a, isNot(equals(b)));
     });
 
     test('steps with different instruction are not equal', () {
-      final a = _makeStep(instruction: 'Step A');
-      final b = _makeStep(instruction: 'Step B');
+      final a = makeStep(instruction: 'Step A');
+      final b = makeStep(instruction: 'Step B');
       expect(a, isNot(equals(b)));
     });
 
     test('steps with different verified are not equal', () {
-      final a = _makeStep(verified: false);
-      final b = _makeStep(verified: true);
+      final a = makeStep(verified: false);
+      final b = makeStep(verified: true);
       expect(a, isNot(equals(b)));
     });
 
     test('equal steps have equal hash codes', () {
-      final a = _makeStep();
-      final b = _makeStep();
+      final a = makeStep();
+      final b = makeStep();
       expect(a.hashCode, b.hashCode);
     });
 
     test('step is equal to itself', () {
-      final step = _makeStep();
+      final step = makeStep();
       expect(step, equals(step));
     });
   });
@@ -511,7 +511,7 @@ void main() {
 
   group('SessionStep.toString', () {
     test('includes all field values', () {
-      final step = _makeStep(
+      final step = makeStep(
         id: 'step-001',
         sessionId: 'sess-001',
         stepNumber: 1,
@@ -528,7 +528,7 @@ void main() {
     });
 
     test('starts with SessionStep(', () {
-      expect(_makeStep().toString(), startsWith('SessionStep('));
+      expect(makeStep().toString(), startsWith('SessionStep('));
     });
   });
 
@@ -538,7 +538,7 @@ void main() {
 
   group('Session.toString', () {
     test('includes id, userId, and status', () {
-      final session = _makeSession(
+      final session = makeSession(
         id: 'sess-001',
         userId: 'user-abc',
         status: SessionStatus.active,
@@ -551,7 +551,7 @@ void main() {
     });
 
     test('starts with Session(', () {
-      expect(_makeSession().toString(), startsWith('Session('));
+      expect(makeSession().toString(), startsWith('Session('));
     });
   });
 }

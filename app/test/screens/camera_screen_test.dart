@@ -19,7 +19,7 @@ import 'package:physicscopilot/services/websocket_service.dart';
 import 'package:physicscopilot/services/camera_service.dart';
 import 'package:physicscopilot/services/voice_service.dart';
 import 'package:physicscopilot/screens/camera_screen.dart';
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 // ── Fake CameraService that never initialises (stays loading) ─────────────────
 

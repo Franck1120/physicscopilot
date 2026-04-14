@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/auth_service.dart';
+import 'package:physicscopilot/services/auth_service.dart';
 
 /// Email + password sign-in / sign-up screen.
 ///
@@ -36,16 +36,16 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       if (_isSignUp) {
         await AuthService.signUpWithEmail(
-            _emailCtrl.text.trim(), _passwordCtrl.text);
+            _emailCtrl.text.trim(), _passwordCtrl.text,);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Account creato. Controlla la tua email.')),
+                content: Text('Account creato. Controlla la tua email.'),),
           );
         }
       } else {
         await AuthService.signInWithEmail(
-            _emailCtrl.text.trim(), _passwordCtrl.text);
+            _emailCtrl.text.trim(), _passwordCtrl.text,);
         // GoRouter redirect guard re-runs and navigates to /home.
         if (mounted) context.go('/home');
       }
@@ -116,14 +116,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const [AutofillHints.email],
                         style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Email',
-                          labelStyle: const TextStyle(color: kTextMuted),
+                          labelStyle: TextStyle(color: kTextMuted),
                           prefixIcon:
-                              const Icon(Icons.email_outlined, color: kTextMuted),
+                              Icon(Icons.email_outlined, color: kTextMuted),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14,),
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
@@ -156,20 +156,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           disabledBackgroundColor: kAccent.withAlpha(100),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                              borderRadius: BorderRadius.circular(10),),
                         ),
                         child: _loading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                    strokeWidth: 2, color: Colors.white,),
                               )
                             : Text(
                                 _isSignUp ? 'Registrati' : 'Accedi',
                                 style: const TextStyle(
                                     fontSize: 15,
-                                    fontWeight: FontWeight.w600),
+                                    fontWeight: FontWeight.w600,),
                               ),
                       ),
                     ),

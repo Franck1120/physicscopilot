@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../main.dart'
+import 'package:physicscopilot/main.dart'
     show kAccent, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../widgets/safe_screen.dart';
-import '../providers/settings_provider.dart';
-import '../providers/voice_provider.dart';
-import '../utils/constants.dart';
+import 'package:physicscopilot/widgets/safe_screen.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/providers/voice_provider.dart';
+import 'package:physicscopilot/utils/constants.dart';
 
 // ThemeMode is imported via flutter/material.dart above.
 
@@ -43,7 +43,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _saveUrl() async {
-    HapticFeedback.lightImpact();
+    await HapticFeedback.lightImpact();
     await ref
         .read(settingsProvider.notifier)
         .setServerUrl(_urlController.text);
@@ -59,7 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _resetUrl() async {
-    HapticFeedback.lightImpact();
+    await HapticFeedback.lightImpact();
     _urlController.clear();
     await ref.read(settingsProvider.notifier).setServerUrl(null);
     setState(() => _urlEdited = false);
@@ -95,11 +95,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              letterSpacing: 0.4),
+              letterSpacing: 0.4,),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
-              color: Colors.white, size: 20),
+              color: Colors.white, size: 20,),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -107,7 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
           // ── Server URL ────────────────────────────────────────────────────
-          _SectionHeader(label: 'CONNESSIONE'),
+          const _SectionHeader(label: 'CONNESSIONE'),
           const SizedBox(height: 10),
           _Card(
             child: Column(
@@ -118,12 +118,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,
-                      fontWeight: FontWeight.w600),
+                      fontWeight: FontWeight.w600,),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'Default: ${AppConstants.wsBaseUrl}\nLascia vuoto per usare il valore compilato.',
-                  style: const TextStyle(color: kTextMuted, fontSize: 12, height: 1.4),
+                  style: TextStyle(color: kTextMuted, fontSize: 12, height: 1.4),
                 ),
                 const SizedBox(height: 12),
                 Semantics(
@@ -142,7 +142,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       filled: true,
                       fillColor: const Color(0xFF111111),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                          horizontal: 14, vertical: 10,),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide:
@@ -161,7 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       suffixIcon: _urlController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear,
-                                  color: kTextMuted, size: 18),
+                                  color: kTextMuted, size: 18,),
                               onPressed: () {
                                 _urlController.clear();
                                 setState(() => _urlEdited = true);
@@ -207,7 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── Voice + Theme ─────────────────────────────────────────────────
-          _SectionHeader(label: 'FUNZIONALITÀ'),
+          const _SectionHeader(label: 'FUNZIONALITÀ'),
           const SizedBox(height: 10),
           _Card(
             child: Column(
@@ -216,7 +216,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Row(
                   children: [
                     const Icon(Icons.volume_up_outlined,
-                        color: kAccent, size: 22),
+                        color: kAccent, size: 22,),
                     const SizedBox(width: 14),
                     const Expanded(
                       child: Column(
@@ -226,11 +226,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600)),
+                                  fontWeight: FontWeight.w600,),),
                           SizedBox(height: 2),
                           Text('Legge le istruzioni AI ad alta voce.',
                               style:
-                                  TextStyle(color: kTextMuted, fontSize: 12)),
+                                  TextStyle(color: kTextMuted, fontSize: 12),),
                         ],
                       ),
                     ),
@@ -268,11 +268,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600)),
+                                  fontWeight: FontWeight.w600,),),
                           SizedBox(height: 2),
                           Text('Passa tra tema chiaro e scuro.',
                               style:
-                                  TextStyle(color: kTextMuted, fontSize: 12)),
+                                  TextStyle(color: kTextMuted, fontSize: 12),),
                         ],
                       ),
                     ),
@@ -285,7 +285,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onChanged: (v) => ref
                             .read(settingsProvider.notifier)
                             .setThemeMode(
-                                v ? ThemeMode.dark : ThemeMode.light),
+                                v ? ThemeMode.dark : ThemeMode.light,),
                         activeThumbColor: kAccent,
                       ),
                     ),
@@ -311,10 +311,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
-                              fontWeight: FontWeight.w600)),
+                              fontWeight: FontWeight.w600,),),
                       SizedBox(height: 2),
                       Text('Lingua di Gemini e guida vocale.',
-                          style: TextStyle(color: kTextMuted, fontSize: 12)),
+                          style: TextStyle(color: kTextMuted, fontSize: 12),),
                     ],
                   ),
                 ),
@@ -328,14 +328,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       .map((e) => DropdownMenuItem(
                             value: e.key,
                             child: Text(e.value),
-                          ))
+                          ),)
                       .toList(),
                   onChanged: (lang) async {
                     if (lang == null) return;
-                    HapticFeedback.selectionClick();
+                    await HapticFeedback.selectionClick();
                     await ref.read(settingsProvider.notifier).setLanguage(lang);
                     // Update TTS language immediately.
-                    ref.read(voiceServiceProvider).setLanguage(lang);
+                    await ref.read(voiceServiceProvider).setLanguage(lang);
                   },
                 ),
               ],
@@ -345,12 +345,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── Info versione ─────────────────────────────────────────────────
-          _SectionHeader(label: 'CONNESSIONE SERVER'),
+          const _SectionHeader(label: 'CONNESSIONE SERVER'),
           const SizedBox(height: 10),
           _Card(
             child: Column(
               children: [
-                _InfoRow(
+                const _InfoRow(
                   label: 'URL compilato',
                   value: AppConstants.wsBaseUrl,
                 ),
@@ -369,16 +369,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── About ─────────────────────────────────────────────────────────
-          _SectionHeader(label: 'INFORMAZIONI APP'),
+          const _SectionHeader(label: 'INFORMAZIONI APP'),
           const SizedBox(height: 10),
           _Card(
             child: Column(
               children: [
-                _InfoRow(label: 'App', value: 'PhysicsCopilot'),
+                const _InfoRow(label: 'App', value: 'PhysicsCopilot'),
                 const Divider(color: kBgCardBorder, height: 20),
-                _InfoRow(label: 'Versione', value: '1.0.0 (build 1)'),
+                const _InfoRow(label: 'Versione', value: '1.0.0 (build 1)'),
                 const Divider(color: kBgCardBorder, height: 20),
-                _InfoRow(label: 'Motore AI', value: 'Google Gemini'),
+                const _InfoRow(label: 'Motore AI', value: 'Google Gemini'),
                 const Divider(color: kBgCardBorder, height: 20),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -428,21 +428,21 @@ void showAboutAppDialog(BuildContext context) {
           ),
         ],
       ),
-      content: Column(
+      content: const Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Versione 1.0.0 (build 1)',
             style: TextStyle(color: kTextMuted, fontSize: 13),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Powered by',
             style: TextStyle(color: kTextMuted, fontSize: 11, letterSpacing: 0.4),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: 4),
+          Text(
             'Google Gemini AI',
             style: TextStyle(
               color: Colors.white,
@@ -450,10 +450,10 @@ void showAboutAppDialog(BuildContext context) {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
-          const Divider(color: kBgCardBorder, height: 1),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 20),
+          Divider(color: kBgCardBorder, height: 1),
+          SizedBox(height: 16),
+          Text(
             'Privacy Policy',
             style: TextStyle(
               color: kAccent,
@@ -461,13 +461,13 @@ void showAboutAppDialog(BuildContext context) {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          const SelectableText(
+          SizedBox(height: 4),
+          SelectableText(
             'https://physicscopilot.app/privacy',
             style: TextStyle(color: kTextMuted, fontSize: 12),
           ),
-          const SizedBox(height: 14),
-          const Text(
+          SizedBox(height: 14),
+          Text(
             'Termini di Servizio',
             style: TextStyle(
               color: kAccent,
@@ -475,8 +475,8 @@ void showAboutAppDialog(BuildContext context) {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          const SelectableText(
+          SizedBox(height: 4),
+          SelectableText(
             'https://physicscopilot.app/terms',
             style: TextStyle(color: kTextMuted, fontSize: 12),
           ),
@@ -544,7 +544,7 @@ class _InfoRow extends StatelessWidget {
           SizedBox(
             width: 140,
             child: Text(label,
-                style: const TextStyle(color: kTextMuted, fontSize: 13)),
+                style: const TextStyle(color: kTextMuted, fontSize: 13),),
           ),
           Expanded(
             child: Text(

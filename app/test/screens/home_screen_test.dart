@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider;
-import 'package:physicscopilot/providers/printer_provider.dart';
+import 'package:physicscopilot/providers/equipment_provider.dart';
+import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/providers/websocket_provider.dart';
+import 'package:physicscopilot/services/api_service.dart' show serverHealthProvider, ServerHealth;
 import 'package:physicscopilot/services/websocket_service.dart';
 import 'package:physicscopilot/screens/home_screen.dart';
 
@@ -14,14 +15,14 @@ void main() {
   group('HomeScreen', () {
     /// Build a [ProviderScope]-wrapped [HomeScreen] with all providers overridden
     /// so that no real WebSocket connection is opened.
-    Future<Widget> buildTestWidget({PrinterProfile? printer}) async {
+    Future<Widget> buildTestWidget({EquipmentProfile? equipment}) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
 
       return ProviderScope(
         overrides: [
           sharedPrefsProvider.overrideWithValue(prefs),
-          // Override connection status to always report connected
+          // Override connection status to always report connected.
           connectionStatusProvider.overrideWith(
             (ref) => Stream.value(ConnectionStatus.connected),
           ),
@@ -31,15 +32,19 @@ void main() {
             ref.onDispose(() => svc.disconnect());
             return svc;
           }),
-          if (printer != null)
-            printerProvider.overrideWith((ref) {
-              final notifier = PrinterNotifier()..select(printer);
+          // Prevent healthCheck from leaving a pending retry timer.
+          serverHealthProvider.overrideWith(
+            (_) => Stream.value(ServerHealth.offline()),
+          ),
+          if (equipment != null)
+            equipmentProvider.overrideWith((ref) {
+              final notifier = EquipmentNotifier()..select(equipment);
               return notifier;
             }),
         ],
         child: const MaterialApp(
           home: HomeScreen(
-            onChangePrinter: _noop,
+            onChangeEquipment: _noop,
             onStartCamera: _noop,
           ),
         ),
@@ -95,16 +100,16 @@ void main() {
       expect(find.text('Profilo'), findsOneWidget);
     });
 
-    testWidgets('shows printer name when printer is selected', (tester) async {
+    testWidgets('shows equipment name when equipment is selected', (tester) async {
       tolerateOverflowErrors(tester);
-      const printer = PrinterProfile(
+      const equipment = EquipmentProfile(
         id: 'p1',
         name: 'Creality Ender 3',
         manufacturer: 'Creality',
         extruderType: 'bowden',
         enclosed: false,
       );
-      await tester.pumpWidget(await buildTestWidget(printer: printer));
+      await tester.pumpWidget(await buildTestWidget(equipment: equipment));
       await tester.pump();
       expect(find.text('Creality Ender 3'), findsOneWidget);
     });

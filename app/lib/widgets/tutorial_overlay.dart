@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart' show kAccent;
-import '../utils/strings.dart';
+import 'package:physicscopilot/main.dart' show kAccent;
+import 'package:physicscopilot/utils/strings.dart';
 
 /// Shown once on the first use of the session screen.
 /// Tapping anywhere dismisses it and marks it as seen in SharedPreferences.
@@ -73,7 +73,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                                horizontal: 14, vertical: 10,),
                             decoration: BoxDecoration(
                               color: kAccent,
                               borderRadius: BorderRadius.circular(12),
@@ -96,7 +96,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                           ),
                           const SizedBox(height: 6),
                           const Icon(Icons.arrow_downward_rounded,
-                              color: kAccent, size: 28),
+                              color: kAccent, size: 28,),
                         ],
                       ),
                     ),

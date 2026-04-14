@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../widgets/step_progress.dart';
+import 'package:physicscopilot/widgets/step_progress.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 

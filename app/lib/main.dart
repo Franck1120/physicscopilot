@@ -315,11 +315,11 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
   }
 
   ThemeData _buildLightTheme() => ThemeData(
-        colorScheme: ColorScheme.light(
+        colorScheme: const ColorScheme.light(
           primary: kAccent,
           secondary: kAccentDark,
-          surface: const Color(0xFFF9FAFB),
-          onSurface: const Color(0xFF111827),
+          surface: Color(0xFFF9FAFB),
+          onSurface: Color(0xFF111827),
           onPrimary: Colors.white,
           error: Colors.redAccent,
         ),
@@ -403,14 +403,14 @@ class _PhysicsCopilotAppState extends ConsumerState<PhysicsCopilotApp> {
             fontWeight: FontWeight.bold,
           ),
           contentTextStyle: const TextStyle(
-              color: Color(0xFF374151), fontSize: 14, height: 1.5),
+              color: Color(0xFF374151), fontSize: 14, height: 1.5,),
         ),
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         useMaterial3: true,
       );
 
   ThemeData _buildDarkTheme() => ThemeData(
-        colorScheme: ColorScheme.dark(
+        colorScheme: const ColorScheme.dark(
           primary: kAccent,
           secondary: kAccentDark,
           surface: kBgSurface,
@@ -532,21 +532,21 @@ class _AppErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return const Material(
       color: kBgPrimary,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.warning_amber_rounded,
                 color: Colors.orangeAccent,
                 size: 52,
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 AppStrings.errorGeneric,
                 style: TextStyle(
                   color: Colors.white,
@@ -555,8 +555,8 @@ class _AppErrorWidget extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 AppStrings.restartApp,
                 style: TextStyle(color: kTextMuted, fontSize: 14),
                 textAlign: TextAlign.center,
@@ -619,7 +619,7 @@ class _SplashScreenState extends State<_SplashScreen>
     ).animate(CurvedAnimation(
       parent: _ctrl,
       curve: const Interval(0.35, 0.70, curve: Curves.easeOut),
-    ));
+    ),);
     _titleFade = CurvedAnimation(
       parent: _ctrl,
       curve: const Interval(0.35, 0.65, curve: Curves.easeIn),

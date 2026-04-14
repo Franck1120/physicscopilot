@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart' show kAccent;
+import 'package:physicscopilot/main.dart' show kAccent;
 
 /// Semi-transparent overlay that displays the current AI repair instruction
 /// over the camera preview. Animates in when [text] changes.

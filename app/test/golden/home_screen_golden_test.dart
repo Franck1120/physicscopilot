@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart';
 import 'package:physicscopilot/providers/websocket_provider.dart';
 import 'package:physicscopilot/screens/home_screen.dart';
 import 'package:physicscopilot/services/api_service.dart'
@@ -65,7 +65,7 @@ void main() {
               (ref) => Stream.value(ServerHealth.offline()),
             ),
           ],
-          child: MaterialApp(
+          child: const MaterialApp(
             debugShowCheckedModeBanner: false,
             home: HomeScreen(
               onChangeEquipment: _noop,

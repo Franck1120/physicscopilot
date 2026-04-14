@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:physicscopilot/providers/websocket_provider.dart';
 import 'package:physicscopilot/providers/settings_provider.dart';
 import 'package:physicscopilot/services/websocket_service.dart';
-import 'package:physicscopilot/main.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart';
 
 void main() {
   group('WebSocketService', () {
@@ -83,7 +83,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
       addTearDown(container.dispose);
 
       // No value emitted yet → provider must be in loading state.
@@ -95,7 +95,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
 
       // Subscribe so the provider activates before we emit.
       final statuses = <ConnectionStatus>[];
@@ -117,7 +117,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
 
       final statuses = <ConnectionStatus>[];
       container.listen(connectionStatusProvider, (_, next) {
@@ -138,7 +138,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
 
       final statuses = <ConnectionStatus>[];
       container.listen(connectionStatusProvider, (_, next) {
@@ -162,7 +162,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
 
       final statuses = <ConnectionStatus>[];
       container.listen(connectionStatusProvider, (_, next) {
@@ -186,7 +186,7 @@ void main() {
 
       final container = ProviderContainer(overrides: [
         connectionStatusProvider.overrideWith((ref) => controller.stream),
-      ]);
+      ],);
 
       final statuses = <ConnectionStatus>[];
       container.listen(connectionStatusProvider, (_, next) {
@@ -206,7 +206,7 @@ void main() {
         ConnectionStatus.connecting,
         ConnectionStatus.connected,
         ConnectionStatus.disconnected,
-      ]));
+      ]),);
 
       await controller.close();
       container.dispose();
@@ -251,7 +251,7 @@ void main() {
           ref.onDispose(() => svc.disconnect());
           return svc;
         }),
-      ]);
+      ],);
 
       // Read so the provider is created and onDispose is registered.
       container.read(webSocketServiceProvider);

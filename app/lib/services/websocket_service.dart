@@ -114,7 +114,7 @@ class WebSocketService {
         'type': 'frame',
         'data': base64Encode(frameBytes),
         'timestamp': DateTime.now().millisecondsSinceEpoch,
-      }));
+      }),);
     } catch (_) {
       // Connection may have dropped; reconnect will be triggered by onDone.
     }
@@ -128,7 +128,7 @@ class WebSocketService {
         'type': 'text',
         'content': text,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
-      }));
+      }),);
     } catch (_) {
       // Connection may have dropped; reconnect will be triggered by onDone.
     }

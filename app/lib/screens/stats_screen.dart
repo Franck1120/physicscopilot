@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/session_record.dart';
-import '../providers/session_history_provider.dart';
-import '../utils/strings.dart';
-import '../widgets/achievement_badges.dart';
-import '../widgets/progress_ring_widget.dart';
-import '../../main.dart'
-    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kBgSurface, kTextMuted;
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/session_history_provider.dart';
+import 'package:physicscopilot/utils/strings.dart';
+import 'package:physicscopilot/widgets/achievement_badges.dart';
+import 'package:physicscopilot/widgets/progress_ring_widget.dart';
+import 'package:physicscopilot/main.dart'
+    show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kTextMuted;
 
 // ── StatsScreen ───────────────────────────────────────────────────────────────
 
@@ -308,7 +308,7 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(color: kTextMuted, fontSize: 12)),
+              style: const TextStyle(color: kTextMuted, fontSize: 12),),
         ],
       ),
     );
@@ -375,12 +375,12 @@ class _LegendRow extends StatelessWidget {
         Expanded(
           child: Text(label,
               style:
-                  const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const TextStyle(color: Colors.white70, fontSize: 13),),
         ),
         Text(
           '$count',
           style: TextStyle(
-              color: color, fontSize: 13, fontWeight: FontWeight.bold),
+              color: color, fontSize: 13, fontWeight: FontWeight.bold,),
         ),
       ],
     );

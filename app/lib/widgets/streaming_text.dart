@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart' show kAccent;
+import 'package:physicscopilot/main.dart' show kAccent;
 
 /// Displays incrementally-streamed AI text with a blinking cursor.
 ///

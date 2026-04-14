@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../main.dart' show kAccent, kBgCard;
+import 'package:physicscopilot/main.dart' show kAccent, kBgCard;
 
 // ── ProgressRing ─────────────────────────────────────────────────────────────
 

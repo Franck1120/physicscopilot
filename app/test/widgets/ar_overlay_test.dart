@@ -30,7 +30,7 @@ void main() {
     test('isEmpty is false when boxes list is non-empty', () {
       final data = OverlayData.fromJson({
         'boxes': [
-          {'x': 0.0, 'y': 0.0, 'w': 0.5, 'h': 0.5, 'label': 'A', 'color': 'blue'}
+          {'x': 0.0, 'y': 0.0, 'w': 0.5, 'h': 0.5, 'label': 'A', 'color': 'blue'},
         ],
       });
       expect(data.isEmpty, isFalse);

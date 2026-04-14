@@ -127,13 +127,10 @@ class _TestApiService {
 // ---------------------------------------------------------------------------
 
 Map<String, dynamic> _sessionJson({String id = 'session-1'}) => {
-      'session_id': id,
-      'device_info': {'brand': 'Test', 'model': 'X1'},
+      'id': id,
+      'device': {'brand': 'Test', 'model': 'X1'},
       'problem_detected': 'overheating',
       'created_at': '2026-01-01T00:00:00Z',
-      'last_activity': '2026-01-01T01:00:00Z',
-      'current_step': 1,
-      'total_steps': 3,
     };
 
 // ---------------------------------------------------------------------------
@@ -160,7 +157,7 @@ void main() {
       final result = await service.healthCheck();
 
       expect(result, isFalse);
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(Duration(seconds: 10)),);
 
     test('createSession() returns RemoteSession on 201', () async {
       final adapter = _MockAdapter()
@@ -174,8 +171,7 @@ void main() {
 
       expect(session, isNotNull);
       expect(session!.sessionId, equals('session-1'));
-      expect(session.deviceBrand, equals('Test'));
-      expect(session.deviceModel, equals('X1'));
+      expect(session.deviceName, equals('Test X1'));
     });
 
     test('listSessions() returns list on 200', () async {

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
-import '../models/session_record.dart';
-import '../providers/equipment_provider.dart';
-import '../providers/session_history_provider.dart';
-import '../providers/websocket_provider.dart';
-import '../services/api_service.dart' show serverOnlineProvider;
-import '../services/websocket_service.dart';
-import '../utils/extensions.dart';
-import 'history_screen.dart';
+import 'package:physicscopilot/main.dart' show kAccent, kAccentDark, kBgPrimary, kBgCard, kBgCardBorder, kTextMuted;
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/equipment_provider.dart';
+import 'package:physicscopilot/providers/session_history_provider.dart';
+import 'package:physicscopilot/providers/websocket_provider.dart';
+import 'package:physicscopilot/services/api_service.dart' show serverOnlineProvider;
+import 'package:physicscopilot/services/websocket_service.dart';
+import 'package:physicscopilot/utils/extensions.dart';
+import 'package:physicscopilot/screens/history_screen.dart';
 
 
 // ---------------------------------------------------------------------------
@@ -338,8 +338,8 @@ class _EquipmentSection extends StatelessWidget {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onChangeEquipment,
-                child: Chip(
-                  label: const Text(
+                child: const Chip(
+                  label: Text(
                     'Cambia',
                     style: TextStyle(
                       color: kAccent,
@@ -348,8 +348,8 @@ class _EquipmentSection extends StatelessWidget {
                     ),
                   ),
                   backgroundColor: kBgPrimary,
-                  side: const BorderSide(color: kAccent, width: 1),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  side: BorderSide(color: kAccent, width: 1),
+                  padding: EdgeInsets.symmetric(horizontal: 4),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -569,9 +569,9 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 42,
           backgroundColor: kAccentDark,
           child: Text(
@@ -583,8 +583,8 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        const Text(
+        SizedBox(height: 14),
+        Text(
           'Utente',
           style: TextStyle(
             color: Colors.white,
@@ -592,9 +592,9 @@ class _ProfileHeader extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Chip(
-          label: const Text(
+          label: Text(
             'Free',
             style: TextStyle(
               color: kAccent,
@@ -603,8 +603,8 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           backgroundColor: kBgPrimary,
-          side: const BorderSide(color: kAccent, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          side: BorderSide(color: kAccent, width: 1.5),
+          padding: EdgeInsets.symmetric(horizontal: 8),
         ),
       ],
     );

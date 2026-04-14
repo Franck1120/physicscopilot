@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:physicscopilot/models/device.dart';
 
 void main() {
-  final _createdAt = DateTime(2026, 1, 15, 10, 30, 0);
+  final createdAt = DateTime(2026, 1, 15, 10, 30, 0);
 
-  final _deviceJson = <String, dynamic>{
+  final deviceJson = <String, dynamic>{
     'id': 'device-001',
     'user_id': 'user-abc',
     'brand': 'HP',
@@ -12,7 +12,7 @@ void main() {
     'created_at': '2026-01-15T10:30:00.000',
   };
 
-  Device _makeDevice({
+  Device makeDevice({
     String id = 'device-001',
     String userId = 'user-abc',
     String brand = 'HP',
@@ -29,7 +29,7 @@ void main() {
 
   group('Device.fromJson', () {
     test('parses all fields correctly', () {
-      final device = Device.fromJson(_deviceJson);
+      final device = Device.fromJson(deviceJson);
 
       expect(device.id, 'device-001');
       expect(device.userId, 'user-abc');
@@ -39,7 +39,7 @@ void main() {
     });
 
     test('parses device_id with underscored key (user_id)', () {
-      final json = Map<String, dynamic>.from(_deviceJson)
+      final json = Map<String, dynamic>.from(deviceJson)
         ..['user_id'] = 'user-xyz';
       final device = Device.fromJson(json);
       expect(device.userId, 'user-xyz');
@@ -48,18 +48,18 @@ void main() {
 
   group('Device.toJson', () {
     test('serializes all fields to map', () {
-      final device = _makeDevice(createdAt: _createdAt);
+      final device = makeDevice(createdAt: createdAt);
       final json = device.toJson();
 
       expect(json['id'], 'device-001');
       expect(json['user_id'], 'user-abc');
       expect(json['brand'], 'HP');
       expect(json['model'], 'LaserJet 1020');
-      expect(json['created_at'], _createdAt.toIso8601String());
+      expect(json['created_at'], createdAt.toIso8601String());
     });
 
     test('round-trips through fromJson → toJson', () {
-      final original = Device.fromJson(_deviceJson);
+      final original = Device.fromJson(deviceJson);
       final roundTripped = Device.fromJson(original.toJson());
       expect(roundTripped, original);
     });
@@ -67,13 +67,13 @@ void main() {
 
   group('Device.copyWith', () {
     test('returns identical device when no overrides provided', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final copy = device.copyWith();
       expect(copy, device);
     });
 
     test('overrides only the specified fields', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final copy = device.copyWith(brand: 'Canon', model: 'PIXMA');
 
       expect(copy.brand, 'Canon');
@@ -84,20 +84,20 @@ void main() {
     });
 
     test('overrides id', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final copy = device.copyWith(id: 'new-id');
       expect(copy.id, 'new-id');
       expect(copy.brand, device.brand);
     });
 
     test('overrides userId', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final copy = device.copyWith(userId: 'new-user');
       expect(copy.userId, 'new-user');
     });
 
     test('overrides createdAt', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final newDate = DateTime(2025, 6, 1);
       final copy = device.copyWith(createdAt: newDate);
       expect(copy.createdAt, newDate);
@@ -106,50 +106,50 @@ void main() {
 
   group('Device equality', () {
     test('two devices with identical fields are equal', () {
-      final a = _makeDevice();
-      final b = _makeDevice();
+      final a = makeDevice();
+      final b = makeDevice();
       expect(a, equals(b));
     });
 
     test('devices with different id are not equal', () {
-      final a = _makeDevice(id: 'id-1');
-      final b = _makeDevice(id: 'id-2');
+      final a = makeDevice(id: 'id-1');
+      final b = makeDevice(id: 'id-2');
       expect(a, isNot(equals(b)));
     });
 
     test('devices with different brand are not equal', () {
-      final a = _makeDevice(brand: 'HP');
-      final b = _makeDevice(brand: 'Canon');
+      final a = makeDevice(brand: 'HP');
+      final b = makeDevice(brand: 'Canon');
       expect(a, isNot(equals(b)));
     });
 
     test('equal devices have equal hash codes', () {
-      final a = _makeDevice();
-      final b = _makeDevice();
+      final a = makeDevice();
+      final b = makeDevice();
       expect(a.hashCode, b.hashCode);
     });
 
     test('device is equal to itself (identity)', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       expect(device, equals(device));
     });
   });
 
   group('Device.displayName', () {
     test('concatenates brand and model with a space', () {
-      final device = _makeDevice(brand: 'HP', model: 'LaserJet 1020');
+      final device = makeDevice(brand: 'HP', model: 'LaserJet 1020');
       expect(device.displayName, 'HP LaserJet 1020');
     });
 
     test('handles single-word brand and model', () {
-      final device = _makeDevice(brand: 'Canon', model: 'PIXMA');
+      final device = makeDevice(brand: 'Canon', model: 'PIXMA');
       expect(device.displayName, 'Canon PIXMA');
     });
   });
 
   group('Device.toString', () {
     test('includes all field values', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       final str = device.toString();
 
       expect(str, contains('device-001'));
@@ -159,7 +159,7 @@ void main() {
     });
 
     test('starts with Device(', () {
-      final device = _makeDevice();
+      final device = makeDevice();
       expect(device.toString(), startsWith('Device('));
     });
   });

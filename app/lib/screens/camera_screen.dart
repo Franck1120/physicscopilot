@@ -4,18 +4,18 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../main.dart' show kAccent;
-import '../providers/camera_provider.dart';
-import '../providers/overlay_provider.dart';
-import '../providers/session_provider.dart';
-import '../providers/step_provider.dart';
-import '../providers/voice_provider.dart';
-import '../providers/websocket_provider.dart';
-import '../services/websocket_service.dart';
-import '../utils/strings.dart';
-import '../widgets/ar_overlay.dart';
-import '../widgets/guidance_overlay.dart';
-import '../widgets/step_progress.dart';
+import 'package:physicscopilot/main.dart' show kAccent;
+import 'package:physicscopilot/providers/camera_provider.dart';
+import 'package:physicscopilot/providers/overlay_provider.dart';
+import 'package:physicscopilot/providers/session_provider.dart';
+import 'package:physicscopilot/providers/step_provider.dart';
+import 'package:physicscopilot/providers/voice_provider.dart';
+import 'package:physicscopilot/providers/websocket_provider.dart';
+import 'package:physicscopilot/services/websocket_service.dart';
+import 'package:physicscopilot/utils/strings.dart';
+import 'package:physicscopilot/widgets/ar_overlay.dart';
+import 'package:physicscopilot/widgets/guidance_overlay.dart';
+import 'package:physicscopilot/widgets/step_progress.dart';
 
 /// How long to wait for an AI response before surfacing a timeout error.
 const Duration _kAIResponseTimeout = Duration(seconds: 15);
@@ -60,7 +60,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     ).animate(CurvedAnimation(
       parent: _chatController,
       curve: Curves.easeInOut,
-    ));
+    ),);
     // Start bridging once camera is ready — use listenManual so it's
     // registered once in initState rather than on every build().
     _cameraInitSub = ref.listenManual<AsyncValue<void>>(
@@ -161,7 +161,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   // ── UI actions ────────────────────────────────────────────────────────────
 
   Future<void> _toggleMic() async {
-    HapticFeedback.mediumImpact();
+    await HapticFeedback.mediumImpact();
     await ref.read(voiceProvider.notifier).toggleListening();
   }
 
@@ -449,7 +449,7 @@ class _ChatPanel extends StatelessWidget {
                     child: Container(
                       width: 38,
                       height: 38,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: kAccent,
                         shape: BoxShape.circle,
                       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart' show kBgPrimary, kTextMuted, kAccent;
+import 'package:physicscopilot/main.dart' show kBgPrimary, kTextMuted, kAccent;
 
 /// Returns a full-screen Scaffold that displays [error] in a graceful card.
 ///

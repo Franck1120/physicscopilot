@@ -9,11 +9,11 @@ import 'package:physicscopilot/widgets/session_badge.dart';
 
 void main() {
   group('SessionBadge', () {
-    Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+    Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
     testWidgets('resolved status shows "Risolto" text', (tester) async {
       await tester.pumpWidget(
-        _wrap(const SessionBadge(status: SessionStatus.resolved)),
+        wrap(const SessionBadge(status: SessionStatus.resolved)),
       );
       await tester.pump();
       expect(find.text('Risolto'), findsOneWidget);
@@ -21,7 +21,7 @@ void main() {
 
     testWidgets('unresolved status shows "Non risolto" text', (tester) async {
       await tester.pumpWidget(
-        _wrap(const SessionBadge(status: SessionStatus.unresolved)),
+        wrap(const SessionBadge(status: SessionStatus.unresolved)),
       );
       await tester.pump();
       expect(find.text('Non risolto'), findsOneWidget);
@@ -29,7 +29,7 @@ void main() {
 
     testWidgets('resolved variant renders without error', (tester) async {
       await tester.pumpWidget(
-        _wrap(const SessionBadge(status: SessionStatus.resolved)),
+        wrap(const SessionBadge(status: SessionStatus.resolved)),
       );
       await tester.pump();
       expect(find.byType(SessionBadge), findsOneWidget);
@@ -37,7 +37,7 @@ void main() {
 
     testWidgets('unresolved variant renders without error', (tester) async {
       await tester.pumpWidget(
-        _wrap(const SessionBadge(status: SessionStatus.unresolved)),
+        wrap(const SessionBadge(status: SessionStatus.unresolved)),
       );
       await tester.pump();
       expect(find.byType(SessionBadge), findsOneWidget);

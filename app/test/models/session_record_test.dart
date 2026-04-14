@@ -7,13 +7,14 @@ void main() {
       final record = SessionRecord(
         id: 'rec-001',
         date: DateTime(2026, 4, 10),
-        printerName: 'HP LaserJet 1020',
+        equipmentName: 'HP LaserJet 1020',
+        summary: '',
         problemDescription: 'Paper jam at tray 2',
         status: SessionStatus.resolved,
         duration: const Duration(minutes: 8),
       );
       expect(record.id, 'rec-001');
-      expect(record.printerName, 'HP LaserJet 1020');
+      expect(record.equipmentName, 'HP LaserJet 1020');
       expect(record.problemDescription, 'Paper jam at tray 2');
       expect(record.status, SessionStatus.resolved);
       expect(record.duration.inMinutes, 8);
@@ -32,7 +33,8 @@ void main() {
       final record = SessionRecord(
         id: 'id',
         date: date,
-        printerName: 'Printer',
+        equipmentName: 'Printer',
+        summary: '',
         problemDescription: 'Issue',
         status: SessionStatus.unresolved,
         duration: Duration.zero,
@@ -46,7 +48,8 @@ void main() {
       final record = SessionRecord(
         id: 'id',
         date: DateTime.now(),
-        printerName: 'Printer',
+        equipmentName: 'Printer',
+        summary: '',
         problemDescription: 'Issue',
         status: SessionStatus.resolved,
         duration: const Duration(minutes: 5, seconds: 30),
@@ -59,7 +62,8 @@ void main() {
       final resolved = SessionRecord(
         id: 'r1',
         date: DateTime.now(),
-        printerName: 'P',
+        equipmentName: 'P',
+        summary: '',
         problemDescription: 'D',
         status: SessionStatus.resolved,
         duration: Duration.zero,
@@ -67,7 +71,8 @@ void main() {
       final unresolved = SessionRecord(
         id: 'r2',
         date: DateTime.now(),
-        printerName: 'P',
+        equipmentName: 'P',
+        summary: '',
         problemDescription: 'D',
         status: SessionStatus.unresolved,
         duration: Duration.zero,

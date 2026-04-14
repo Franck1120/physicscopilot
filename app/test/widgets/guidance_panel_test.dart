@@ -65,8 +65,10 @@ class _FixedSessionScope extends StatelessWidget {
   }
 }
 
-class _FixedSessionNotifier extends StateNotifier<SessionState> {
-  _FixedSessionNotifier(SessionState s) : super(s);
+class _FixedSessionNotifier extends SessionNotifier {
+  _FixedSessionNotifier(SessionState s) {
+    state = s;
+  }
 }
 
 void main() {
@@ -74,7 +76,7 @@ void main() {
     testWidgets('renders without crash in idle state', (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(),
-      ));
+      ),);
       await tester.pump();
       expect(find.byType(GuidancePanel), findsOneWidget);
     });
@@ -82,7 +84,7 @@ void main() {
     testWidgets('shows idle placeholder text when state is empty', (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(),
-      ));
+      ),);
       await tester.pump();
       // AppStrings.sessionIdle text is rendered in the idle branch.
       // The exact string is defined in utils/strings.dart; we look for a
@@ -94,7 +96,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(isProcessing: true),
-      ));
+      ),);
       await tester.pump();
       expect(find.byType(ThinkingIndicator), findsOneWidget);
     });
@@ -103,7 +105,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(isProcessing: true),
-      ));
+      ),);
       await tester.pump();
       expect(find.textContaining("L'AI sta analizzando"), findsWidgets);
     });
@@ -112,7 +114,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(responseText: 'Hello from AI'),
-      ));
+      ),);
       // _TypewriterResponse animates char-by-char; let all timers fire.
       await tester.pumpAndSettle();
       expect(find.textContaining('Hello from AI'), findsOneWidget);
@@ -122,7 +124,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(errorText: 'Connection failed'),
-      ));
+      ),);
       await tester.pump();
       expect(find.byKey(const ValueKey('error')), findsOneWidget);
       expect(find.textContaining('Connection failed'), findsOneWidget);
@@ -134,7 +136,7 @@ void main() {
         sessionState: const SessionState(),
         isOffline: true,
         cachedResponse: 'Cached AI response',
-      ));
+      ),);
       await tester.pump();
       expect(find.byKey(const ValueKey('offline')), findsOneWidget);
       expect(find.textContaining('offline'), findsWidgets);
@@ -147,7 +149,7 @@ void main() {
         sessionState: const SessionState(),
         isOffline: true,
         cachedResponse: cached,
-      ));
+      ),);
       await tester.pump();
       expect(find.text(cached), findsOneWidget);
     });
@@ -158,7 +160,7 @@ void main() {
         sessionState: const SessionState(),
         isOffline: true,
         cachedResponse: null,
-      ));
+      ),);
       await tester.pump();
       // No cached response → falls through to idle branch.
       expect(find.byKey(const ValueKey('idle')), findsOneWidget);
@@ -167,7 +169,7 @@ void main() {
     testWidgets('shows text input field', (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(),
-      ));
+      ),);
       await tester.pump();
       expect(find.byType(TextField), findsOneWidget);
     });
@@ -175,7 +177,7 @@ void main() {
     testWidgets('shows send button', (tester) async {
       await tester.pumpWidget(_buildPanel(
         sessionState: const SessionState(),
-      ));
+      ),);
       await tester.pump();
       expect(find.byIcon(Icons.send_rounded), findsOneWidget);
     });
@@ -187,7 +189,7 @@ void main() {
           isStreaming: true,
           streamingText: 'partial chunk',
         ),
-      ));
+      ),);
       await tester.pump();
       expect(find.byKey(const ValueKey('streaming')), findsOneWidget);
     });

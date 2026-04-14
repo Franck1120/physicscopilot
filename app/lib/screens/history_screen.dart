@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../models/session_record.dart';
-import '../providers/session_history_provider.dart';
-import '../services/api_service.dart';
-import '../utils/strings.dart';
-import '../widgets/safe_screen.dart';
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/session_history_provider.dart';
+import 'package:physicscopilot/services/api_service.dart';
+import 'package:physicscopilot/utils/strings.dart';
+import 'package:physicscopilot/widgets/safe_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Server sessions provider — fetches from REST API and converts to SessionRecord.
@@ -24,7 +24,7 @@ final _serverSessionsProvider = FutureProvider<List<SessionRecord>>((ref) async 
     summary: r.problemDetected,
     status: SessionStatus.resolved,
     duration: Duration.zero,
-  )).toList();
+  ),).toList();
 });
 
 /// Screen that displays the full session history, merging local records with
@@ -92,7 +92,7 @@ class HistoryScreen extends ConsumerWidget {
             : [
                 IconButton(
                   icon: const Icon(Icons.delete_sweep_outlined,
-                      color: Colors.white54),
+                      color: Colors.white54,),
                   tooltip: AppStrings.historyClearAll,
                   onPressed: () => _confirmClearAll(context, ref),
                 ),
@@ -151,7 +151,7 @@ class HistoryScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: const Text(AppStrings.historyClearAll,
-            style: TextStyle(color: Colors.white)),
+            style: TextStyle(color: Colors.white),),
         content: const Text(
           AppStrings.historyClearConfirm,
           style: TextStyle(color: Colors.white70),
@@ -160,7 +160,7 @@ class HistoryScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text(AppStrings.cancel,
-                style: TextStyle(color: Colors.white54)),
+                style: TextStyle(color: Colors.white54),),
           ),
           TextButton(
             onPressed: () {
@@ -168,7 +168,7 @@ class HistoryScreen extends ConsumerWidget {
               Navigator.of(ctx).pop();
             },
             child: const Text(AppStrings.delete,
-                style: TextStyle(color: Colors.redAccent)),
+                style: TextStyle(color: Colors.redAccent),),
           ),
         ],
       ),
@@ -274,24 +274,24 @@ class _SessionCard extends StatelessWidget {
                 children: [
                   Icon(Icons.calendar_today_outlined,
                       size: 13,
-                      color: Colors.white.withValues(alpha: 0.45)),
+                      color: Colors.white.withValues(alpha: 0.45),),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(session.date),
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.45),
-                        fontSize: 12),
+                        fontSize: 12,),
                   ),
                   const Spacer(),
                   Icon(Icons.timer_outlined,
                       size: 13,
-                      color: Colors.white.withValues(alpha: 0.45)),
+                      color: Colors.white.withValues(alpha: 0.45),),
                   const SizedBox(width: 4),
                   Text(
                     _formatDuration(session.duration),
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.45),
-                        fontSize: 12),
+                        fontSize: 12,),
                   ),
                 ],
               ),
@@ -501,12 +501,12 @@ class _DetailRow extends StatelessWidget {
         Icon(icon, size: 16, color: Colors.white54),
         const SizedBox(width: 8),
         Text('$label: ',
-            style: const TextStyle(color: Colors.white54, fontSize: 13)),
+            style: const TextStyle(color: Colors.white54, fontSize: 13),),
         Text(value,
             style: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,
-                fontWeight: FontWeight.w500)),
+                fontWeight: FontWeight.w500,),),
       ],
     );
   }
@@ -524,20 +524,20 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history,
-              size: 80, color: Colors.white.withValues(alpha: 0.2)),
+              size: 80, color: Colors.white.withValues(alpha: 0.2),),
           const SizedBox(height: 16),
           Text(
             AppStrings.historyEmpty,
             style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 16,
-                fontWeight: FontWeight.w500),
+                fontWeight: FontWeight.w500,),
           ),
           const SizedBox(height: 8),
           Text(
             AppStrings.historyEmptySub,
             style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
+                color: Colors.white.withValues(alpha: 0.3), fontSize: 13,),
           ),
         ],
       ),

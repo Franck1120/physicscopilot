@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../main.dart' show kAccent, kTextMuted;
-import '../providers/prefs_provider.dart';
-import '../services/api_service.dart';
+import 'package:physicscopilot/main.dart' show kAccent, kTextMuted;
+import 'package:physicscopilot/providers/prefs_provider.dart';
+import 'package:physicscopilot/services/api_service.dart';
 
 /// Thumbs-up / thumbs-down buttons shown once the typewriter animation ends.
 /// Selection is persisted to SharedPreferences as aggregate counters.
@@ -28,7 +28,7 @@ class _FeedbackBarState extends ConsumerState<FeedbackBar> {
 
   Future<void> _setVote(bool liked) async {
     if (_vote != null) return; // already voted
-    HapticFeedback.selectionClick();
+    await HapticFeedback.selectionClick();
     setState(() => _vote = liked);
 
     // Local persistence

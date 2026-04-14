@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
+import 'package:physicscopilot/main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
 
 /// Returns a list of step strings if [text] contains 2+ numbered items
 /// (e.g. "1. Do this\n2. Do that"), otherwise null.
@@ -47,7 +47,7 @@ class _MultiStepViewState extends State<MultiStepView> {
           Row(
             children: [
               const Icon(Icons.format_list_numbered,
-                  color: kAccent, size: 16),
+                  color: kAccent, size: 16,),
               const SizedBox(width: 8),
               Text(
                 '$done / $total completati',
@@ -87,7 +87,7 @@ class _MultiStepViewState extends State<MultiStepView> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                      horizontal: 12, vertical: 10,),
                   decoration: BoxDecoration(
                     color: isDone
                         ? kAccent.withAlpha(30)
@@ -114,14 +114,14 @@ class _MultiStepViewState extends State<MultiStepView> {
                         ),
                         child: isDone
                             ? const Icon(Icons.check,
-                                color: Colors.white, size: 13)
+                                color: Colors.white, size: 13,)
                             : Center(
                                 child: Text(
                                   '${i + 1}',
                                   style: const TextStyle(
                                       color: kTextMuted,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w600),
+                                      fontWeight: FontWeight.w600,),
                                 ),
                               ),
                       ),
@@ -162,14 +162,14 @@ class _MultiStepViewState extends State<MultiStepView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle_outline,
-                      color: kAccent, size: 16),
+                      color: kAccent, size: 16,),
                   SizedBox(width: 8),
                   Text(
                     'Tutti i passi completati!',
                     style: TextStyle(
                         color: kAccent,
                         fontSize: 13,
-                        fontWeight: FontWeight.w600),
+                        fontWeight: FontWeight.w600,),
                   ),
                 ],
               ),

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
-import '../providers/session_provider.dart';
-import '../utils/strings.dart';
-import 'feedback_bar.dart';
-import 'multi_step_view.dart';
-import 'streaming_text.dart';
+import 'package:physicscopilot/main.dart' show kAccent, kBgCard, kBgCardBorder, kTextMuted;
+import 'package:physicscopilot/providers/session_provider.dart';
+import 'package:physicscopilot/utils/strings.dart';
+import 'package:physicscopilot/widgets/feedback_bar.dart';
+import 'package:physicscopilot/widgets/multi_step_view.dart';
+import 'package:physicscopilot/widgets/streaming_text.dart';
 
 /// Bottom panel that displays AI responses and the text-input row.
 ///
@@ -46,7 +46,7 @@ class GuidancePanel extends ConsumerWidget {
             session: session,
             cachedResponse: cachedResponse,
             isOffline: isOffline,
-          )),
+          ),),
           _TextInputRow(controller: textController, onSend: onSendText),
         ],
       ),
@@ -86,12 +86,12 @@ class _ResponseArea extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.warning_amber_rounded,
-                color: Colors.orangeAccent, size: 18),
+                color: Colors.orangeAccent, size: 18,),
             const SizedBox(width: 8),
             Expanded(
               child: Text(session.errorText!,
                   style: const TextStyle(
-                      color: Colors.orangeAccent, fontSize: 13)),
+                      color: Colors.orangeAccent, fontSize: 13,),),
             ),
           ],
         ),
@@ -109,7 +109,7 @@ class _ResponseArea extends StatelessWidget {
             child: const Row(
               children: [
                 Icon(Icons.cloud_off_outlined,
-                    color: Colors.orangeAccent, size: 14),
+                    color: Colors.orangeAccent, size: 14,),
                 SizedBox(width: 8),
                 Text(
                   'Modalità offline — ultima risposta disponibile',
@@ -128,7 +128,7 @@ class _ResponseArea extends StatelessWidget {
               child: Text(
                 cachedResponse!,
                 style: const TextStyle(
-                    color: Colors.white70, fontSize: 14, height: 1.5),
+                    color: Colors.white70, fontSize: 14, height: 1.5,),
               ),
             ),
           ),
@@ -326,7 +326,7 @@ class _TypewriterResponseState extends State<_TypewriterResponse> {
                   child: Text(
                     displayed,
                     style: const TextStyle(
-                        color: Colors.white, fontSize: 14, height: 1.5),
+                        color: Colors.white, fontSize: 14, height: 1.5,),
                   ),
                 ),
               ],
@@ -350,13 +350,13 @@ class _TypewriterResponseState extends State<_TypewriterResponse> {
                   button: true,
                   child: IconButton(
                     icon: const Icon(Icons.copy_outlined,
-                        size: 16, color: kTextMuted),
+                        size: 16, color: kTextMuted,),
                     tooltip: 'Copia risposta',
                     onPressed: done
                         ? () {
                             HapticFeedback.selectionClick();
                             Clipboard.setData(
-                                ClipboardData(text: widget.text));
+                                ClipboardData(text: widget.text),);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(AppStrings.sessionResponseCopied),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/session_record.dart';
-import '../utils/strings.dart';
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/utils/strings.dart';
 
 // ── SessionBadge ─────────────────────────────────────────────────────────────
 

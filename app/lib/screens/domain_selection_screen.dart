@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/session_record.dart';
-import '../providers/session_history_provider.dart';
-import '../providers/settings_provider.dart';
-import '../../main.dart'
+import 'package:physicscopilot/models/session_record.dart';
+import 'package:physicscopilot/providers/session_history_provider.dart';
+import 'package:physicscopilot/providers/settings_provider.dart';
+import 'package:physicscopilot/main.dart'
     show kAccent, kBgCard, kBgCardBorder, kBgPrimary, kTextMuted;
 
 // ── Domain data ───────────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ class _DomainSelectionScreenState extends ConsumerState<DomainSelectionScreen> {
   }
 
   int _sessionCountForDomain(
-      String domainId, List<SessionRecord> sessions) =>
+      String domainId, List<SessionRecord> sessions,) =>
       sessions
           .where((s) => s.equipmentName.toLowerCase().contains(domainId.toLowerCase()))
           .length;
@@ -189,7 +189,7 @@ class _DomainSelectionScreenState extends ConsumerState<DomainSelectionScreen> {
                           item: domain,
                           selected: isSelected,
                           sessionCount: _sessionCountForDomain(
-                              domain.id, sessions),
+                              domain.id, sessions,),
                           onTap: () async {
                             await ref
                                 .read(settingsProvider.notifier)
@@ -269,7 +269,7 @@ class _DomainCard extends StatelessWidget {
                 right: 6,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 2),
+                      horizontal: 5, vertical: 2,),
                   decoration: BoxDecoration(
                     color: kAccent,
                     borderRadius: BorderRadius.circular(10),

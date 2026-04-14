@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../main.dart' show onboardingCompletedProvider;
-import '../providers/prefs_provider.dart' show sharedPrefsProvider;
+import 'package:physicscopilot/main.dart' show onboardingCompletedProvider;
+import 'package:physicscopilot/providers/prefs_provider.dart' show sharedPrefsProvider;
 
 /// Onboarding flow shown once on first launch.
 /// Calls [onComplete] after saving the completion flag so the router

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/equipment_provider.dart';
+import 'package:physicscopilot/providers/equipment_provider.dart';
 
 const _kAccent = Color(0xFF1B4F72);
 const _kBackground = Color(0xFF0D1B2A);
@@ -99,7 +99,7 @@ class _EquipmentSelectionScreenState
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Annulla',
-                style: TextStyle(color: Colors.white54)),
+                style: TextStyle(color: Colors.white54),),
           ),
           TextButton(
             onPressed: () {
@@ -139,7 +139,7 @@ class _EquipmentSelectionScreenState
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                        horizontal: 16, vertical: 8,),
                     itemCount: _filtered.length + 1,
                     itemBuilder: (context, index) {
                       if (index < _filtered.length) {

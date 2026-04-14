@@ -67,7 +67,7 @@ void main() {
       await tester.pumpWidget(_buildSession(
         connectionStatus: ConnectionStatus.disconnected,
         prefs: prefs,
-      ));
+      ),);
       // First pump builds the widget tree; second pump triggers post-frame callbacks.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
@@ -86,7 +86,7 @@ void main() {
       await tester.pumpWidget(_buildSession(
         connectionStatus: ConnectionStatus.connecting,
         prefs: prefs,
-      ));
+      ),);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -101,7 +101,7 @@ void main() {
       await tester.pumpWidget(_buildSession(
         connectionStatus: ConnectionStatus.connected,
         prefs: prefs,
-      ));
+      ),);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -117,7 +117,7 @@ void main() {
       await tester.pumpWidget(_buildSession(
         connectionStatus: ConnectionStatus.connected,
         prefs: prefs,
-      ));
+      ),);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -131,7 +131,7 @@ void main() {
       await tester.pumpWidget(_buildSession(
         connectionStatus: ConnectionStatus.connected,
         prefs: prefs,
-      ));
+      ),);
       await tester.pump();
 
       expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);

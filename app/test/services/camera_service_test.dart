@@ -6,7 +6,6 @@
 // 3. dispose() closes streams and cleans up.
 // 4. FrameQuality enum values cover all brightness classifications.
 // 5. initialize() throws when no cameras are available.
-import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
