@@ -83,7 +83,7 @@ class WebSocketService {
     }
   }
 
-  void _onData(dynamic raw) {
+  void _onData(Object? raw) {
     if (raw is! String) return;
     try {
       final decoded = jsonDecode(raw);

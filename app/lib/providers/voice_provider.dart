@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/voice_service.dart';
@@ -13,7 +14,7 @@ final voiceServiceProvider = Provider<VoiceService>((ref) {
   final service = VoiceService();
   service.initialize().catchError((e) {
     // Non-fatal: STT/TTS may be unavailable but the app remains usable.
-    assert(() { print('VoiceService init failed: $e'); return true; }());
+    assert(() { debugPrint('VoiceService init failed: $e'); return true; }());
   });
   ref.onDispose(service.dispose);
   return service;
