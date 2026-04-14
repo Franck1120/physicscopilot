@@ -204,7 +204,7 @@ class ApiService {
 /// falling back to the compile-time [AppConstants.apiBaseUrl].
 final apiServiceProvider = Provider<ApiService>((ref) {
   final settings = ref.watch(settingsProvider);
-  final baseUrl = settings.serverUrlOverride ?? AppConstants.apiBaseUrl;
+  final baseUrl = AppConstants.resolveApiUrl(settings.serverUrlOverride);
   return ApiService(baseUrl: baseUrl);
 });
 
@@ -226,5 +226,5 @@ final serverHealthProvider = StreamProvider<ServerHealth>((ref) async* {
 /// Convenience wrapper around [serverHealthProvider] for UI widgets that
 /// only need to know whether the server is online.
 final serverOnlineProvider = Provider<bool>((ref) {
-  return ref.watch(serverHealthProvider).valueOrNull?.isOnline ?? false;
+  return ref.watch(serverHealthProvider).value?.isOnline ?? false;
 });

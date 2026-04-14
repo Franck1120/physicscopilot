@@ -13,12 +13,13 @@ import '../utils/constants.dart';
 /// against SUPABASE_JWT_SECRET; in dev mode (no secret configured) the token
 /// param is present but ignored by the server.
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
-  final settings = ref.read(settingsProvider);
-  final baseUrl = settings.serverUrlOverride ?? AppConstants.wsBaseUrl;
-  // Watch only language so the service reconnects when the user changes it.
-  // Other settings (voice, theme) must not trigger a reconnect.
+  // Watch both serverUrlOverride and language: changing either must reconnect.
+  final serverUrlOverride =
+      ref.watch(settingsProvider.select((s) => s.serverUrlOverride));
   final language =
       ref.watch(settingsProvider.select((s) => s.language));
+
+  final baseUrl = AppConstants.resolveWsUrl(serverUrlOverride);
 
   final service = WebSocketService(
     baseUrl,

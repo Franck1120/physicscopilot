@@ -51,7 +51,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('URL server aggiornato — riavvia la sessione.'),
+          content: Text('URL aggiornato — riconnessione in corso.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -122,7 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Default: ${AppConstants.wsBaseUrl}\nLascia vuoto per usare il valore compilato.',
+                  'Default: ${AppConstants.apiBaseUrl}\nInserisci solo l\'host (es. physicscopilot.onrender.com). Lascia vuoto per il valore compilato.',
                   style: const TextStyle(color: kTextMuted, fontSize: 12, height: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -136,7 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     autocorrect: false,
                     onChanged: (_) => setState(() => _urlEdited = true),
                     decoration: InputDecoration(
-                      hintText: 'es. wss://your-tunnel.trycloudflare.com',
+                      hintText: 'es. physicscopilot.onrender.com',
                       hintStyle:
                           const TextStyle(color: kTextMuted, fontSize: 12),
                       filled: true,
