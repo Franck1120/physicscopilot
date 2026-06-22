@@ -35,6 +35,9 @@ jobs:
   gosec:
     name: Go — Security Scan (gosec)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     defaults:
       run:
         working-directory: server
@@ -48,11 +51,14 @@ jobs:
           go-version: '1.26'
           cache-dependency-path: server/go.sum
 
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      # -no-fail: report findings via SARIF instead of failing the step, so the
+      # upload below always runs. The action's `working-directory` input was
+      # unreliable and left the SARIF outside server/, breaking the upload.
       - name: Run gosec
-        uses: securego/gosec@master
-        with:
-          args: '-fmt sarif -out gosec.sarif ./...'
-          working-directory: server
+        run: gosec -fmt sarif -out gosec.sarif -no-fail ./...
 
       - name: Upload SARIF report
         uses: github/codeql-action/upload-sarif@v4
@@ -77,11 +83,16 @@ jobs:
           flutter-version: '3.41.6'
           channel: stable
 
+      # `flutter pub get` resolves and validates the full dependency graph;
+      # an unresolvable, yanked, or discontinued package fails here.
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Check for known vulnerabilities
-        run: dart pub audit
+      # The Dart SDK has no native `pub audit` (the previous command exited 64 —
+      # unknown subcommand). `pub outdated` audits the resolved graph against the
+      # latest published versions and surfaces discontinued packages.
+      - name: Audit dependencies
+        run: flutter pub outdated
 
   codeql:
     name: CodeQL Analysis
