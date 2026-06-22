@@ -16,6 +16,17 @@ PhysicsCopilot turns any smartphone into an AI assistant for physical work — s
 
 ---
 
+## Demo
+
+<!-- TODO: replace with real screen recordings -->
+| Live diagnosis | Voice-guided steps | AR overlays |
+|----------------|--------------------|-------------|
+| ![Diagnosis demo](docs/demo/diagnosis.gif) | ![Voice demo](docs/demo/voice.gif) | ![Overlay demo](docs/demo/overlay.gif) |
+
+> _GIFs are placeholders — drop real recordings into `docs/demo/` to light them up._
+
+---
+
 ## Use Cases
 
 | Domain | Examples |
@@ -93,25 +104,22 @@ Key architectural choices are documented in [`docs/adr/`](docs/adr/README.md):
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         USER'S PHONE                            │
-│                                                                 │
-│   Camera frames ──►  Flutter App  ──► TTS / AR overlay         │
-│                           │                                     │
-└───────────────────────────┼─────────────────────────────────────┘
-                            │  WebSocket (wss://)
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     GO SERVER (Fiber)                           │
-│                                                                 │
-│   WebSocket handler ──► Frame processor ──► Gemini 2.5 Flash   │
-│                                │                                │
-│                                ▼                                │
-│              RAG service  ──► KB context injection              │
-│                                                                 │
-│             Session REST API · Prometheus metrics               │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Phone["User's phone — Flutter app"]
+        CAM["Camera frames"] --> APP["Flutter client"]
+        APP --> OUT["TTS + AR overlay"]
+    end
+    APP -->|"WebSocket (wss)"| WS["WebSocket handler"]
+    subgraph Server["Go server (Fiber)"]
+        WS --> FP["Frame processor"]
+        FP --> GEM["Gemini 2.5 Flash"]
+        FP --> RAG["RAG service · KB context"]
+        REST["Session REST API"]
+        MET["Prometheus /metrics"]
+    end
+    GEM -->|"guidance"| APP
+    REST --> DB[("Postgres / Supabase")]
 ```
 
 ---
@@ -307,3 +315,9 @@ flutter build apk --release \
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+---
+
+## Author
+
+Built by **[Hephios Lab](https://github.com/Franck1120)** ([@Franck1120](https://github.com/Franck1120)).
